@@ -158,14 +158,24 @@ public class Ring extends KindofMisc {
 	
 	@Override
 	public String name() {
-		return isKnown() ? super.name() : Messages.get(Ring.class, gem);
+		if (isKnown()) {
+			return super.name();
+		} else if (super.guessed_name == null) {
+			return Messages.get(Ring.class, gem);
+		} else {
+			return super.guessed_name + "*";
+		}
 	}
 	
 	@Override
 	public String info(){
-		
 		String desc = isKnown() ? super.desc() : Messages.get(this, "unknown_desc");
-		
+
+		if (super.guessed_name != null) {
+			// TODO: Figure out localization practices
+			desc += "\n\nYou have guessed that this item is a " + super.guessed_name + ".";
+		}
+
 		if (cursed && isEquipped( Dungeon.hero )) {
 			desc += "\n\n" + Messages.get(Ring.class, "cursed_worn");
 			
