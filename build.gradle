@@ -15,8 +15,8 @@ allprojects {
         appName = 'Tweaked Pixel Dungeon'
         appPackageName = 'com.gabrieltb.tweakedpixeldungeon'
 
-        appVersionCode = 2
-        appVersionName = '2.2.1.1'
+        appVersionCode = 3
+        appVersionName = '2.2.1.2'
 
         appJavaCompatibility = JavaVersion.VERSION_1_8
 
