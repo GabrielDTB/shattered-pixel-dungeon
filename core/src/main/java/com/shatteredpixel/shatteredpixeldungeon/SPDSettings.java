@@ -252,14 +252,6 @@ public class SPDSettings extends GameSettings {
 		return getLong( KEY_LAST_DAILY, 0);
 	}
 
-	public static void supportNagged( boolean value ) {
-		put( KEY_SUPPORT_NAGGED, value );
-	}
-
-	public static boolean supportNagged() {
-		return getBoolean(KEY_SUPPORT_NAGGED, false);
-	}
-
 	//Input
 
 	public static final String KEY_CONTROLLER_SENS  = "controller_sens";

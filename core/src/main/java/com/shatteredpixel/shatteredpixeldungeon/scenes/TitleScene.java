@@ -134,7 +134,7 @@ public class TitleScene extends PixelScene {
 		};
 		btnPlay.icon(Icons.get(Icons.ENTER));
 		add(btnPlay);
-		
+
 		StyledButton btnRankings = new StyledButton(GREY_TR,Messages.get(this, "rankings")){
 			@Override
 			protected void onClick() {
