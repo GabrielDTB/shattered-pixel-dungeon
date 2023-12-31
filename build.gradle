@@ -12,8 +12,8 @@ buildscript {
 allprojects {
 
     ext {
-        appName = 'Shattered Pixel Dungeon'
-        appPackageName = 'com.shatteredpixel.shatteredpixeldungeon'
+        appName = 'Tweaked Pixel Dungeon'
+        appPackageName = 'com.gabrieltb.tweakedpixeldungeon'
 
         appVersionCode = 754
         appVersionName = '2.2.1'
