@@ -163,7 +163,7 @@ public class Ring extends KindofMisc {
 		} else if (super.guessed_name == null) {
 			return Messages.get(Ring.class, gem);
 		} else {
-			return super.guessed_name + "*";
+			return super.guessed_name + "?";
 		}
 	}
 	

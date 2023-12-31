@@ -361,7 +361,7 @@ public class Potion extends Item {
 		} else if (super.guessed_name == null) {
 			return Messages.get(this, color);
 		} else {
-			return super.guessed_name + "*";
+			return super.guessed_name + "?";
 		}
 	}
 

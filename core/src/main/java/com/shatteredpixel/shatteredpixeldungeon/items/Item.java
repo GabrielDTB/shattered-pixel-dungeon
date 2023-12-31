@@ -92,6 +92,7 @@ public class Item implements Bundlable {
 	public int icon = -1; //used as an identifier for items with randomized images
 
 	public String guessed_name;
+	public int guessed_icon = -1;
 	
 	public boolean stackable = false;
 	protected int quantity = 1;
@@ -160,6 +161,7 @@ public class Item implements Bundlable {
 
 	public class WndGuess extends Window {
 		private Class curGuess = null;
+		private int curGuessIcon = -1;
 
 		private static final int WIDTH = 120;
 		private static final int BTN_SIZE = 20;
@@ -183,6 +185,7 @@ public class Item implements Bundlable {
 				protected void onClick() {
 					super.onClick();
 					guessed_name = curGuess == null ? null : Messages.titleCase(Messages.get(curGuess, "name"));
+					guessed_icon = curGuessIcon;
 					hide();
 				}
 			};
@@ -238,10 +241,13 @@ public class Item implements Bundlable {
 					@Override
 					protected void onClick() {
 						if (curGuess == null) {
+							curGuessIcon = Reflection.newInstance(i).icon;
 							curGuess = i;
 						} else if (curGuess == i) {
+							curGuessIcon = -1;
 							curGuess = null;
 						} else {
+							curGuessIcon = Reflection.newInstance(i).icon;
 							curGuess = i;
 						}
 						if (curGuess == null) {
@@ -694,6 +700,7 @@ public class Item implements Bundlable {
 	private static final String CURSED			= "cursed";
 	private static final String CURSED_KNOWN	= "cursedKnown";
 	private static final String GUESSED_NAME    = "guessedName";
+	private static final String GUESSED_ICON    = "guessedIcon";
 	private static final String QUICKSLOT		= "quickslotpos";
 	private static final String KEPT_LOST       = "kept_lost";
 	
@@ -705,6 +712,7 @@ public class Item implements Bundlable {
 		bundle.put( CURSED, cursed );
 		bundle.put( CURSED_KNOWN, cursedKnown );
 		bundle.put( GUESSED_NAME, guessed_name);
+		bundle.put( GUESSED_ICON, guessed_icon);
 		if (Dungeon.quickslot.contains(this)) {
 			bundle.put( QUICKSLOT, Dungeon.quickslot.getSlot(this) );
 		}
@@ -717,7 +725,11 @@ public class Item implements Bundlable {
 		levelKnown	 = bundle.getBoolean( LEVEL_KNOWN );
 		cursedKnown	 = bundle.getBoolean( CURSED_KNOWN );
 		guessed_name = bundle.getString( GUESSED_NAME );
-		if (Objects.equals(guessed_name, "")) { guessed_name = null; };
+		guessed_icon = bundle.getInt( GUESSED_ICON );
+		if (Objects.equals(guessed_name, "")) {
+			guessed_name = null;
+			guessed_icon = -1;
+		};
 		
 		int level = bundle.getInt( LEVEL );
 		if (level > 0) {
