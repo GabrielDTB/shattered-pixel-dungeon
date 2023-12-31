@@ -226,7 +226,7 @@ public abstract class Scroll extends Item {
 		} else if (super.guessed_name == null) {
 			return Messages.get(this, rune);
 		} else {
-			return super.guessed_name + "*";
+			return super.guessed_name + "?";
 		}
 	}
 	
