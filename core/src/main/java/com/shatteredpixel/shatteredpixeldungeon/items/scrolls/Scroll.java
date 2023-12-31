@@ -221,14 +221,25 @@ public abstract class Scroll extends Item {
 	
 	@Override
 	public String name() {
-		return isKnown() ? super.name() : Messages.get(this, rune);
+		if (isKnown()) {
+			return super.name();
+		} else if (super.guessed_name == null) {
+			return Messages.get(this, rune);
+		} else {
+			return super.guessed_name + "*";
+		}
 	}
 	
 	@Override
 	public String info() {
-		return isKnown() ?
-			desc() :
-			Messages.get(this, "unknown_desc");
+		String desc = isKnown() ? super.desc() : Messages.get(this, "unknown_desc");
+
+		if (super.guessed_name != null) {
+			// TODO: Figure out localization practices
+			desc += "\n\nYou have guessed that this item is a " + super.guessed_name + ".";
+		}
+
+		return desc;
 	}
 	
 	@Override

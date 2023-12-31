@@ -33,6 +33,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.ExoticPotion;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ExoticScroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.TippedDart;
@@ -41,9 +46,18 @@ import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
+import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
+import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
+import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
+import com.shatteredpixel.shatteredpixeldungeon.windows.IconTitle;
+import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.Bundlable;
@@ -54,6 +68,8 @@ import com.watabou.utils.Reflection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Objects;
+
 
 public class Item implements Bundlable {
 
@@ -66,6 +82,7 @@ public class Item implements Bundlable {
 	
 	public static final String AC_DROP		= "DROP";
 	public static final String AC_THROW		= "THROW";
+	public static final String AC_GUESS    = "GUESS";
 	
 	protected String defaultAction;
 	public boolean usesTargeting;
@@ -73,6 +90,8 @@ public class Item implements Bundlable {
 	//TODO should these be private and accessed through methods?
 	public int image = 0;
 	public int icon = -1; //used as an identifier for items with randomized images
+
+	public String guessed_name;
 	
 	public boolean stackable = false;
 	protected int quantity = 1;
@@ -106,6 +125,9 @@ public class Item implements Bundlable {
 		ArrayList<String> actions = new ArrayList<>();
 		actions.add( AC_DROP );
 		actions.add( AC_THROW );
+		if ((this instanceof Potion || this instanceof Scroll || this instanceof Ring) && !this.isIdentified()) {
+			actions.add( AC_GUESS );
+		}
 		return actions;
 	}
 
@@ -129,11 +151,132 @@ public class Item implements Bundlable {
 			return false;
 		}
 	}
-	
+
 	public void doDrop( Hero hero ) {
 		hero.spendAndNext(TIME_TO_DROP);
 		int pos = hero.pos;
 		Dungeon.level.drop(detachAll(hero.belongings.backpack), pos).sprite.drop(pos);
+	}
+
+	public class WndGuess extends Window {
+		private Class curGuess = null;
+
+		private static final int WIDTH = 120;
+		private static final int BTN_SIZE = 20;
+
+		public WndGuess(final Item item){
+
+			IconTitle titlebar = new IconTitle();
+			titlebar.icon(Icons.MAGNIFY.get());
+			titlebar.label( "Guess" );
+			titlebar.setRect( 0, 0, WIDTH, 0 );
+			add(titlebar);
+
+			RenderedTextBlock text = PixelScene.renderTextBlock(6);
+			text.text( "Guess the type of the unidentified item. This will change the name of the item but won't tell you if you're correct." );
+			text.setPos(0, titlebar.bottom());
+			text.maxWidth( WIDTH );
+			add(text);
+
+			final RedButton guess = new RedButton(""){
+				@Override
+				protected void onClick() {
+					super.onClick();
+					guessed_name = curGuess == null ? null : Messages.titleCase(Messages.get(curGuess, "name"));
+					hide();
+				}
+			};
+			guess.icon( new ItemSprite(item) );
+			guess.setRect(0, 80, WIDTH, 20);
+			guess.text(" "); // TODO: This is a hack
+			add(guess);
+
+			float left;
+			float top = text.bottom() + 5;
+			int rows;
+			int placed = 0;
+
+			final ArrayList<Class<?extends Item>> unIDed = new ArrayList<>();
+			if (item.isIdentified()){
+				hide();
+				return;
+			} else if (item instanceof Potion){
+				if (item instanceof ExoticPotion) {
+					for (Class<?extends Item> i : Potion.getUnknown()){
+						unIDed.add(ExoticPotion.regToExo.get(i));
+					}
+				} else {
+					unIDed.addAll(Potion.getUnknown());
+				}
+			} else if (item instanceof Scroll){
+				if (item instanceof ExoticScroll) {
+					for (Class<?extends Item> i : Scroll.getUnknown()){
+						unIDed.add(ExoticScroll.regToExo.get(i));
+					}
+				} else {
+					unIDed.addAll(Scroll.getUnknown());
+				}
+			} else if (item instanceof Ring) {
+				unIDed.addAll(Ring.getUnknown());
+			} else {
+				hide();
+				return;
+			}
+
+			if (unIDed.size() <= 5){
+				rows = 1;
+				top += BTN_SIZE/2f;
+				left = (WIDTH - BTN_SIZE*unIDed.size())/2f;
+			} else {
+				rows = 2;
+				left = (WIDTH - BTN_SIZE*((unIDed.size()+1)/2))/2f;
+			}
+
+			for (final Class<?extends Item> i : unIDed){
+
+				IconButton btn = new IconButton(){
+					@Override
+					protected void onClick() {
+						if (curGuess == null) {
+							curGuess = i;
+						} else if (curGuess == i) {
+							curGuess = null;
+						} else {
+							curGuess = i;
+						}
+						if (curGuess == null) {
+							guess.text(" "); // TODO: This is a hack
+						} else {
+							guess.text( Messages.titleCase(Messages.get(curGuess, "name")) );
+						}
+						super.onClick();
+					}
+				};
+				Image im = new Image(Assets.Sprites.ITEM_ICONS);
+				im.frame(ItemSpriteSheet.Icons.film.get(Reflection.newInstance(i).icon));
+				im.scale.set(2f);
+				btn.icon(im);
+				btn.setRect(left + placed*BTN_SIZE, top, BTN_SIZE, BTN_SIZE);
+				add(btn);
+
+				placed++;
+				if (rows == 2 && placed == ((unIDed.size()+1)/2)){
+					placed = 0;
+					if (unIDed.size() % 2 == 1){
+						left += BTN_SIZE/2f;
+					}
+					top += BTN_SIZE;
+				}
+			}
+
+			resize(WIDTH, 100);
+
+		}
+
+	}
+
+	public void doGuess( Hero hero ) {
+		GameScene.show( new WndGuess(this));
 	}
 
 	//resets an item's properties, to ensure consistency between runs
@@ -162,11 +305,17 @@ public class Item implements Bundlable {
 			}
 			
 		} else if (action.equals( AC_THROW )) {
-			
+
 			if (hero.belongings.backpack.contains(this) || isEquipped(hero)) {
 				doThrow(hero);
 			}
-			
+
+		} else if (action.equals( AC_GUESS )) {
+
+			if (hero.belongings.backpack.contains(this) || isEquipped(hero)) {
+				doGuess(hero);
+			}
+
 		}
 	}
 
@@ -443,6 +592,7 @@ public class Item implements Bundlable {
 			if (!isIdentified()) Talent.onItemIdentified(Dungeon.hero, this);
 		}
 
+		guessed_name = null;
 		levelKnown = true;
 		cursedKnown = true;
 		Item.updateQuickslot();
@@ -543,6 +693,7 @@ public class Item implements Bundlable {
 	private static final String LEVEL_KNOWN		= "levelKnown";
 	private static final String CURSED			= "cursed";
 	private static final String CURSED_KNOWN	= "cursedKnown";
+	private static final String GUESSED_NAME    = "guessedName";
 	private static final String QUICKSLOT		= "quickslotpos";
 	private static final String KEPT_LOST       = "kept_lost";
 	
@@ -553,6 +704,7 @@ public class Item implements Bundlable {
 		bundle.put( LEVEL_KNOWN, levelKnown );
 		bundle.put( CURSED, cursed );
 		bundle.put( CURSED_KNOWN, cursedKnown );
+		bundle.put( GUESSED_NAME, guessed_name);
 		if (Dungeon.quickslot.contains(this)) {
 			bundle.put( QUICKSLOT, Dungeon.quickslot.getSlot(this) );
 		}
@@ -561,9 +713,11 @@ public class Item implements Bundlable {
 	
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
-		quantity	= bundle.getInt( QUANTITY );
-		levelKnown	= bundle.getBoolean( LEVEL_KNOWN );
-		cursedKnown	= bundle.getBoolean( CURSED_KNOWN );
+		quantity	 = bundle.getInt( QUANTITY );
+		levelKnown	 = bundle.getBoolean( LEVEL_KNOWN );
+		cursedKnown	 = bundle.getBoolean( CURSED_KNOWN );
+		guessed_name = bundle.getString( GUESSED_NAME );
+		if (Objects.equals(guessed_name, "")) { guessed_name = null; };
 		
 		int level = bundle.getInt( LEVEL );
 		if (level > 0) {
