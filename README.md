@@ -1,23 +1,16 @@
-# Shattered Pixel Dungeon
+# Tweaked (Shattered) Pixel Dungeon
 
-[Shattered Pixel Dungeon](https://shatteredpixel.com/shatteredpd/) is an open-source traditional roguelike dungeon crawler with randomized levels and enemies, and hundreds of items to collect and use. Its based on the [source code of Pixel Dungeon](https://github.com/00-Evan/pixel-dungeon-gradle), by [Watabou](https://www.watabou.ru).
+Tweaked Pixel Dungeon is a slightly modified version of [Shattered Pixel Dungeon](https://shatteredpixel.com/shatteredpd/), an open-source traditional roguelike dungeon crawler with randomized levels and enemies, and hundreds of items to collect and use. SPD is based on the [source code of Pixel Dungeon](https://github.com/00-Evan/pixel-dungeon-gradle), by [Watabou](https://www.watabou.ru).
 
-Shattered Pixel Dungeon currently compiles for Android, iOS, and Desktop platforms. You can find official releases of the game on:
+Tweaked Pixel Dungeon currently compiles for Android and Desktop platforms. You can find the releases in [releases](https://github.com/GabrielDTB/tweaked-pixel-dungeon/releases).
 
-[![Get it on Google Play](https://shatteredpixel.com/assets/images/badges/gplay.png)](https://play.google.com/store/apps/details?id=com.shatteredpixel.shatteredpixeldungeon)
-[![Download on the App Store](https://shatteredpixel.com/assets/images/badges/appstore.png)](https://apps.apple.com/app/shattered-pixel-dungeon/id1563121109)
-[![Steam](https://shatteredpixel.com/assets/images/badges/steam.png)](https://store.steampowered.com/app/1769170/Shattered_Pixel_Dungeon/)<br>
-[![GOG.com](https://shatteredpixel.com/assets/images/badges/gog.png)](https://www.gog.com/game/shattered_pixel_dungeon)
-[![Itch.io](https://shatteredpixel.com/assets/images/badges/itch.png)](https://shattered-pixel.itch.io/shattered-pixel-dungeon)
-[![Github Releases](https://shatteredpixel.com/assets/images/badges/github.png)](https://github.com/00-Evan/shattered-pixel-dungeon/releases)
+If you like this game, please consider [supporting Evan on Patreon](https://www.patreon.com/ShatteredPixel)!
 
-If you like this game, please consider [supporting me on Patreon](https://www.patreon.com/ShatteredPixel)!
-
-There is an official blog for this project at [ShatteredPixel.com](https://www.shatteredpixel.com/blog/).
+There is an official blog for the upstream project at [ShatteredPixel.com](https://www.shatteredpixel.com/blog/). I might write some posts about this project on my blog at [GabrielTB.me/blog](https://www.gabrieltb.me/blog/).
 
 The game also has a translation project hosted on [Transifex](https://www.transifex.com/shattered-pixel/shattered-pixel-dungeon/).
 
-Note that **this repository does not accept pull requests!** The code here is provided in hopes that others may find it useful for their own projects, not to allow community contribution. Issue reports of all kinds (bug reports, feature requests, etc.) are welcome.
+Note that **this repository might accept pull requests.** 
 
 If you'd like to work with the code, you can find the following guides in `/docs`:
 - [Compiling for Android.](docs/getting-started-android.md)
