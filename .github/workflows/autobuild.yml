@@ -1,0 +1,122 @@
+name: Build and Release
+on: push
+jobs:
+  Build-APK:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Decode Keystore
+        id: decode_keystore
+        uses: timheuer/base64-to-file@v1.2
+        with:
+          fileName: 'android_keystore.jks'
+          fileDir: '/home/runner/work/tweaked-pixel-dungeon/tweaked-pixel-dungeon/android/keystore/'
+          encodedString: ${{ secrets.KEYSTORE }}
+      - name: Build APK
+        run: ./gradlew :android:assembleRelease -x test --no-daemon
+        env:
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+      - name: Get APK name
+        id: getname
+        run: |
+          APK_NAME=$(ls android/build/outputs/apk/release | grep .apk)
+          echo $APK_NAME
+          echo "APK_NAME=${APK_NAME}" >> $GITHUB_ENV
+      - name: Get APK version
+        run: |
+          VERSION=$(echo "${APK_NAME}" | awk -F'_' '{print $2}' | sed 's/\.apk$//')
+          echo $VERSION
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+      - name: Move APK
+        run: mv android/build/outputs/apk/release/${APK_NAME} TweakedPD-v${{ env.VERSION }}-Android.apk;ls -la
+      - name: Verify Signature
+        run: $ANDROID_SDK_ROOT/build-tools/33.0.1/apksigner verify --print-certs TweakedPD-v${VERSION}-Android.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: android_apk
+          path: TweakedPD-v${{ env.VERSION }}-Android.apk
+
+  Build-Jar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Build Jar
+        run: ./gradlew desktop:release --no-daemon
+      - name: Get Jar name
+        id: getname
+        run: |
+          JAR_NAME=$(ls desktop/build/libs | grep .jar)
+          echo $JAR_NAME
+          echo "JAR_NAME=${JAR_NAME}" >> $GITHUB_ENV
+      - name: Get Jar version
+        run: |
+          VERSION=$(echo "${JAR_NAME}" | awk -F'-' '{print $2}' | sed 's/\.jar$//')
+          echo $VERSION
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+      - name: Move Jar
+        run: mv desktop/build/libs/${JAR_NAME} TweakedPD-v${{ env.VERSION }}-Java.jar;ls -la
+      - name: Upload Jar
+        uses: actions/upload-artifact@v3.1.2
+        with:
+          name: desktop_jar
+          path: TweakedPD-v${{ env.VERSION }}-Java.jar
+
+  Create-Github-Release:
+    needs: 
+      - Build-APK
+      - Build-Jar
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download APK from build
+        uses: actions/download-artifact@v1
+        with:
+          name: android_apk
+      - name: Download Jar from build
+        uses: actions/download-artifact@v1
+        with:
+          name: desktop_jar
+      - name: Get file names
+        run: |
+          ls -la android_apk
+          ls -la desktop_jar
+          APK_NAME=$(ls android_apk)
+          JAR_NAME=$(ls desktop_jar)
+          echo $APK_NAME
+          echo $JAR_NAME
+          echo "APK_NAME=${APK_NAME}" >> $GITHUB_ENV
+          echo "JAR_NAME=${JAR_NAME}" >> $GITHUB_ENV
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            android_apk/${{ env.APK_NAME }}
+            desktop_jar/${{ env.JAR_NAME }}
