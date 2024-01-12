@@ -37,147 +37,146 @@ import com.watabou.utils.Random;
 
 public class DM200 extends Mob {
 
-	{
-		spriteClass = DM200Sprite.class;
+    private static final String VENT_COOLDOWN = "vent_cooldown";
+    private int ventCooldown = 0;
 
-		HP = HT = 80;
-		defenseSkill = 12;
+    {
+        spriteClass = DM200Sprite.class;
 
-		EXP = 9;
-		maxLvl = 17;
+        HP = HT = 80;
+        defenseSkill = 12;
 
-		loot = Random.oneOf(Generator.Category.WEAPON, Generator.Category.ARMOR);
-		lootChance = 0.125f; //initially, see lootChance()
+        EXP = 9;
+        maxLvl = 17;
 
-		properties.add(Property.INORGANIC);
-		properties.add(Property.LARGE);
+        loot = Random.oneOf(Generator.Category.WEAPON, Generator.Category.ARMOR);
+        lootChance = 0.125f; //initially, see lootChance()
 
-		HUNTING = new Hunting();
-	}
+        properties.add(Property.INORGANIC);
+        properties.add(Property.LARGE);
 
-	@Override
-	public int damageRoll() {
-		return Random.NormalIntRange( 10, 25 );
-	}
+        HUNTING = new Hunting();
+    }
 
-	@Override
-	public int attackSkill( Char target ) {
-		return 20;
-	}
+    @Override
+    public int damageRoll() {
+        return Random.NormalIntRange(10, 25);
+    }
 
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 8);
-	}
+    @Override
+    public int attackSkill(Char target) {
+        return 20;
+    }
 
-	@Override
-	public float lootChance(){
-		//each drop makes future drops 1/2 as likely
-		// so loot chance looks like: 1/8, 1/16, 1/32, 1/64, etc.
-		return super.lootChance() * (float)Math.pow(1/2f, Dungeon.LimitedDrops.DM200_EQUIP.count);
-	}
+    @Override
+    public int drRoll() {
+        return super.drRoll() + Random.NormalIntRange(0, 8);
+    }
 
-	public Item createLoot() {
-		Dungeon.LimitedDrops.DM200_EQUIP.count++;
-		//uses probability tables for dwarf city
-		if (loot == Generator.Category.WEAPON){
-			return Generator.randomWeapon(4, true);
-		} else {
-			return Generator.randomArmor(4);
-		}
-	}
+    @Override
+    public float lootChance() {
+        //each drop makes future drops 1/2 as likely
+        // so loot chance looks like: 1/8, 1/16, 1/32, 1/64, etc.
+        return super.lootChance() * (float) Math.pow(1 / 2f, Dungeon.LimitedDrops.DM200_EQUIP.count);
+    }
 
-	private int ventCooldown = 0;
+    public Item createLoot() {
+        Dungeon.LimitedDrops.DM200_EQUIP.count++;
+        //uses probability tables for dwarf city
+        if (loot == Generator.Category.WEAPON) {
+            return Generator.randomWeapon(4, true);
+        } else {
+            return Generator.randomArmor(4);
+        }
+    }
 
-	private static final String VENT_COOLDOWN = "vent_cooldown";
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(VENT_COOLDOWN, ventCooldown);
+    }
 
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put(VENT_COOLDOWN, ventCooldown);
-	}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        ventCooldown = bundle.getInt(VENT_COOLDOWN);
+    }
 
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		ventCooldown = bundle.getInt( VENT_COOLDOWN );
-	}
+    @Override
+    protected boolean act() {
+        ventCooldown--;
+        return super.act();
+    }
 
-	@Override
-	protected boolean act() {
-		ventCooldown--;
-		return super.act();
-	}
+    public void onZapComplete() {
+        zap();
+        next();
+    }
 
-	public void onZapComplete(){
-		zap();
-		next();
-	}
+    private void zap() {
+        spend(TICK);
+        ventCooldown = 30;
 
-	private void zap( ){
-		spend( TICK );
-		ventCooldown = 30;
+        Ballistica trajectory = new Ballistica(pos, enemy.pos, Ballistica.STOP_TARGET);
 
-		Ballistica trajectory = new Ballistica(pos, enemy.pos, Ballistica.STOP_TARGET);
+        for (int i : trajectory.subPath(0, trajectory.dist)) {
+            GameScene.add(Blob.seed(i, 20, ToxicGas.class));
+        }
+        GameScene.add(Blob.seed(trajectory.collisionPos, 100, ToxicGas.class));
 
-		for (int i : trajectory.subPath(0, trajectory.dist)){
-			GameScene.add(Blob.seed(i, 20, ToxicGas.class));
-		}
-		GameScene.add(Blob.seed(trajectory.collisionPos, 100, ToxicGas.class));
+    }
 
-	}
+    protected boolean canVent(int target) {
+        if (ventCooldown > 0) return false;
+        PathFinder.buildDistanceMap(target, BArray.not(Dungeon.level.solid, null), Dungeon.level.distance(pos, target) + 1);
+        //vent can go around blocking terrain, but not through it
+        if (PathFinder.distance[pos] == Integer.MAX_VALUE) {
+            return false;
+        }
+        return true;
+    }
 
-	protected boolean canVent(int target){
-		if (ventCooldown > 0) return false;
-		PathFinder.buildDistanceMap(target, BArray.not(Dungeon.level.solid, null), Dungeon.level.distance(pos, target)+1);
-		//vent can go around blocking terrain, but not through it
-		if (PathFinder.distance[pos] == Integer.MAX_VALUE){
-			return false;
-		}
-		return true;
-	}
+    private class Hunting extends Mob.Hunting {
 
-	private class Hunting extends Mob.Hunting{
+        @Override
+        public boolean act(boolean enemyInFOV, boolean justAlerted) {
+            if (!enemyInFOV || canAttack(enemy)) {
+                return super.act(enemyInFOV, justAlerted);
+            } else {
+                enemySeen = true;
+                target = enemy.pos;
 
-		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
-			if (!enemyInFOV || canAttack(enemy)) {
-				return super.act(enemyInFOV, justAlerted);
-			} else {
-				enemySeen = true;
-				target = enemy.pos;
+                int oldPos = pos;
 
-				int oldPos = pos;
+                if (distance(enemy) >= 1 && Random.Int(100 / distance(enemy)) == 0 && canVent(target)) {
+                    if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
+                        sprite.zap(enemy.pos);
+                        return false;
+                    } else {
+                        zap();
+                        return true;
+                    }
 
-				if (distance(enemy) >= 1 && Random.Int(100/distance(enemy)) == 0 && canVent(target)){
-					if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
-						sprite.zap( enemy.pos );
-						return false;
-					} else {
-						zap();
-						return true;
-					}
+                } else if (getCloser(target)) {
+                    spend(1 / speed());
+                    return moveSprite(oldPos, pos);
 
-				} else if (getCloser( target )) {
-					spend( 1 / speed() );
-					return moveSprite( oldPos,  pos );
+                } else if (canVent(target)) {
+                    if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
+                        sprite.zap(enemy.pos);
+                        return false;
+                    } else {
+                        zap();
+                        return true;
+                    }
 
-				} else if (canVent(target)) {
-					if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
-						sprite.zap( enemy.pos );
-						return false;
-					} else {
-						zap();
-						return true;
-					}
+                } else {
+                    spend(TICK);
+                    return true;
+                }
 
-				} else {
-					spend( TICK );
-					return true;
-				}
-
-			}
-		}
-	}
+            }
+        }
+    }
 
 }

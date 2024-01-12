@@ -32,32 +32,32 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class PhantomMeat extends Food {
 
-	{
-		image = ItemSpriteSheet.PHANTOM_MEAT;
-		energy = Hunger.STARVING;
-	}
+    {
+        image = ItemSpriteSheet.PHANTOM_MEAT;
+        energy = Hunger.STARVING;
+    }
 
-	@Override
-	protected void satisfy(Hero hero) {
-		super.satisfy(hero);
-		effect(hero);
-	}
+    public static void effect(Hero hero) {
 
-	public int value() {
-		return 30 * quantity;
-	}
+        Barkskin.conditionallyAppend(hero, hero.HT / 4, 1);
+        Buff.affect(hero, Invisibility.class, Invisibility.DURATION);
+        if (hero.HP < hero.HT) {
+            hero.HP = Math.min(hero.HP + hero.HT / 4, hero.HT);
+        }
+        hero.sprite.emitter().burst(Speck.factory(Speck.HEALING), 1);
+        PotionOfHealing.cure(hero);
 
-	public static void effect(Hero hero){
+    }
 
-		Barkskin.conditionallyAppend( hero, hero.HT / 4, 1 );
-		Buff.affect( hero, Invisibility.class, Invisibility.DURATION );
-		if (hero.HP < hero.HT) {
-			hero.HP = Math.min( hero.HP + hero.HT / 4, hero.HT );
-		}
-		hero.sprite.emitter().burst( Speck.factory( Speck.HEALING ), 1 );
-		PotionOfHealing.cure(hero);
+    @Override
+    protected void satisfy(Hero hero) {
+        super.satisfy(hero);
+        effect(hero);
+    }
 
-	}
+    public int value() {
+        return 30 * quantity;
+    }
 
 
 }

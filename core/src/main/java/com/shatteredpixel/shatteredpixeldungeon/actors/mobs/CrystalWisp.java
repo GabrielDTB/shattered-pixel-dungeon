@@ -34,124 +34,126 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-public class CrystalWisp extends Mob{
+public class CrystalWisp extends Mob {
 
-	{
-		spriteClass = CrystalWispSprite.class;
+    public static final String SPRITE = "sprite";
 
-		HP = HT = 30;
-		defenseSkill = 16;
+    {
+        spriteClass = CrystalWispSprite.class;
 
-		EXP = 7;
-		maxLvl = -2;
+        HP = HT = 30;
+        defenseSkill = 16;
 
-		flying = true;
+        EXP = 7;
+        maxLvl = -2;
 
-		properties.add(Property.INORGANIC);
-	}
+        flying = true;
 
-	public CrystalWisp(){
-		super();
-		switch (Random.Int(3)){
-			case 0: default:
-				spriteClass = CrystalWispSprite.Blue.class;
-				break;
-			case 1:
-				spriteClass = CrystalWispSprite.Green.class;
-				break;
-			case 2:
-				spriteClass = CrystalWispSprite.Red.class;
-				break;
-		}
-	}
+        properties.add(Property.INORGANIC);
+    }
 
-	@Override
-	public boolean[] modifyPassable(boolean[] passable) {
-		for (int i = 0; i < Dungeon.level.length(); i++){
-			passable[i] = passable[i] || Dungeon.level.map[i] == Terrain.MINE_CRYSTAL;
-		}
-		return passable;
-	}
+    public CrystalWisp() {
+        super();
+        switch (Random.Int(3)) {
+            case 0:
+            default:
+                spriteClass = CrystalWispSprite.Blue.class;
+                break;
+            case 1:
+                spriteClass = CrystalWispSprite.Green.class;
+                break;
+            case 2:
+                spriteClass = CrystalWispSprite.Red.class;
+                break;
+        }
+    }
 
-	@Override
-	public int damageRoll() {
-		return Random.NormalIntRange( 5, 10 );
-	}
+    @Override
+    public boolean[] modifyPassable(boolean[] passable) {
+        for (int i = 0; i < Dungeon.level.length(); i++) {
+            passable[i] = passable[i] || Dungeon.level.map[i] == Terrain.MINE_CRYSTAL;
+        }
+        return passable;
+    }
 
-	@Override
-	public int attackSkill( Char target ) {
-		return 18;
-	}
+    @Override
+    public int damageRoll() {
+        return Random.NormalIntRange(5, 10);
+    }
 
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 5);
-	}
+    @Override
+    public int attackSkill(Char target) {
+        return 18;
+    }
 
-	@Override
-	protected boolean canAttack( Char enemy ) {
-		return super.canAttack(enemy)
-				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
-	}
+    @Override
+    public int drRoll() {
+        return super.drRoll() + Random.NormalIntRange(0, 5);
+    }
 
-	protected boolean doAttack(Char enemy ) {
+    @Override
+    protected boolean canAttack(Char enemy) {
+        return super.canAttack(enemy)
+                || new Ballistica(pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
+    }
 
-		if (Dungeon.level.adjacent( pos, enemy.pos )
-				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos != enemy.pos) {
+    protected boolean doAttack(Char enemy) {
 
-			return super.doAttack( enemy );
+        if (Dungeon.level.adjacent(pos, enemy.pos)
+                || new Ballistica(pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos != enemy.pos) {
 
-		} else {
+            return super.doAttack(enemy);
 
-			if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
-				sprite.zap( enemy.pos );
-				return false;
-			} else {
-				zap();
-				return true;
-			}
-		}
-	}
+        } else {
 
-	//used so resistances can differentiate between melee and magical attacks
-	public static class LightBeam {}
+            if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
+                sprite.zap(enemy.pos);
+                return false;
+            } else {
+                zap();
+                return true;
+            }
+        }
+    }
 
-	private void zap() {
-		spend( 1f );
+    private void zap() {
+        spend(1f);
 
-		Invisibility.dispel(this);
-		Char enemy = this.enemy;
-		if (hit( this, enemy, true )) {
+        Invisibility.dispel(this);
+        Char enemy = this.enemy;
+        if (hit(this, enemy, true)) {
 
-			int dmg = Random.NormalIntRange( 5, 10 );
-			enemy.damage( dmg, new LightBeam() );
+            int dmg = Random.NormalIntRange(5, 10);
+            enemy.damage(dmg, new LightBeam());
 
-			if (!enemy.isAlive() && enemy == Dungeon.hero) {
-				Badges.validateDeathFromEnemyMagic();
-				Dungeon.fail( this );
-				GLog.n( Messages.get(this, "beam_kill") );
-			}
-		} else {
-			enemy.sprite.showStatus( CharSprite.NEUTRAL,  enemy.defenseVerb() );
-		}
-	}
+            if (!enemy.isAlive() && enemy == Dungeon.hero) {
+                Badges.validateDeathFromEnemyMagic();
+                Dungeon.fail(this);
+                GLog.n(Messages.get(this, "beam_kill"));
+            }
+        } else {
+            enemy.sprite.showStatus(CharSprite.NEUTRAL, enemy.defenseVerb());
+        }
+    }
 
-	public void onZapComplete() {
-		zap();
-		next();
-	}
+    public void onZapComplete() {
+        zap();
+        next();
+    }
 
-	public static final String SPRITE = "sprite";
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(SPRITE, spriteClass);
+    }
 
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put(SPRITE, spriteClass);
-	}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        spriteClass = bundle.getClass(SPRITE);
+    }
 
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		spriteClass = bundle.getClass(SPRITE);
-	}
+    //used so resistances can differentiate between melee and magical attacks
+    public static class LightBeam {
+    }
 }

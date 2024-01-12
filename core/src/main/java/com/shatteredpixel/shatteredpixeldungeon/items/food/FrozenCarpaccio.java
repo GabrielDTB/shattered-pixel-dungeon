@@ -35,48 +35,48 @@ import com.watabou.utils.Random;
 
 public class FrozenCarpaccio extends Food {
 
-	{
-		image = ItemSpriteSheet.CARPACCIO;
-		energy = Hunger.HUNGRY/2f;
-	}
-	
-	@Override
-	protected void satisfy(Hero hero) {
-		super.satisfy(hero);
-		effect(hero);
-	}
-	
-	public int value() {
-		return 10 * quantity;
-	}
+    {
+        image = ItemSpriteSheet.CARPACCIO;
+        energy = Hunger.HUNGRY / 2f;
+    }
 
-	public static void effect(Hero hero){
-		switch (Random.Int( 5 )) {
-			case 0:
-				GLog.i( Messages.get(FrozenCarpaccio.class, "invis") );
-				Buff.affect( hero, Invisibility.class, Invisibility.DURATION );
-				break;
-			case 1:
-				GLog.i( Messages.get(FrozenCarpaccio.class, "hard") );
-				Barkskin.conditionallyAppend( hero, hero.HT / 4, 1 );
-				break;
-			case 2:
-				GLog.i( Messages.get(FrozenCarpaccio.class, "refresh") );
-				PotionOfHealing.cure(hero);
-				break;
-			case 3:
-				GLog.i( Messages.get(FrozenCarpaccio.class, "better") );
-				if (hero.HP < hero.HT) {
-					hero.HP = Math.min( hero.HP + hero.HT / 4, hero.HT );
-					hero.sprite.emitter().burst( Speck.factory( Speck.HEALING ), 1 );
-				}
-				break;
-		}
-	}
-	
-	public static Food cook( MysteryMeat ingredient ) {
-		FrozenCarpaccio result = new FrozenCarpaccio();
-		result.quantity = ingredient.quantity();
-		return result;
-	}
+    public static void effect(Hero hero) {
+        switch (Random.Int(5)) {
+            case 0:
+                GLog.i(Messages.get(FrozenCarpaccio.class, "invis"));
+                Buff.affect(hero, Invisibility.class, Invisibility.DURATION);
+                break;
+            case 1:
+                GLog.i(Messages.get(FrozenCarpaccio.class, "hard"));
+                Barkskin.conditionallyAppend(hero, hero.HT / 4, 1);
+                break;
+            case 2:
+                GLog.i(Messages.get(FrozenCarpaccio.class, "refresh"));
+                PotionOfHealing.cure(hero);
+                break;
+            case 3:
+                GLog.i(Messages.get(FrozenCarpaccio.class, "better"));
+                if (hero.HP < hero.HT) {
+                    hero.HP = Math.min(hero.HP + hero.HT / 4, hero.HT);
+                    hero.sprite.emitter().burst(Speck.factory(Speck.HEALING), 1);
+                }
+                break;
+        }
+    }
+
+    public static Food cook(MysteryMeat ingredient) {
+        FrozenCarpaccio result = new FrozenCarpaccio();
+        result.quantity = ingredient.quantity();
+        return result;
+    }
+
+    @Override
+    protected void satisfy(Hero hero) {
+        super.satisfy(hero);
+        effect(hero);
+    }
+
+    public int value() {
+        return 10 * quantity;
+    }
 }

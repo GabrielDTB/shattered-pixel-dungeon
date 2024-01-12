@@ -38,140 +38,143 @@ import com.watabou.utils.Bundle;
 
 public class Flail extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.FLAIL;
-		hitSound = Assets.Sounds.HIT_CRUSH;
-		hitSoundPitch = 0.8f;
+    private static float spinBonus = 1f;
 
-		tier = 4;
-		ACC = 0.8f; //0.8x accuracy
-		//also cannot surprise attack, see Hero.canSurpriseAttack
-	}
+    {
+        image = ItemSpriteSheet.FLAIL;
+        hitSound = Assets.Sounds.HIT_CRUSH;
+        hitSoundPitch = 0.8f;
 
-	@Override
-	public int max(int lvl) {
-		return  Math.round(7*(tier+1)) +        //35 base, up from 25
-				lvl*Math.round(1.6f*(tier+1));  //+8 per level, up from +5
-	}
+        tier = 4;
+        ACC = 0.8f; //0.8x accuracy
+        //also cannot surprise attack, see Hero.canSurpriseAttack
+    }
 
-	private static float spinBonus = 1f;
+    @Override
+    public int max(int lvl) {
+        return Math.round(7 * (tier + 1)) +        //35 base, up from 25
+                lvl * Math.round(1.6f * (tier + 1));  //+8 per level, up from +5
+    }
 
-	@Override
-	public int damageRoll(Char owner) {
-		int dmg = Math.round(super.damageRoll(owner) * spinBonus);
-		if (spinBonus > 1f) Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-		spinBonus = 1f;
-		return dmg;
-	}
+    @Override
+    public int damageRoll(Char owner) {
+        int dmg = Math.round(super.damageRoll(owner) * spinBonus);
+        if (spinBonus > 1f) Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
+        spinBonus = 1f;
+        return dmg;
+    }
 
-	@Override
-	public float accuracyFactor(Char owner, Char target) {
-		SpinAbilityTracker spin = owner.buff(SpinAbilityTracker.class);
-		if (spin != null) {
-			Actor.add(new Actor() {
-				{ actPriority = VFX_PRIO; }
-				@Override
-				protected boolean act() {
-					if (owner instanceof Hero && !target.isAlive()){
-						onAbilityKill((Hero)owner, target);
-					}
-					Actor.remove(this);
-					return true;
-				}
-			});
-			//we detach and calculate bonus here in case the attack misses (e.g. vs. monks)
-			spin.detach();
-			spinBonus = 1f + (spin.spins/3f);
-			return Float.POSITIVE_INFINITY;
-		} else {
-			spinBonus = 1f;
-			return super.accuracyFactor(owner, target);
-		}
-	}
+    @Override
+    public float accuracyFactor(Char owner, Char target) {
+        SpinAbilityTracker spin = owner.buff(SpinAbilityTracker.class);
+        if (spin != null) {
+            Actor.add(new Actor() {
+                {
+                    actPriority = VFX_PRIO;
+                }
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		if (Dungeon.hero.buff(SpinAbilityTracker.class) != null){
-			return 0;
-		} else {
-			return 2;
-		}
-	}
+                @Override
+                protected boolean act() {
+                    if (owner instanceof Hero && !target.isAlive()) {
+                        onAbilityKill((Hero) owner, target);
+                    }
+                    Actor.remove(this);
+                    return true;
+                }
+            });
+            //we detach and calculate bonus here in case the attack misses (e.g. vs. monks)
+            spin.detach();
+            spinBonus = 1f + (spin.spins / 3f);
+            return Float.POSITIVE_INFINITY;
+        } else {
+            spinBonus = 1f;
+            return super.accuracyFactor(owner, target);
+        }
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        if (Dungeon.hero.buff(SpinAbilityTracker.class) != null) {
+            return 0;
+        } else {
+            return 2;
+        }
+    }
 
-		SpinAbilityTracker spin = hero.buff(SpinAbilityTracker.class);
-		if (spin != null && spin.spins >= 3){
-			GLog.w(Messages.get(this, "spin_warn"));
-			return;
-		}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
 
-		beforeAbilityUsed(hero, null);
-		if (spin == null){
-			spin = Buff.affect(hero, SpinAbilityTracker.class, 3f);
-		}
+        SpinAbilityTracker spin = hero.buff(SpinAbilityTracker.class);
+        if (spin != null && spin.spins >= 3) {
+            GLog.w(Messages.get(this, "spin_warn"));
+            return;
+        }
 
-		spin.spins++;
-		Buff.prolong(hero, SpinAbilityTracker.class, 3f);
-		Sample.INSTANCE.play(Assets.Sounds.CHAINS, 1, 1, 0.9f + 0.1f*spin.spins);
-		hero.sprite.operate(hero.pos);
-		hero.spendAndNext(Actor.TICK);
-		BuffIndicator.refreshHero();
+        beforeAbilityUsed(hero, null);
+        if (spin == null) {
+            spin = Buff.affect(hero, SpinAbilityTracker.class, 3f);
+        }
 
-		afterAbilityUsed(hero);
-	}
+        spin.spins++;
+        Buff.prolong(hero, SpinAbilityTracker.class, 3f);
+        Sample.INSTANCE.play(Assets.Sounds.CHAINS, 1, 1, 0.9f + 0.1f * spin.spins);
+        hero.sprite.operate(hero.pos);
+        hero.spendAndNext(Actor.TICK);
+        BuffIndicator.refreshHero();
 
-	public static class SpinAbilityTracker extends FlavourBuff {
+        afterAbilityUsed(hero);
+    }
 
-		{
-			type = buffType.POSITIVE;
-		}
+    public static class SpinAbilityTracker extends FlavourBuff {
 
-		public int spins = 0;
+        public static String SPINS = "spins";
+        public int spins = 0;
 
-		@Override
-		public int icon() {
-			return BuffIndicator.DUEL_SPIN;
-		}
+        {
+            type = buffType.POSITIVE;
+        }
 
-		@Override
-		public void tintIcon(Image icon) {
-			switch (spins){
-				case 1: default:
-					icon.hardlight(0, 1, 0);
-					break;
-				case 2:
-					icon.hardlight(1, 1, 0);
-					break;
-				case 3:
-					icon.hardlight(1, 0, 0);
-					break;
-			}
-		}
+        @Override
+        public int icon() {
+            return BuffIndicator.DUEL_SPIN;
+        }
 
-		@Override
-		public float iconFadePercent() {
-			return Math.max(0, (3 - visualcooldown()) / 3);
-		}
+        @Override
+        public void tintIcon(Image icon) {
+            switch (spins) {
+                case 1:
+                default:
+                    icon.hardlight(0, 1, 0);
+                    break;
+                case 2:
+                    icon.hardlight(1, 1, 0);
+                    break;
+                case 3:
+                    icon.hardlight(1, 0, 0);
+                    break;
+            }
+        }
 
-		@Override
-		public String desc() {
-			return Messages.get(this, "desc", (int)Math.round((spins/3f)*100f), dispTurns());
-		}
+        @Override
+        public float iconFadePercent() {
+            return Math.max(0, (3 - visualcooldown()) / 3);
+        }
 
-		public static String SPINS = "spins";
+        @Override
+        public String desc() {
+            return Messages.get(this, "desc", (int) Math.round((spins / 3f) * 100f), dispTurns());
+        }
 
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(SPINS, spins);
-		}
+        @Override
+        public void storeInBundle(Bundle bundle) {
+            super.storeInBundle(bundle);
+            bundle.put(SPINS, spins);
+        }
 
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			spins = bundle.getInt(SPINS);
-		}
-	}
+        @Override
+        public void restoreFromBundle(Bundle bundle) {
+            super.restoreFromBundle(bundle);
+            spins = bundle.getInt(SPINS);
+        }
+    }
 }

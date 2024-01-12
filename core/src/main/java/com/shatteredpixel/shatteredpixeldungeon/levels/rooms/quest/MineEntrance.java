@@ -43,130 +43,130 @@ import java.util.ArrayList;
 
 public class MineEntrance extends EntranceRoom {
 
-	@Override
-	public int minWidth() {
-		return Math.max(super.minWidth(), 7);
-	}
+    @Override
+    public int minWidth() {
+        return Math.max(super.minWidth(), 7);
+    }
 
-	@Override
-	public int minHeight() {
-		return Math.max(super.minHeight(), 7);
-	}
+    @Override
+    public int minHeight() {
+        return Math.max(super.minHeight(), 7);
+    }
 
-	@Override
-	public boolean canMerge(Level l, Point p, int mergeTerrain) {
-		//StandardRoom.canMerge
-		int cell = l.pointToCell(pointInside(p, 1));
-		return (Terrain.flags[l.map[cell]] & Terrain.SOLID) == 0;
-	}
+    @Override
+    public boolean canMerge(Level l, Point p, int mergeTerrain) {
+        //StandardRoom.canMerge
+        int cell = l.pointToCell(pointInside(p, 1));
+        return (Terrain.flags[l.map[cell]] & Terrain.SOLID) == 0;
+    }
 
-	@Override
-	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+    @Override
+    public void paint(Level level) {
+        Painter.fill(level, this, Terrain.WALL);
+        Painter.fill(level, this, 1, Terrain.EMPTY);
 
-		int entrance;
-		do {
-			entrance = level.pointToCell(random(3));
-		} while (level.findMob(entrance) != null || level.map[entrance] == Terrain.WALL);
-		Painter.set( level, entrance, Terrain.ENTRANCE );
+        int entrance;
+        do {
+            entrance = level.pointToCell(random(3));
+        } while (level.findMob(entrance) != null || level.map[entrance] == Terrain.WALL);
+        Painter.set(level, entrance, Terrain.ENTRANCE);
 
-		QuestExit vis = new QuestExit();
-		Point e = level.cellToPoint(entrance);
-		vis.pos(e.x - 1, e.y - 1);
-		level.customTiles.add(vis);
+        QuestExit vis = new QuestExit();
+        Point e = level.cellToPoint(entrance);
+        vis.pos(e.x - 1, e.y - 1);
+        level.customTiles.add(vis);
 
-		level.transitions.add(new LevelTransition(level,
-				entrance,
-				LevelTransition.Type.BRANCH_ENTRANCE,
-				Dungeon.depth,
-				0,
-				LevelTransition.Type.BRANCH_EXIT));
+        level.transitions.add(new LevelTransition(level,
+                entrance,
+                LevelTransition.Type.BRANCH_ENTRANCE,
+                Dungeon.depth,
+                0,
+                LevelTransition.Type.BRANCH_EXIT));
 
-		if (Blacksmith.Quest.Type() == Blacksmith.Quest.CRYSTAL){
-			for (int i = 0; i < width()*height()/2; i ++){
-				Point r = random(1);
-				if (level.distance(level.pointToCell(r), entrance) > 1) {
-					Painter.set(level, r, Terrain.MINE_CRYSTAL);
-				}
-			}
-		} else if (Blacksmith.Quest.Type() == Blacksmith.Quest.GNOLL) {
+        if (Blacksmith.Quest.Type() == Blacksmith.Quest.CRYSTAL) {
+            for (int i = 0; i < width() * height() / 2; i++) {
+                Point r = random(1);
+                if (level.distance(level.pointToCell(r), entrance) > 1) {
+                    Painter.set(level, r, Terrain.MINE_CRYSTAL);
+                }
+            }
+        } else if (Blacksmith.Quest.Type() == Blacksmith.Quest.GNOLL) {
 
-			//connections to non-secret rooms have a 7/8 chance to become empty, otherwise wall
-			for (Room n : connected.keySet()){
-				if (!(n instanceof SecretRoom) && connected.get(n).type == Door.Type.REGULAR){
-					if (Random.Int(8) == 0){
-						connected.get(n).set(Door.Type.EMPTY);
-					} else {
-						connected.get(n).set(Door.Type.WALL);
-					}
-					connected.get(n).lockTypeChanges(true);
-				}
-			}
+            //connections to non-secret rooms have a 7/8 chance to become empty, otherwise wall
+            for (Room n : connected.keySet()) {
+                if (!(n instanceof SecretRoom) && connected.get(n).type == Door.Type.REGULAR) {
+                    if (Random.Int(8) == 0) {
+                        connected.get(n).set(Door.Type.EMPTY);
+                    } else {
+                        connected.get(n).set(Door.Type.WALL);
+                    }
+                    connected.get(n).lockTypeChanges(true);
+                }
+            }
 
-			ArrayList<Door> doors = new ArrayList<>();
-			for (Door d : connected.values()){
-				if (d.type == Door.Type.WALL){
-					doors.add(d);
-				}
-			}
+            ArrayList<Door> doors = new ArrayList<>();
+            for (Door d : connected.values()) {
+                if (d.type == Door.Type.WALL) {
+                    doors.add(d);
+                }
+            }
 
-			for (Point p : getPoints()){
-				int cell = level.pointToCell(p);
-				if (level.distance(cell, entrance) > 1 && level.map[cell] == Terrain.EMPTY){
-					float dist = 1000;
-					for (Door d : doors){
-						dist = Math.min(dist, Point.distance(p, d));
-					}
-					dist = GameMath.gate(1f, dist-0.5f, 5f);
-					if (Random.Float((float) Math.pow(dist, 2)) < 1f) {
-						Painter.set(level, cell, Terrain.MINE_BOULDER);
-					}
-				}
-			}
+            for (Point p : getPoints()) {
+                int cell = level.pointToCell(p);
+                if (level.distance(cell, entrance) > 1 && level.map[cell] == Terrain.EMPTY) {
+                    float dist = 1000;
+                    for (Door d : doors) {
+                        dist = Math.min(dist, Point.distance(p, d));
+                    }
+                    dist = GameMath.gate(1f, dist - 0.5f, 5f);
+                    if (Random.Float((float) Math.pow(dist, 2)) < 1f) {
+                        Painter.set(level, cell, Terrain.MINE_BOULDER);
+                    }
+                }
+            }
 
-		}
-	}
+        }
+    }
 
-	public static class QuestExit extends CustomTilemap {
+    public static class QuestExit extends CustomTilemap {
 
-		{
-			texture = Assets.Environment.CAVES_QUEST;
+        final int TEX_WIDTH = 128;
 
-			tileW = tileH = 3;
-		}
+        {
+            texture = Assets.Environment.CAVES_QUEST;
 
-		final int TEX_WIDTH = 128;
+            tileW = tileH = 3;
+        }
 
-		@Override
-		public Tilemap create() {
-			Tilemap v = super.create();
-			v.map(mapSimpleImage(0, 1, TEX_WIDTH), 3);
-			return v;
-		}
+        @Override
+        public Tilemap create() {
+            Tilemap v = super.create();
+            v.map(mapSimpleImage(0, 1, TEX_WIDTH), 3);
+            return v;
+        }
 
-		@Override
-		public String name(int tileX, int tileY) {
-			if (tileX == 1 && tileY == 1){
-				return Messages.get(this, "name");
-			}
-			return super.name(tileX, tileY);
-		}
+        @Override
+        public String name(int tileX, int tileY) {
+            if (tileX == 1 && tileY == 1) {
+                return Messages.get(this, "name");
+            }
+            return super.name(tileX, tileY);
+        }
 
-		@Override
-		public String desc(int tileX, int tileY) {
-			if (tileX == 1 && tileY == 1){
-				return Messages.get(this, "desc");
-			}
-			return super.desc(tileX, tileY);
-		}
+        @Override
+        public String desc(int tileX, int tileY) {
+            if (tileX == 1 && tileY == 1) {
+                return Messages.get(this, "desc");
+            }
+            return super.desc(tileX, tileY);
+        }
 
-		@Override
-		public Image image(int tileX, int tileY) {
-			if (tileX == 1 && tileY == 1){
-				return super.image(tileX, tileY);
-			}
-			return null;
-		}
-	}
+        @Override
+        public Image image(int tileX, int tileY) {
+            if (tileX == 1 && tileY == 1) {
+                return super.image(tileX, tileY);
+            }
+            return null;
+        }
+    }
 }

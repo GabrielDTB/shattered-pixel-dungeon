@@ -34,82 +34,82 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class Invisibility extends FlavourBuff {
 
-	public static final float DURATION	= 20f;
+    public static final float DURATION = 20f;
 
-	{
-		type = buffType.POSITIVE;
-		announced = true;
-	}
-	
-	@Override
-	public boolean attachTo( Char target ) {
-		if (super.attachTo( target )) {
-			target.invisible++;
-			if (target instanceof Hero && ((Hero) target).subClass == HeroSubClass.ASSASSIN){
-				Buff.affect(target, Preparation.class);
-			}
-			if (target instanceof Hero && ((Hero) target).hasTalent(Talent.PROTECTIVE_SHADOWS)){
-				Buff.affect(target, Talent.ProtectiveShadowsTracker.class);
-			}
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	@Override
-	public void detach() {
-		if (target.invisible > 0)
-			target.invisible--;
-		super.detach();
-	}
-	
-	@Override
-	public int icon() {
-		return BuffIndicator.INVISIBLE;
-	}
+    {
+        type = buffType.POSITIVE;
+        announced = true;
+    }
 
-	@Override
-	public float iconFadePercent() {
-		return Math.max(0, (DURATION - visualcooldown()) / DURATION);
-	}
+    public static void dispel() {
+        if (Dungeon.hero == null) return;
 
-	@Override
-	public void fx(boolean on) {
-		if (on) target.sprite.add( CharSprite.State.INVISIBLE );
-		else if (target.invisible == 0) target.sprite.remove( CharSprite.State.INVISIBLE );
-	}
+        dispel(Dungeon.hero);
+    }
 
-	public static void dispel() {
-		if (Dungeon.hero == null) return;
+    public static void dispel(Char ch) {
 
-		dispel(Dungeon.hero);
-	}
+        for (Buff invis : ch.buffs(Invisibility.class)) {
+            invis.detach();
+        }
+        CloakOfShadows.cloakStealth cloakBuff = ch.buff(CloakOfShadows.cloakStealth.class);
+        if (cloakBuff != null) {
+            cloakBuff.dispel();
+        }
 
-	public static void dispel(Char ch){
+        //these aren't forms of invisibility, but do dispel at the same time as it.
+        TimekeepersHourglass.timeFreeze timeFreeze = ch.buff(TimekeepersHourglass.timeFreeze.class);
+        if (timeFreeze != null) {
+            timeFreeze.detach();
+        }
 
-		for ( Buff invis : ch.buffs( Invisibility.class )){
-			invis.detach();
-		}
-		CloakOfShadows.cloakStealth cloakBuff = ch.buff( CloakOfShadows.cloakStealth.class );
-		if (cloakBuff != null) {
-			cloakBuff.dispel();
-		}
+        Preparation prep = ch.buff(Preparation.class);
+        if (prep != null) {
+            prep.detach();
+        }
 
-		//these aren't forms of invisibility, but do dispel at the same time as it.
-		TimekeepersHourglass.timeFreeze timeFreeze = ch.buff( TimekeepersHourglass.timeFreeze.class );
-		if (timeFreeze != null) {
-			timeFreeze.detach();
-		}
+        Swiftthistle.TimeBubble bubble = ch.buff(Swiftthistle.TimeBubble.class);
+        if (bubble != null) {
+            bubble.detach();
+        }
+    }
 
-		Preparation prep = ch.buff( Preparation.class );
-		if (prep != null){
-			prep.detach();
-		}
+    @Override
+    public boolean attachTo(Char target) {
+        if (super.attachTo(target)) {
+            target.invisible++;
+            if (target instanceof Hero && ((Hero) target).subClass == HeroSubClass.ASSASSIN) {
+                Buff.affect(target, Preparation.class);
+            }
+            if (target instanceof Hero && ((Hero) target).hasTalent(Talent.PROTECTIVE_SHADOWS)) {
+                Buff.affect(target, Talent.ProtectiveShadowsTracker.class);
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-		Swiftthistle.TimeBubble bubble =  ch.buff( Swiftthistle.TimeBubble.class );
-		if (bubble != null){
-			bubble.detach();
-		}
-	}
+    @Override
+    public void detach() {
+        if (target.invisible > 0)
+            target.invisible--;
+        super.detach();
+    }
+
+    @Override
+    public int icon() {
+        return BuffIndicator.INVISIBLE;
+    }
+
+    @Override
+    public float iconFadePercent() {
+        return Math.max(0, (DURATION - visualcooldown()) / DURATION);
+    }
+
+    @Override
+    public void fx(boolean on) {
+        if (on) target.sprite.add(CharSprite.State.INVISIBLE);
+        else if (target.invisible == 0) target.sprite.remove(CharSprite.State.INVISIBLE);
+    }
 }

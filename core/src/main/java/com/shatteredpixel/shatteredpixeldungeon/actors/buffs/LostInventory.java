@@ -25,13 +25,13 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class LostInventory extends Buff {
 
-	{
-		type = buffType.NEGATIVE;
-	}
+    {
+        type = buffType.NEGATIVE;
+    }
 
-	@Override
-	public int icon() {
-		return BuffIndicator.NOINV;
-	}
+    @Override
+    public int icon() {
+        return BuffIndicator.NOINV;
+    }
 
 }

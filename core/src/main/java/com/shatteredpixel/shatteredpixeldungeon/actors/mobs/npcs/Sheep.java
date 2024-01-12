@@ -34,71 +34,69 @@ import com.watabou.utils.Random;
 
 public class Sheep extends NPC {
 
-	private static final String[] LINE_KEYS = {"Baa!", "Baa?", "Baa.", "Baa..."};
+    private static final String[] LINE_KEYS = {"Baa!", "Baa?", "Baa.", "Baa..."};
+    private static final String LIFESPAN = "lifespan";
+    public float lifespan;
 
-	{
-		spriteClass = SheepSprite.class;
-	}
+    private boolean initialized = false;
 
-	public float lifespan;
+    {
+        spriteClass = SheepSprite.class;
+    }
 
-	private boolean initialized = false;
+    @Override
+    protected boolean act() {
+        if (initialized) {
+            HP = 0;
 
-	@Override
-	protected boolean act() {
-		if (initialized) {
-			HP = 0;
+            destroy();
+            sprite.die();
 
-			destroy();
-			sprite.die();
+        } else {
+            initialized = true;
+            spend(lifespan + Random.Float(-2, 2));
+        }
+        return true;
+    }
 
-		} else {
-			initialized = true;
-			spend( lifespan + Random.Float(-2, 2) );
-		}
-		return true;
-	}
+    @Override
+    public int defenseSkill(Char enemy) {
+        return INFINITE_EVASION;
+    }
 
-	@Override
-	public int defenseSkill(Char enemy) {
-		return INFINITE_EVASION;
-	}
+    @Override
+    public void damage(int dmg, Object src) {
+        //do nothing
+    }
 
-	@Override
-	public void damage( int dmg, Object src ) {
-		//do nothing
-	}
+    @Override
+    public boolean add(Buff buff) {
+        return false;
+    }
 
-	@Override
-	public boolean add( Buff buff ) {
-		return false;
-	}
+    @Override
+    public boolean interact(Char c) {
+        sprite.showStatus(CharSprite.NEUTRAL, Messages.get(this, Random.element(LINE_KEYS)));
+        if (c == Dungeon.hero) {
+            Dungeon.hero.spendAndNext(1f);
+            Sample.INSTANCE.play(Assets.Sounds.SHEEP, 1, Random.Float(0.91f, 1.1f));
+            //sheep summoned by woolly bomb can be dispelled by interacting
+            if (lifespan >= 20) {
+                spend(-cooldown());
+            }
+        }
+        return true;
+    }
 
-	@Override
-	public boolean interact(Char c) {
-		sprite.showStatus( CharSprite.NEUTRAL, Messages.get(this, Random.element( LINE_KEYS )) );
-		if (c == Dungeon.hero) {
-			Dungeon.hero.spendAndNext(1f);
-			Sample.INSTANCE.play(Assets.Sounds.SHEEP, 1, Random.Float(0.91f, 1.1f));
-			//sheep summoned by woolly bomb can be dispelled by interacting
-			if (lifespan >= 20){
-				spend(-cooldown());
-			}
-		}
-		return true;
-	}
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(LIFESPAN, lifespan);
+    }
 
-	private static final String LIFESPAN = "lifespan";
-
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put(LIFESPAN, lifespan);
-	}
-
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		lifespan = bundle.getInt(LIFESPAN);
-	}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        lifespan = bundle.getInt(LIFESPAN);
+    }
 }

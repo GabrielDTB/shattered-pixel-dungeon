@@ -38,93 +38,93 @@ import com.watabou.utils.Random;
 
 public class PoisonDartTrap extends Trap {
 
-	{
-		color = GREEN;
-		shape = CROSSHAIR;
-		
-		canBeHidden = false;
-		avoidsHallways = true;
-	}
-	
-	protected int poisonAmount(){
-		return 8 + Math.round(2*scalingDepth() / 3f);
-	}
-	
-	protected boolean canTarget( Char ch ){
-		return true;
-	}
-	
-	@Override
-	public void activate() {
+    {
+        color = GREEN;
+        shape = CROSSHAIR;
 
-		//we handle this inside of a separate actor as the trap may produce a visual effect we need to pause for
-		Actor.add(new Actor() {
+        canBeHidden = false;
+        avoidsHallways = true;
+    }
 
-			{
-				actPriority = VFX_PRIO;
-			}
+    protected int poisonAmount() {
+        return 8 + Math.round(2 * scalingDepth() / 3f);
+    }
 
-			@Override
-			protected boolean act() {
-				Actor.remove(this);
-				Char target = Actor.findChar(pos);
+    protected boolean canTarget(Char ch) {
+        return true;
+    }
 
-				if (target != null && !canTarget(target)){
-					target = null;
-				}
+    @Override
+    public void activate() {
 
-				//find the closest char that can be aimed at
-				if (target == null){
-					float closestDist = Float.MAX_VALUE;
-					for (Char ch : Actor.chars()){
-						if (!ch.isAlive()) continue;
-						float curDist = Dungeon.level.trueDistance(pos, ch.pos);
-						if (ch.invisible > 0) curDist += 1000;
-						Ballistica bolt = new Ballistica(pos, ch.pos, Ballistica.PROJECTILE);
-						if (canTarget(ch) && bolt.collisionPos == ch.pos && curDist < closestDist){
-							target = ch;
-							closestDist = curDist;
-						}
-					}
-				}
+        //we handle this inside of a separate actor as the trap may produce a visual effect we need to pause for
+        Actor.add(new Actor() {
 
-				if (target != null) {
-					final Char finalTarget = target;
-					if (Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[target.pos]) {
-						((MissileSprite) ShatteredPixelDungeon.scene().recycle(MissileSprite.class)).
-								reset(pos, finalTarget.sprite, new PoisonDart(), new Callback() {
-									@Override
-									public void call() {
-										int dmg = Random.NormalIntRange(4, 8) - finalTarget.drRoll();
-										finalTarget.damage(dmg, PoisonDartTrap.this);
-										if (finalTarget == Dungeon.hero){
-											//for the poison dart traps in the Tengu fight
-											if (Dungeon.depth == 10) {
-												Statistics.qualifiedForBossChallengeBadge = false;
-												Statistics.bossScores[1] -= 100;
-											}
-											if (!finalTarget.isAlive()) {
-												Dungeon.fail(PoisonDartTrap.this);
-											}
-										}
-										Buff.affect( finalTarget, Poison.class ).set( poisonAmount() );
-										Sample.INSTANCE.play(Assets.Sounds.HIT, 1, 1, Random.Float(0.8f, 1.25f));
-										finalTarget.sprite.bloodBurstA(finalTarget.sprite.center(), dmg);
-										finalTarget.sprite.flash();
-										next();
-									}
-								});
-						return false;
-					} else {
-						finalTarget.damage(Random.NormalIntRange(4, 8) - finalTarget.drRoll(), PoisonDartTrap.this);
-						Buff.affect( finalTarget, Poison.class ).set( poisonAmount() );
-						return true;
-					}
-				} else {
-					return true;
-				}
-			}
+            {
+                actPriority = VFX_PRIO;
+            }
 
-		});
-	}
+            @Override
+            protected boolean act() {
+                Actor.remove(this);
+                Char target = Actor.findChar(pos);
+
+                if (target != null && !canTarget(target)) {
+                    target = null;
+                }
+
+                //find the closest char that can be aimed at
+                if (target == null) {
+                    float closestDist = Float.MAX_VALUE;
+                    for (Char ch : Actor.chars()) {
+                        if (!ch.isAlive()) continue;
+                        float curDist = Dungeon.level.trueDistance(pos, ch.pos);
+                        if (ch.invisible > 0) curDist += 1000;
+                        Ballistica bolt = new Ballistica(pos, ch.pos, Ballistica.PROJECTILE);
+                        if (canTarget(ch) && bolt.collisionPos == ch.pos && curDist < closestDist) {
+                            target = ch;
+                            closestDist = curDist;
+                        }
+                    }
+                }
+
+                if (target != null) {
+                    final Char finalTarget = target;
+                    if (Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[target.pos]) {
+                        ((MissileSprite) ShatteredPixelDungeon.scene().recycle(MissileSprite.class)).
+                                reset(pos, finalTarget.sprite, new PoisonDart(), new Callback() {
+                                    @Override
+                                    public void call() {
+                                        int dmg = Random.NormalIntRange(4, 8) - finalTarget.drRoll();
+                                        finalTarget.damage(dmg, PoisonDartTrap.this);
+                                        if (finalTarget == Dungeon.hero) {
+                                            //for the poison dart traps in the Tengu fight
+                                            if (Dungeon.depth == 10) {
+                                                Statistics.qualifiedForBossChallengeBadge = false;
+                                                Statistics.bossScores[1] -= 100;
+                                            }
+                                            if (!finalTarget.isAlive()) {
+                                                Dungeon.fail(PoisonDartTrap.this);
+                                            }
+                                        }
+                                        Buff.affect(finalTarget, Poison.class).set(poisonAmount());
+                                        Sample.INSTANCE.play(Assets.Sounds.HIT, 1, 1, Random.Float(0.8f, 1.25f));
+                                        finalTarget.sprite.bloodBurstA(finalTarget.sprite.center(), dmg);
+                                        finalTarget.sprite.flash();
+                                        next();
+                                    }
+                                });
+                        return false;
+                    } else {
+                        finalTarget.damage(Random.NormalIntRange(4, 8) - finalTarget.drRoll(), PoisonDartTrap.this);
+                        Buff.affect(finalTarget, Poison.class).set(poisonAmount());
+                        return true;
+                    }
+                } else {
+                    return true;
+                }
+            }
+
+        });
+    }
 }

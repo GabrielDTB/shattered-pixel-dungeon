@@ -31,77 +31,77 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class RingOfMight extends Ring {
 
-	{
-		icon = ItemSpriteSheet.Icons.RING_MIGHT;
-	}
+    {
+        icon = ItemSpriteSheet.Icons.RING_MIGHT;
+    }
 
-	@Override
-	public boolean doEquip(Hero hero) {
-		if (super.doEquip(hero)){
-			hero.updateHT( false );
-			return true;
-		} else {
-			return false;
-		}
-	}
+    public static int strengthBonus(Char target) {
+        return getBonus(target, Might.class);
+    }
 
-	@Override
-	public boolean doUnequip(Hero hero, boolean collect, boolean single) {
-		if (super.doUnequip(hero, collect, single)){
-			hero.updateHT( false );
-			return true;
-		} else {
-			return false;
-		}
-	}
+    public static float HTMultiplier(Char target) {
+        return (float) Math.pow(1.035, getBuffedBonus(target, Might.class));
+    }
 
-	@Override
-	public Item upgrade() {
-		super.upgrade();
-		updateTargetHT();
-		return this;
-	}
+    @Override
+    public boolean doEquip(Hero hero) {
+        if (super.doEquip(hero)) {
+            hero.updateHT(false);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	public void level(int value) {
-		super.level(value);
-		updateTargetHT();
-	}
-	
-	private void updateTargetHT(){
-		if (buff != null && buff.target instanceof Hero){
-			((Hero) buff.target).updateHT( false );
-		}
-	}
-	
-	public String statsInfo() {
-		if (isIdentified()){
-			String info = Messages.get(this, "stats",
-					soloBonus(), Messages.decimalFormat("#.##", 100f * (Math.pow(1.035, soloBuffedBonus()) - 1f)));
-			if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Might.class)){
-				info += "\n\n" + Messages.get(this, "combined_stats",
-						getBonus(Dungeon.hero, Might.class), Messages.decimalFormat("#.##", 100f * (Math.pow(1.035, combinedBuffedBonus(Dungeon.hero, Might.class)) - 1f)));
-			}
-			return info;
-		} else {
-			return Messages.get(this, "typical_stats", 1, Messages.decimalFormat("#.##", 3.5f));
-		}
-	}
+    @Override
+    public boolean doUnequip(Hero hero, boolean collect, boolean single) {
+        if (super.doUnequip(hero, collect, single)) {
+            hero.updateHT(false);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-	@Override
-	protected RingBuff buff( ) {
-		return new Might();
-	}
-	
-	public static int strengthBonus( Char target ){
-		return getBonus( target, Might.class );
-	}
-	
-	public static float HTMultiplier( Char target ){
-		return (float)Math.pow(1.035, getBuffedBonus(target, Might.class));
-	}
+    @Override
+    public Item upgrade() {
+        super.upgrade();
+        updateTargetHT();
+        return this;
+    }
 
-	public class Might extends RingBuff {
-	}
+    @Override
+    public void level(int value) {
+        super.level(value);
+        updateTargetHT();
+    }
+
+    private void updateTargetHT() {
+        if (buff != null && buff.target instanceof Hero) {
+            ((Hero) buff.target).updateHT(false);
+        }
+    }
+
+    public String statsInfo() {
+        if (isIdentified()) {
+            String info = Messages.get(this, "stats",
+                    soloBonus(), Messages.decimalFormat("#.##", 100f * (Math.pow(1.035, soloBuffedBonus()) - 1f)));
+            if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Might.class)) {
+                info += "\n\n" + Messages.get(this, "combined_stats",
+                        getBonus(Dungeon.hero, Might.class), Messages.decimalFormat("#.##", 100f * (Math.pow(1.035, combinedBuffedBonus(Dungeon.hero, Might.class)) - 1f)));
+            }
+            return info;
+        } else {
+            return Messages.get(this, "typical_stats", 1, Messages.decimalFormat("#.##", 3.5f));
+        }
+    }
+
+    @Override
+    protected RingBuff buff() {
+        return new Might();
+    }
+
+    public class Might extends RingBuff {
+    }
 }
 

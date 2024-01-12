@@ -31,175 +31,174 @@ import com.watabou.noosa.Visual;
 
 public class ActionIndicator extends Tag {
 
-	Visual primaryVis;
-	Visual secondVis;
+    public static Action action;
+    public static ActionIndicator instance;
+    Visual primaryVis;
+    Visual secondVis;
+    private boolean needsRefresh = false;
 
-	public static Action action;
-	public static ActionIndicator instance;
+    public ActionIndicator() {
+        super(0);
 
-	public ActionIndicator() {
-		super( 0 );
+        instance = this;
 
-		instance = this;
+        setSize(SIZE, SIZE);
+        visible = false;
+    }
 
-		setSize( SIZE, SIZE );
-		visible = false;
-	}
-	
-	@Override
-	public GameAction keyAction() {
-		return SPDAction.TAG_ACTION;
-	}
-	
-	@Override
-	public void destroy() {
-		super.destroy();
-		instance = null;
-	}
-	
-	@Override
-	protected synchronized void layout() {
-		super.layout();
-		
-		if (primaryVis != null){
-			if (!flipped)   primaryVis.x = x + (SIZE - primaryVis.width()) / 2f + 1;
-			else            primaryVis.x = x + width - (SIZE + primaryVis.width()) / 2f - 1;
-			primaryVis.y = y + (height - primaryVis.height()) / 2f;
-			PixelScene.align(primaryVis);
-			if (secondVis != null){
-				if (secondVis.width() > 16) secondVis.x = primaryVis.center().x - secondVis.width()/2f;
-				else                        secondVis.x = primaryVis.center().x + 8 - secondVis.width();
-				if (secondVis instanceof BitmapText){
-					//need a special case here for text unfortunately
-					secondVis.y = primaryVis.center().y + 8 - ((BitmapText) secondVis).baseLine();
-				} else {
-					secondVis.y = primaryVis.center().y + 8 - secondVis.height();
-				}
-				PixelScene.align(secondVis);
-			}
-		}
-	}
-	
-	private boolean needsRefresh = false;
-	
-	@Override
-	public void update() {
-		super.update();
+    public static void setAction(Action action) {
+        synchronized (ActionIndicator.class) {
+            ActionIndicator.action = action;
+            refresh();
+        }
+    }
 
-		synchronized (ActionIndicator.class) {
-			if (!visible && action != null) {
-				visible = true;
-				needsRefresh = true;
-				flash();
-			} else {
-				visible = action != null;
-			}
+    public static void clearAction() {
+        clearAction(null);
+    }
 
-			if (needsRefresh) {
-				if (primaryVis != null) {
-					primaryVis.destroy();
-					primaryVis.killAndErase();
-					primaryVis = null;
-				}
-				if (secondVis != null) {
-					secondVis.destroy();
-					secondVis.killAndErase();
-					secondVis = null;
-				}
-				if (action != null) {
-					primaryVis = action.primaryVisual();
-					add(primaryVis);
+    public static void clearAction(Action action) {
+        synchronized (ActionIndicator.class) {
+            if (action == null || ActionIndicator.action == action) {
+                ActionIndicator.action = null;
+            }
+        }
+    }
 
-					secondVis = action.secondaryVisual();
-					if (secondVis != null) {
-						add(secondVis);
-					}
+    public static void refresh() {
+        synchronized (ActionIndicator.class) {
+            if (instance != null) {
+                instance.needsRefresh = true;
+            }
+        }
+    }
 
-					setColor(action.indicatorColor());
-				}
+    @Override
+    public GameAction keyAction() {
+        return SPDAction.TAG_ACTION;
+    }
 
-				layout();
-				needsRefresh = false;
-			}
+    @Override
+    public void destroy() {
+        super.destroy();
+        instance = null;
+    }
 
-			if (!Dungeon.hero.ready) {
-				if (primaryVis != null) primaryVis.alpha(0.5f);
-				if (secondVis != null) secondVis.alpha(0.5f);
-			} else {
-				if (primaryVis != null) primaryVis.alpha(1f);
-				if (secondVis != null) secondVis.alpha(1f);
-			}
-		}
+    @Override
+    protected synchronized void layout() {
+        super.layout();
 
-	}
+        if (primaryVis != null) {
+            if (!flipped) primaryVis.x = x + (SIZE - primaryVis.width()) / 2f + 1;
+            else primaryVis.x = x + width - (SIZE + primaryVis.width()) / 2f - 1;
+            primaryVis.y = y + (height - primaryVis.height()) / 2f;
+            PixelScene.align(primaryVis);
+            if (secondVis != null) {
+                if (secondVis.width() > 16)
+                    secondVis.x = primaryVis.center().x - secondVis.width() / 2f;
+                else secondVis.x = primaryVis.center().x + 8 - secondVis.width();
+                if (secondVis instanceof BitmapText) {
+                    //need a special case here for text unfortunately
+                    secondVis.y = primaryVis.center().y + 8 - ((BitmapText) secondVis).baseLine();
+                } else {
+                    secondVis.y = primaryVis.center().y + 8 - secondVis.height();
+                }
+                PixelScene.align(secondVis);
+            }
+        }
+    }
 
-	@Override
-	protected void onClick() {
-		super.onClick();
-		if (action != null && Dungeon.hero.ready) {
-			action.doAction();
-		}
-	}
+    @Override
+    public void update() {
+        super.update();
 
-	@Override
-	protected String hoverText() {
-		String text = (action == null ? null : action.actionName());
-		if (text != null){
-			return Messages.titleCase(text);
-		} else {
-			return null;
-		}
-	}
+        synchronized (ActionIndicator.class) {
+            if (!visible && action != null) {
+                visible = true;
+                needsRefresh = true;
+                flash();
+            } else {
+                visible = action != null;
+            }
 
-	public static void setAction(Action action){
-		synchronized (ActionIndicator.class) {
-			ActionIndicator.action = action;
-			refresh();
-		}
-	}
+            if (needsRefresh) {
+                if (primaryVis != null) {
+                    primaryVis.destroy();
+                    primaryVis.killAndErase();
+                    primaryVis = null;
+                }
+                if (secondVis != null) {
+                    secondVis.destroy();
+                    secondVis.killAndErase();
+                    secondVis = null;
+                }
+                if (action != null) {
+                    primaryVis = action.primaryVisual();
+                    add(primaryVis);
 
-	public static void clearAction(){
-		clearAction(null);
-	}
+                    secondVis = action.secondaryVisual();
+                    if (secondVis != null) {
+                        add(secondVis);
+                    }
 
-	public static void clearAction(Action action){
-		synchronized (ActionIndicator.class) {
-			if (action == null || ActionIndicator.action == action) {
-				ActionIndicator.action = null;
-			}
-		}
-	}
+                    setColor(action.indicatorColor());
+                }
 
-	public static void refresh(){
-		synchronized (ActionIndicator.class) {
-			if (instance != null) {
-				instance.needsRefresh = true;
-			}
-		}
-	}
+                layout();
+                needsRefresh = false;
+            }
 
-	public interface Action {
+            if (!Dungeon.hero.ready) {
+                if (primaryVis != null) primaryVis.alpha(0.5f);
+                if (secondVis != null) secondVis.alpha(0.5f);
+            } else {
+                if (primaryVis != null) primaryVis.alpha(1f);
+                if (secondVis != null) secondVis.alpha(1f);
+            }
+        }
 
-		String actionName();
+    }
 
-		default int actionIcon(){
-			return HeroIcon.NONE;
-		}
+    @Override
+    protected void onClick() {
+        super.onClick();
+        if (action != null && Dungeon.hero.ready) {
+            action.doAction();
+        }
+    }
 
-		//usually just a static icon, unless overridden
-		default Visual primaryVisual(){
-			return new HeroIcon(this);
-		}
+    @Override
+    protected String hoverText() {
+        String text = (action == null ? null : action.actionName());
+        if (text != null) {
+            return Messages.titleCase(text);
+        } else {
+            return null;
+        }
+    }
 
-		//a smaller visual on the bottom-right, usually a tiny icon or bitmap text
-		default Visual secondaryVisual(){
-			return null; //no second visual by default
-		}
+    public interface Action {
 
-		int indicatorColor();
+        String actionName();
 
-		void doAction();
+        default int actionIcon() {
+            return HeroIcon.NONE;
+        }
 
-	}
+        //usually just a static icon, unless overridden
+        default Visual primaryVisual() {
+            return new HeroIcon(this);
+        }
+
+        //a smaller visual on the bottom-right, usually a tiny icon or bitmap text
+        default Visual secondaryVisual() {
+            return null; //no second visual by default
+        }
+
+        int indicatorColor();
+
+        void doAction();
+
+    }
 
 }

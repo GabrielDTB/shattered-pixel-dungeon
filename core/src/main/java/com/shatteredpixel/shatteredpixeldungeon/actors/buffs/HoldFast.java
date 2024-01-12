@@ -32,57 +32,56 @@ import com.watabou.utils.Random;
 
 public class HoldFast extends Buff {
 
-	{
-		type = buffType.POSITIVE;
-	}
+    private static final String POS = "pos";
+    public int pos = -1;
 
-	public int pos = -1;
+    {
+        type = buffType.POSITIVE;
+    }
 
-	@Override
-	public boolean act() {
-		if (pos != target.pos) {
-			detach();
-		} else {
-			spend(TICK);
-		}
-		return true;
-	}
+    @Override
+    public boolean act() {
+        if (pos != target.pos) {
+            detach();
+        } else {
+            spend(TICK);
+        }
+        return true;
+    }
 
-	public int armorBonus(){
-		if (pos == target.pos && target instanceof Hero){
-			return Random.NormalIntRange(0, 2* ((Hero) target).pointsInTalent(Talent.HOLD_FAST));
-		} else {
-			detach();
-			return 0;
-		}
-	}
+    public int armorBonus() {
+        if (pos == target.pos && target instanceof Hero) {
+            return Random.NormalIntRange(0, 2 * ((Hero) target).pointsInTalent(Talent.HOLD_FAST));
+        } else {
+            detach();
+            return 0;
+        }
+    }
 
-	@Override
-	public int icon() {
-		return BuffIndicator.ARMOR;
-	}
+    @Override
+    public int icon() {
+        return BuffIndicator.ARMOR;
+    }
 
-	@Override
-	public void tintIcon(Image icon) {
-		icon.hardlight(1.9f, 2.4f, 3.25f);
-	}
+    @Override
+    public void tintIcon(Image icon) {
+        icon.hardlight(1.9f, 2.4f, 3.25f);
+    }
 
-	@Override
-	public String desc() {
-		return Messages.get(this, "desc", 2*Dungeon.hero.pointsInTalent(Talent.HOLD_FAST));
-	}
+    @Override
+    public String desc() {
+        return Messages.get(this, "desc", 2 * Dungeon.hero.pointsInTalent(Talent.HOLD_FAST));
+    }
 
-	private static final String POS = "pos";
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(POS, pos);
+    }
 
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put(POS, pos);
-	}
-
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		pos = bundle.getInt(POS);
-	}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        pos = bundle.getInt(POS);
+    }
 }

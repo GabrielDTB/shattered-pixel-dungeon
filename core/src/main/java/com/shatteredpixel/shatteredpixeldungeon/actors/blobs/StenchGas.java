@@ -32,33 +32,33 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 
 public class StenchGas extends Blob {
 
-	@Override
-	protected void evolve() {
-		super.evolve();
+    @Override
+    protected void evolve() {
+        super.evolve();
 
-		Char ch;
-		int cell;
+        Char ch;
+        int cell;
 
-		for (int i = area.left; i < area.right; i++){
-			for (int j = area.top; j < area.bottom; j++){
-				cell = i + j*Dungeon.level.width();
-				if (cur[cell] > 0 && (ch = Actor.findChar( cell )) != null) {
-					if (!ch.isImmune(this.getClass()))
-						Buff.prolong( ch, Paralysis.class, Paralysis.DURATION/5 );
-				}
-			}
-		}
-	}
+        for (int i = area.left; i < area.right; i++) {
+            for (int j = area.top; j < area.bottom; j++) {
+                cell = i + j * Dungeon.level.width();
+                if (cur[cell] > 0 && (ch = Actor.findChar(cell)) != null) {
+                    if (!ch.isImmune(this.getClass()))
+                        Buff.prolong(ch, Paralysis.class, Paralysis.DURATION / 5);
+                }
+            }
+        }
+    }
 
-	@Override
-	public void use( BlobEmitter emitter ) {
-		super.use( emitter );
+    @Override
+    public void use(BlobEmitter emitter) {
+        super.use(emitter);
 
-		emitter.pour( Speck.factory(Speck.STENCH), 0.4f );
-	}
+        emitter.pour(Speck.factory(Speck.STENCH), 0.4f);
+    }
 
-	@Override
-	public String tileDesc() {
-		return Messages.get(this, "desc");
-	}
+    @Override
+    public String tileDesc() {
+        return Messages.get(this, "desc");
+    }
 }

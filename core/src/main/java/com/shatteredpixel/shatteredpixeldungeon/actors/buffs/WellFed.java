@@ -29,68 +29,67 @@ import com.watabou.utils.Bundle;
 
 public class WellFed extends Buff {
 
-	{
-		type = buffType.POSITIVE;
-		announced = true;
-	}
-	
-	int left;
-	
-	@Override
-	public boolean act() {
-		left --;
-		if (left < 0){
-			detach();
-			return true;
-		} else if (left % 18 == 0){
-			target.HP = Math.min(target.HT, target.HP + 1);
-		}
-		
-		spend(TICK);
-		return true;
-	}
-	
-	public void reset(){
-		//heals one HP every 18 turns for 450 turns
-		//25 HP healed in total
-		left = (int)Hunger.STARVING;
-		if (Dungeon.isChallenged(Challenges.NO_FOOD)){
-			//150 turns if on diet is enabled
-			left /= 3;
-		}
-	}
-	
-	@Override
-	public int icon() {
-		return BuffIndicator.WELL_FED;
-	}
+    private static final String LEFT = "left";
+    int left;
 
-	@Override
-	public float iconFadePercent() {
-		return Math.max(0, (Hunger.STARVING - left) / Hunger.STARVING);
-	}
+    {
+        type = buffType.POSITIVE;
+        announced = true;
+    }
 
-	@Override
-	public String iconTextDisplay() {
-		return Integer.toString(left);
-	}
-	
-	@Override
-	public String desc() {
-		return Messages.get(this, "desc", left + 1);
-	}
-	
-	private static final String LEFT = "left";
-	
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put(LEFT, left);
-	}
-	
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		left = bundle.getInt(LEFT);
-	}
+    @Override
+    public boolean act() {
+        left--;
+        if (left < 0) {
+            detach();
+            return true;
+        } else if (left % 18 == 0) {
+            target.HP = Math.min(target.HT, target.HP + 1);
+        }
+
+        spend(TICK);
+        return true;
+    }
+
+    public void reset() {
+        //heals one HP every 18 turns for 450 turns
+        //25 HP healed in total
+        left = (int) Hunger.STARVING;
+        if (Dungeon.isChallenged(Challenges.NO_FOOD)) {
+            //150 turns if on diet is enabled
+            left /= 3;
+        }
+    }
+
+    @Override
+    public int icon() {
+        return BuffIndicator.WELL_FED;
+    }
+
+    @Override
+    public float iconFadePercent() {
+        return Math.max(0, (Hunger.STARVING - left) / Hunger.STARVING);
+    }
+
+    @Override
+    public String iconTextDisplay() {
+        return Integer.toString(left);
+    }
+
+    @Override
+    public String desc() {
+        return Messages.get(this, "desc", left + 1);
+    }
+
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(LEFT, left);
+    }
+
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        left = bundle.getInt(LEFT);
+    }
 }

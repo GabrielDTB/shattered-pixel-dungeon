@@ -76,239 +76,243 @@ import com.watabou.utils.DeviceCompat;
 
 public enum HeroClass {
 
-	WARRIOR( HeroSubClass.BERSERKER, HeroSubClass.GLADIATOR ),
-	MAGE( HeroSubClass.BATTLEMAGE, HeroSubClass.WARLOCK ),
-	ROGUE( HeroSubClass.ASSASSIN, HeroSubClass.FREERUNNER ),
-	HUNTRESS( HeroSubClass.SNIPER, HeroSubClass.WARDEN ),
-	DUELIST( HeroSubClass.CHAMPION, HeroSubClass.MONK );
+    WARRIOR(HeroSubClass.BERSERKER, HeroSubClass.GLADIATOR),
+    MAGE(HeroSubClass.BATTLEMAGE, HeroSubClass.WARLOCK),
+    ROGUE(HeroSubClass.ASSASSIN, HeroSubClass.FREERUNNER),
+    HUNTRESS(HeroSubClass.SNIPER, HeroSubClass.WARDEN),
+    DUELIST(HeroSubClass.CHAMPION, HeroSubClass.MONK);
 
-	private HeroSubClass[] subClasses;
+    private HeroSubClass[] subClasses;
 
-	HeroClass( HeroSubClass...subClasses ) {
-		this.subClasses = subClasses;
-	}
+    HeroClass(HeroSubClass... subClasses) {
+        this.subClasses = subClasses;
+    }
 
-	public void initHero( Hero hero ) {
+    private static void initWarrior(Hero hero) {
+        (hero.belongings.weapon = new WornShortsword()).identify();
+        ThrowingStone stones = new ThrowingStone();
+        stones.quantity(3).collect();
+        Dungeon.quickslot.setSlot(0, stones);
 
-		hero.heroClass = this;
-		Talent.initClassTalents(hero);
+        if (hero.belongings.armor != null) {
+            hero.belongings.armor.affixSeal(new BrokenSeal());
+        }
 
-		Item i = new ClothArmor().identify();
-		if (!Challenges.isItemBlocked(i)) hero.belongings.armor = (ClothArmor)i;
+        new PotionOfHealing().identify();
+        new ScrollOfRage().identify();
+    }
 
-		i = new Food();
-		if (!Challenges.isItemBlocked(i)) i.collect();
+    private static void initMage(Hero hero) {
+        MagesStaff staff;
 
-		new VelvetPouch().collect();
-		Dungeon.LimitedDrops.VELVET_POUCH.drop();
+        staff = new MagesStaff(new WandOfMagicMissile());
 
-		Waterskin waterskin = new Waterskin();
-		waterskin.collect();
+        (hero.belongings.weapon = staff).identify();
+        hero.belongings.weapon.activate(hero);
 
-		new ScrollOfIdentify().identify();
+        Dungeon.quickslot.setSlot(0, staff);
 
-		switch (this) {
-			case WARRIOR:
-				initWarrior( hero );
-				break;
+        new ScrollOfUpgrade().identify();
+        new PotionOfLiquidFlame().identify();
+    }
 
-			case MAGE:
-				initMage( hero );
-				break;
+    private static void initRogue(Hero hero) {
+        (hero.belongings.weapon = new Dagger()).identify();
 
-			case ROGUE:
-				initRogue( hero );
-				break;
+        CloakOfShadows cloak = new CloakOfShadows();
+        (hero.belongings.artifact = cloak).identify();
+        hero.belongings.artifact.activate(hero);
 
-			case HUNTRESS:
-				initHuntress( hero );
-				break;
+        ThrowingKnife knives = new ThrowingKnife();
+        knives.quantity(3).collect();
 
-			case DUELIST:
-				initDuelist( hero );
-				break;
-		}
+        Dungeon.quickslot.setSlot(0, cloak);
+        Dungeon.quickslot.setSlot(1, knives);
 
-		if (SPDSettings.quickslotWaterskin()) {
-			for (int s = 0; s < QuickSlot.SIZE; s++) {
-				if (Dungeon.quickslot.getItem(s) == null) {
-					Dungeon.quickslot.setSlot(s, waterskin);
-					break;
-				}
-			}
-		}
+        new ScrollOfMagicMapping().identify();
+        new PotionOfInvisibility().identify();
+    }
 
-	}
+    private static void initHuntress(Hero hero) {
 
-	public Badges.Badge masteryBadge() {
-		switch (this) {
-			case WARRIOR:
-				return Badges.Badge.MASTERY_WARRIOR;
-			case MAGE:
-				return Badges.Badge.MASTERY_MAGE;
-			case ROGUE:
-				return Badges.Badge.MASTERY_ROGUE;
-			case HUNTRESS:
-				return Badges.Badge.MASTERY_HUNTRESS;
-			case DUELIST:
-				return Badges.Badge.MASTERY_DUELIST;
-		}
-		return null;
-	}
+        (hero.belongings.weapon = new Gloves()).identify();
+        SpiritBow bow = new SpiritBow();
+        bow.identify().collect();
 
-	private static void initWarrior( Hero hero ) {
-		(hero.belongings.weapon = new WornShortsword()).identify();
-		ThrowingStone stones = new ThrowingStone();
-		stones.quantity(3).collect();
-		Dungeon.quickslot.setSlot(0, stones);
+        Dungeon.quickslot.setSlot(0, bow);
 
-		if (hero.belongings.armor != null){
-			hero.belongings.armor.affixSeal(new BrokenSeal());
-		}
+        new PotionOfMindVision().identify();
+        new ScrollOfLullaby().identify();
+    }
 
-		new PotionOfHealing().identify();
-		new ScrollOfRage().identify();
-	}
+    private static void initDuelist(Hero hero) {
 
-	private static void initMage( Hero hero ) {
-		MagesStaff staff;
+        (hero.belongings.weapon = new Rapier()).identify();
+        hero.belongings.weapon.activate(hero);
 
-		staff = new MagesStaff(new WandOfMagicMissile());
+        ThrowingSpike spikes = new ThrowingSpike();
+        spikes.quantity(2).collect();
 
-		(hero.belongings.weapon = staff).identify();
-		hero.belongings.weapon.activate(hero);
+        Dungeon.quickslot.setSlot(0, hero.belongings.weapon);
+        Dungeon.quickslot.setSlot(1, spikes);
 
-		Dungeon.quickslot.setSlot(0, staff);
+        new PotionOfStrength().identify();
+        new ScrollOfMirrorImage().identify();
+    }
 
-		new ScrollOfUpgrade().identify();
-		new PotionOfLiquidFlame().identify();
-	}
+    public void initHero(Hero hero) {
 
-	private static void initRogue( Hero hero ) {
-		(hero.belongings.weapon = new Dagger()).identify();
+        hero.heroClass = this;
+        Talent.initClassTalents(hero);
 
-		CloakOfShadows cloak = new CloakOfShadows();
-		(hero.belongings.artifact = cloak).identify();
-		hero.belongings.artifact.activate( hero );
+        Item i = new ClothArmor().identify();
+        if (!Challenges.isItemBlocked(i)) hero.belongings.armor = (ClothArmor) i;
 
-		ThrowingKnife knives = new ThrowingKnife();
-		knives.quantity(3).collect();
+        i = new Food();
+        if (!Challenges.isItemBlocked(i)) i.collect();
 
-		Dungeon.quickslot.setSlot(0, cloak);
-		Dungeon.quickslot.setSlot(1, knives);
+        new VelvetPouch().collect();
+        Dungeon.LimitedDrops.VELVET_POUCH.drop();
 
-		new ScrollOfMagicMapping().identify();
-		new PotionOfInvisibility().identify();
-	}
+        Waterskin waterskin = new Waterskin();
+        waterskin.collect();
 
-	private static void initHuntress( Hero hero ) {
+        new ScrollOfIdentify().identify();
 
-		(hero.belongings.weapon = new Gloves()).identify();
-		SpiritBow bow = new SpiritBow();
-		bow.identify().collect();
+        switch (this) {
+            case WARRIOR:
+                initWarrior(hero);
+                break;
 
-		Dungeon.quickslot.setSlot(0, bow);
+            case MAGE:
+                initMage(hero);
+                break;
 
-		new PotionOfMindVision().identify();
-		new ScrollOfLullaby().identify();
-	}
+            case ROGUE:
+                initRogue(hero);
+                break;
 
-	private static void initDuelist( Hero hero ) {
+            case HUNTRESS:
+                initHuntress(hero);
+                break;
 
-		(hero.belongings.weapon = new Rapier()).identify();
-		hero.belongings.weapon.activate(hero);
+            case DUELIST:
+                initDuelist(hero);
+                break;
+        }
 
-		ThrowingSpike spikes = new ThrowingSpike();
-		spikes.quantity(2).collect();
+        if (SPDSettings.quickslotWaterskin()) {
+            for (int s = 0; s < QuickSlot.SIZE; s++) {
+                if (Dungeon.quickslot.getItem(s) == null) {
+                    Dungeon.quickslot.setSlot(s, waterskin);
+                    break;
+                }
+            }
+        }
 
-		Dungeon.quickslot.setSlot(0, hero.belongings.weapon);
-		Dungeon.quickslot.setSlot(1, spikes);
+    }
 
-		new PotionOfStrength().identify();
-		new ScrollOfMirrorImage().identify();
-	}
+    public Badges.Badge masteryBadge() {
+        switch (this) {
+            case WARRIOR:
+                return Badges.Badge.MASTERY_WARRIOR;
+            case MAGE:
+                return Badges.Badge.MASTERY_MAGE;
+            case ROGUE:
+                return Badges.Badge.MASTERY_ROGUE;
+            case HUNTRESS:
+                return Badges.Badge.MASTERY_HUNTRESS;
+            case DUELIST:
+                return Badges.Badge.MASTERY_DUELIST;
+        }
+        return null;
+    }
 
-	public String title() {
-		return Messages.get(HeroClass.class, name());
-	}
+    public String title() {
+        return Messages.get(HeroClass.class, name());
+    }
 
-	public String desc(){
-		return Messages.get(HeroClass.class, name()+"_desc");
-	}
+    public String desc() {
+        return Messages.get(HeroClass.class, name() + "_desc");
+    }
 
-	public String shortDesc(){
-		return Messages.get(HeroClass.class, name()+"_desc_short");
-	}
+    public String shortDesc() {
+        return Messages.get(HeroClass.class, name() + "_desc_short");
+    }
 
-	public HeroSubClass[] subClasses() {
-		return subClasses;
-	}
+    public HeroSubClass[] subClasses() {
+        return subClasses;
+    }
 
-	public ArmorAbility[] armorAbilities(){
-		switch (this) {
-			case WARRIOR: default:
-				return new ArmorAbility[]{new HeroicLeap(), new Shockwave(), new Endure()};
-			case MAGE:
-				return new ArmorAbility[]{new ElementalBlast(), new WildMagic(), new WarpBeacon()};
-			case ROGUE:
-				return new ArmorAbility[]{new SmokeBomb(), new DeathMark(), new ShadowClone()};
-			case HUNTRESS:
-				return new ArmorAbility[]{new SpectralBlades(), new NaturesPower(), new SpiritHawk()};
-			case DUELIST:
-				return new ArmorAbility[]{new Challenge(), new ElementalStrike(), new Feint()};
-		}
-	}
+    public ArmorAbility[] armorAbilities() {
+        switch (this) {
+            case WARRIOR:
+            default:
+                return new ArmorAbility[]{new HeroicLeap(), new Shockwave(), new Endure()};
+            case MAGE:
+                return new ArmorAbility[]{new ElementalBlast(), new WildMagic(), new WarpBeacon()};
+            case ROGUE:
+                return new ArmorAbility[]{new SmokeBomb(), new DeathMark(), new ShadowClone()};
+            case HUNTRESS:
+                return new ArmorAbility[]{new SpectralBlades(), new NaturesPower(), new SpiritHawk()};
+            case DUELIST:
+                return new ArmorAbility[]{new Challenge(), new ElementalStrike(), new Feint()};
+        }
+    }
 
-	public String spritesheet() {
-		switch (this) {
-			case WARRIOR: default:
-				return Assets.Sprites.WARRIOR;
-			case MAGE:
-				return Assets.Sprites.MAGE;
-			case ROGUE:
-				return Assets.Sprites.ROGUE;
-			case HUNTRESS:
-				return Assets.Sprites.HUNTRESS;
-			case DUELIST:
-				return Assets.Sprites.DUELIST;
-		}
-	}
+    public String spritesheet() {
+        switch (this) {
+            case WARRIOR:
+            default:
+                return Assets.Sprites.WARRIOR;
+            case MAGE:
+                return Assets.Sprites.MAGE;
+            case ROGUE:
+                return Assets.Sprites.ROGUE;
+            case HUNTRESS:
+                return Assets.Sprites.HUNTRESS;
+            case DUELIST:
+                return Assets.Sprites.DUELIST;
+        }
+    }
 
-	public String splashArt(){
-		switch (this) {
-			case WARRIOR: default:
-				return Assets.Splashes.WARRIOR;
-			case MAGE:
-				return Assets.Splashes.MAGE;
-			case ROGUE:
-				return Assets.Splashes.ROGUE;
-			case HUNTRESS:
-				return Assets.Splashes.HUNTRESS;
-			case DUELIST:
-				return Assets.Splashes.DUELIST;
-		}
-	}
-	
-	public boolean isUnlocked(){
-		//always unlock on debug builds
-		if (DeviceCompat.isDebug()) return true;
+    public String splashArt() {
+        switch (this) {
+            case WARRIOR:
+            default:
+                return Assets.Splashes.WARRIOR;
+            case MAGE:
+                return Assets.Splashes.MAGE;
+            case ROGUE:
+                return Assets.Splashes.ROGUE;
+            case HUNTRESS:
+                return Assets.Splashes.HUNTRESS;
+            case DUELIST:
+                return Assets.Splashes.DUELIST;
+        }
+    }
 
-		switch (this){
-			case WARRIOR: default:
-				return true;
-			case MAGE:
-				return Badges.isUnlocked(Badges.Badge.UNLOCK_MAGE);
-			case ROGUE:
-				return Badges.isUnlocked(Badges.Badge.UNLOCK_ROGUE);
-			case HUNTRESS:
-				return Badges.isUnlocked(Badges.Badge.UNLOCK_HUNTRESS);
-			case DUELIST:
-				return Badges.isUnlocked(Badges.Badge.UNLOCK_DUELIST);
-		}
-	}
-	
-	public String unlockMsg() {
-		return shortDesc() + "\n\n" + Messages.get(HeroClass.class, name()+"_unlock");
-	}
+    public boolean isUnlocked() {
+        //always unlock on debug builds
+        if (DeviceCompat.isDebug()) return true;
+
+        switch (this) {
+            case WARRIOR:
+            default:
+                return true;
+            case MAGE:
+                return Badges.isUnlocked(Badges.Badge.UNLOCK_MAGE);
+            case ROGUE:
+                return Badges.isUnlocked(Badges.Badge.UNLOCK_ROGUE);
+            case HUNTRESS:
+                return Badges.isUnlocked(Badges.Badge.UNLOCK_HUNTRESS);
+            case DUELIST:
+                return Badges.isUnlocked(Badges.Badge.UNLOCK_DUELIST);
+        }
+    }
+
+    public String unlockMsg() {
+        return shortDesc() + "\n\n" + Messages.get(HeroClass.class, name() + "_unlock");
+    }
 
 }

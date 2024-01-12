@@ -29,41 +29,41 @@ import com.watabou.noosa.ui.Component;
 
 public class WndTitledMessage extends Window {
 
-	protected static final int WIDTH_MIN    = 120;
-	protected static final int WIDTH_MAX    = 220;
-	protected static final int GAP	= 2;
+    protected static final int WIDTH_MIN = 120;
+    protected static final int WIDTH_MAX = 220;
+    protected static final int GAP = 2;
 
-	public WndTitledMessage( Image icon, String title, String message ) {
-		
-		this( new IconTitle( icon, title ), message );
+    public WndTitledMessage(Image icon, String title, String message) {
 
-	}
-	
-	public WndTitledMessage( Component titlebar, String message ) {
+        this(new IconTitle(icon, title), message);
 
-		super();
+    }
 
-		int width = WIDTH_MIN;
+    public WndTitledMessage(Component titlebar, String message) {
 
-		titlebar.setRect( 0, 0, width, 0 );
-		add(titlebar);
+        super();
 
-		RenderedTextBlock text = PixelScene.renderTextBlock( 6 );
-		text.text( message, width );
-		text.setPos( titlebar.left(), titlebar.bottom() + 2*GAP );
-		add( text );
+        int width = WIDTH_MIN;
 
-		while (PixelScene.landscape()
-				&& text.bottom() > (PixelScene.MIN_HEIGHT_L - 10)
-				&& width < WIDTH_MAX){
-			width += 20;
-			titlebar.setRect(0, 0, width, 0);
-			text.setPos( titlebar.left(), titlebar.bottom() + 2*GAP );
-			text.maxWidth(width);
-		}
+        titlebar.setRect(0, 0, width, 0);
+        add(titlebar);
 
-		bringToFront(titlebar);
+        RenderedTextBlock text = PixelScene.renderTextBlock(6);
+        text.text(message, width);
+        text.setPos(titlebar.left(), titlebar.bottom() + 2 * GAP);
+        add(text);
 
-		resize( width, (int)text.bottom() + 2 );
-	}
+        while (PixelScene.landscape()
+                && text.bottom() > (PixelScene.MIN_HEIGHT_L - 10)
+                && width < WIDTH_MAX) {
+            width += 20;
+            titlebar.setRect(0, 0, width, 0);
+            text.setPos(titlebar.left(), titlebar.bottom() + 2 * GAP);
+            text.maxWidth(width);
+        }
+
+        bringToFront(titlebar);
+
+        resize(width, (int) text.bottom() + 2);
+    }
 }

@@ -31,255 +31,267 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
-import com.watabou.utils.BArray;
 import com.watabou.noosa.Image;
+import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public abstract class ChampionEnemy extends Buff {
 
-	{
-		type = buffType.POSITIVE;
-	}
+    protected int color;
 
-	protected int color;
+    {
+        type = buffType.POSITIVE;
+    }
 
-	@Override
-	public int icon() {
-		return BuffIndicator.CORRUPT;
-	}
+    {
+        immunities.add(AllyBuff.class);
+    }
 
-	@Override
-	public void tintIcon(Image icon) {
-		icon.hardlight(color);
-	}
+    public static void rollForChampion(Mob m) {
+        if (Dungeon.mobsToChampion <= 0) Dungeon.mobsToChampion = 8;
 
-	@Override
-	public void fx(boolean on) {
-		if (on) target.sprite.aura( color );
-		else target.sprite.clearAura();
-	}
+        Dungeon.mobsToChampion--;
 
-	public void onAttackProc(Char enemy ){
+        //we roll for a champion enemy even if we aren't spawning one to ensure that
+        //mobsToChampion does not affect levelgen RNG (number of calls to Random.Int() is constant)
+        Class<? extends ChampionEnemy> buffCls;
+        switch (Random.Int(6)) {
+            case 0:
+            default:
+                buffCls = Blazing.class;
+                break;
+            case 1:
+                buffCls = Projecting.class;
+                break;
+            case 2:
+                buffCls = AntiMagic.class;
+                break;
+            case 3:
+                buffCls = Giant.class;
+                break;
+            case 4:
+                buffCls = Blessed.class;
+                break;
+            case 5:
+                buffCls = Growing.class;
+                break;
+        }
 
-	}
+        if (Dungeon.mobsToChampion <= 0 && Dungeon.isChallenged(Challenges.CHAMPION_ENEMIES)) {
+            Buff.affect(m, buffCls);
+            m.state = m.WANDERING;
+        }
+    }
 
-	public boolean canAttackWithExtraReach( Char enemy ){
-		return false;
-	}
+    @Override
+    public int icon() {
+        return BuffIndicator.CORRUPT;
+    }
 
-	public float meleeDamageFactor(){
-		return 1f;
-	}
+    @Override
+    public void tintIcon(Image icon) {
+        icon.hardlight(color);
+    }
 
-	public float damageTakenFactor(){
-		return 1f;
-	}
+    @Override
+    public void fx(boolean on) {
+        if (on) target.sprite.aura(color);
+        else target.sprite.clearAura();
+    }
 
-	public float evasionAndAccuracyFactor(){
-		return 1f;
-	}
+    public void onAttackProc(Char enemy) {
 
-	{
-		immunities.add(AllyBuff.class);
-	}
+    }
 
-	public static void rollForChampion(Mob m){
-		if (Dungeon.mobsToChampion <= 0) Dungeon.mobsToChampion = 8;
+    public boolean canAttackWithExtraReach(Char enemy) {
+        return false;
+    }
 
-		Dungeon.mobsToChampion--;
+    public float meleeDamageFactor() {
+        return 1f;
+    }
 
-		//we roll for a champion enemy even if we aren't spawning one to ensure that
-		//mobsToChampion does not affect levelgen RNG (number of calls to Random.Int() is constant)
-		Class<?extends ChampionEnemy> buffCls;
-		switch (Random.Int(6)){
-			case 0: default:    buffCls = Blazing.class;      break;
-			case 1:             buffCls = Projecting.class;   break;
-			case 2:             buffCls = AntiMagic.class;    break;
-			case 3:             buffCls = Giant.class;        break;
-			case 4:             buffCls = Blessed.class;      break;
-			case 5:             buffCls = Growing.class;      break;
-		}
+    public float damageTakenFactor() {
+        return 1f;
+    }
 
-		if (Dungeon.mobsToChampion <= 0 && Dungeon.isChallenged(Challenges.CHAMPION_ENEMIES)) {
-			Buff.affect(m, buffCls);
-			m.state = m.WANDERING;
-		}
-	}
+    public float evasionAndAccuracyFactor() {
+        return 1f;
+    }
 
-	public static class Blazing extends ChampionEnemy {
+    public static class Blazing extends ChampionEnemy {
 
-		{
-			color = 0xFF8800;
-		}
+        {
+            color = 0xFF8800;
+        }
 
-		@Override
-		public void onAttackProc(Char enemy) {
-			if (!Dungeon.level.water[enemy.pos]) {
-				Buff.affect(enemy, Burning.class).reignite(enemy);
-			}
-		}
+        {
+            immunities.add(Burning.class);
+        }
 
-		@Override
-		public void detach() {
-			//don't trigger when killed by being knocked into a pit
-			if (target.flying || !Dungeon.level.pit[target.pos]) {
-				for (int i : PathFinder.NEIGHBOURS9) {
-					if (!Dungeon.level.solid[target.pos + i] && !Dungeon.level.water[target.pos + i]) {
-						GameScene.add(Blob.seed(target.pos + i, 2, Fire.class));
-					}
-				}
-			}
-			super.detach();
-		}
+        @Override
+        public void onAttackProc(Char enemy) {
+            if (!Dungeon.level.water[enemy.pos]) {
+                Buff.affect(enemy, Burning.class).reignite(enemy);
+            }
+        }
 
-		@Override
-		public float meleeDamageFactor() {
-			return 1.25f;
-		}
+        @Override
+        public void detach() {
+            //don't trigger when killed by being knocked into a pit
+            if (target.flying || !Dungeon.level.pit[target.pos]) {
+                for (int i : PathFinder.NEIGHBOURS9) {
+                    if (!Dungeon.level.solid[target.pos + i] && !Dungeon.level.water[target.pos + i]) {
+                        GameScene.add(Blob.seed(target.pos + i, 2, Fire.class));
+                    }
+                }
+            }
+            super.detach();
+        }
 
-		{
-			immunities.add(Burning.class);
-		}
-	}
+        @Override
+        public float meleeDamageFactor() {
+            return 1.25f;
+        }
+    }
 
-	public static class Projecting extends ChampionEnemy {
+    public static class Projecting extends ChampionEnemy {
 
-		{
-			color = 0x8800FF;
-		}
+        {
+            color = 0x8800FF;
+        }
 
-		@Override
-		public float meleeDamageFactor() {
-			return 1.25f;
-		}
+        @Override
+        public float meleeDamageFactor() {
+            return 1.25f;
+        }
 
-		@Override
-		public boolean canAttackWithExtraReach(Char enemy) {
-			if (Dungeon.level.distance( target.pos, enemy.pos ) > 4){
-				return false;
-			} else {
-				boolean[] passable = BArray.not(Dungeon.level.solid, null);
-				for (Char ch : Actor.chars()) {
-					//our own tile is always passable
-					passable[ch.pos] = ch == target;
-				}
+        @Override
+        public boolean canAttackWithExtraReach(Char enemy) {
+            if (Dungeon.level.distance(target.pos, enemy.pos) > 4) {
+                return false;
+            } else {
+                boolean[] passable = BArray.not(Dungeon.level.solid, null);
+                for (Char ch : Actor.chars()) {
+                    //our own tile is always passable
+                    passable[ch.pos] = ch == target;
+                }
 
-				PathFinder.buildDistanceMap(enemy.pos, passable, 4);
+                PathFinder.buildDistanceMap(enemy.pos, passable, 4);
 
-				return PathFinder.distance[target.pos] <= 4;
-			}
-		}
-	}
+                return PathFinder.distance[target.pos] <= 4;
+            }
+        }
+    }
 
-	public static class AntiMagic extends ChampionEnemy {
+    public static class AntiMagic extends ChampionEnemy {
 
-		{
-			color = 0x00FF00;
-		}
+        {
+            color = 0x00FF00;
+        }
 
-		@Override
-		public float damageTakenFactor() {
-			return 0.5f;
-		}
+        {
+            immunities.addAll(com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.AntiMagic.RESISTS);
+        }
 
-		{
-			immunities.addAll(com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.AntiMagic.RESISTS);
-		}
+        @Override
+        public float damageTakenFactor() {
+            return 0.5f;
+        }
 
-	}
+    }
 
-	//Also makes target large, see Char.properties()
-	public static class Giant extends ChampionEnemy {
+    //Also makes target large, see Char.properties()
+    public static class Giant extends ChampionEnemy {
 
-		{
-			color = 0x0088FF;
-		}
+        {
+            color = 0x0088FF;
+        }
 
-		@Override
-		public float damageTakenFactor() {
-			return 0.2f;
-		}
+        @Override
+        public float damageTakenFactor() {
+            return 0.2f;
+        }
 
-		@Override
-		public boolean canAttackWithExtraReach(Char enemy) {
-			if (Dungeon.level.distance( target.pos, enemy.pos ) > 2){
-				return false;
-			} else {
-				boolean[] passable = BArray.not(Dungeon.level.solid, null);
-				for (Char ch : Actor.chars()) {
-					//our own tile is always passable
-					passable[ch.pos] = ch == target;
-				}
+        @Override
+        public boolean canAttackWithExtraReach(Char enemy) {
+            if (Dungeon.level.distance(target.pos, enemy.pos) > 2) {
+                return false;
+            } else {
+                boolean[] passable = BArray.not(Dungeon.level.solid, null);
+                for (Char ch : Actor.chars()) {
+                    //our own tile is always passable
+                    passable[ch.pos] = ch == target;
+                }
 
-				PathFinder.buildDistanceMap(enemy.pos, passable, 2);
+                PathFinder.buildDistanceMap(enemy.pos, passable, 2);
 
-				return PathFinder.distance[target.pos] <= 2;
-			}
-		}
-	}
+                return PathFinder.distance[target.pos] <= 2;
+            }
+        }
+    }
 
-	public static class Blessed extends ChampionEnemy {
+    public static class Blessed extends ChampionEnemy {
 
-		{
-			color = 0xFFFF00;
-		}
+        {
+            color = 0xFFFF00;
+        }
 
-		@Override
-		public float evasionAndAccuracyFactor() {
-			return 4f;
-		}
-	}
+        @Override
+        public float evasionAndAccuracyFactor() {
+            return 4f;
+        }
+    }
 
-	public static class Growing extends ChampionEnemy {
+    public static class Growing extends ChampionEnemy {
 
-		{
-			color = 0xFF0000;
-		}
+        private static final String MULTIPLIER = "multiplier";
+        private float multiplier = 1.19f;
 
-		private float multiplier = 1.19f;
+        {
+            color = 0xFF0000;
+        }
 
-		@Override
-		public boolean act() {
-			multiplier += 0.01f;
-			spend(4*TICK);
-			return true;
-		}
+        @Override
+        public boolean act() {
+            multiplier += 0.01f;
+            spend(4 * TICK);
+            return true;
+        }
 
-		@Override
-		public float meleeDamageFactor() {
-			return multiplier;
-		}
+        @Override
+        public float meleeDamageFactor() {
+            return multiplier;
+        }
 
-		@Override
-		public float damageTakenFactor() {
-			return 1f/multiplier;
-		}
+        @Override
+        public float damageTakenFactor() {
+            return 1f / multiplier;
+        }
 
-		@Override
-		public float evasionAndAccuracyFactor() {
-			return multiplier;
-		}
+        @Override
+        public float evasionAndAccuracyFactor() {
+            return multiplier;
+        }
 
-		@Override
-		public String desc() {
-			return Messages.get(this, "desc", (int)(100*(multiplier-1)), (int)(100*(1 - 1f/multiplier)));
-		}
+        @Override
+        public String desc() {
+            return Messages.get(this, "desc", (int) (100 * (multiplier - 1)), (int) (100 * (1 - 1f / multiplier)));
+        }
 
-		private static final String MULTIPLIER = "multiplier";
+        @Override
+        public void storeInBundle(Bundle bundle) {
+            super.storeInBundle(bundle);
+            bundle.put(MULTIPLIER, multiplier);
+        }
 
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(MULTIPLIER, multiplier);
-		}
-
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			multiplier = bundle.getFloat(MULTIPLIER);
-		}
-	}
+        @Override
+        public void restoreFromBundle(Bundle bundle) {
+            super.restoreFromBundle(bundle);
+            multiplier = bundle.getFloat(MULTIPLIER);
+        }
+    }
 
 }

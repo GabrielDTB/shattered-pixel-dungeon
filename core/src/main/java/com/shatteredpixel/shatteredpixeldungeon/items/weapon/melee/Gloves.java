@@ -28,31 +28,31 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class Gloves extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.GLOVES;
-		hitSound = Assets.Sounds.HIT;
-		hitSoundPitch = 1.3f;
+    {
+        image = ItemSpriteSheet.GLOVES;
+        hitSound = Assets.Sounds.HIT;
+        hitSoundPitch = 1.3f;
 
-		tier = 1;
-		DLY = 0.5f; //2x speed
-		
-		bones = false;
-	}
+        tier = 1;
+        DLY = 0.5f; //2x speed
 
-	@Override
-	public int max(int lvl) {
-		return  Math.round(2.5f*(tier+1)) +     //5 base, down from 10
-				lvl*Math.round(0.5f*(tier+1));  //+1 per level, down from +2
-	}
+        bones = false;
+    }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+    @Override
+    public int max(int lvl) {
+        return Math.round(2.5f * (tier + 1)) +     //5 base, down from 10
+                lvl * Math.round(0.5f * (tier + 1));  //+1 per level, down from +2
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		Sai.comboStrikeAbility(hero, target, 0.45f, this);
-	}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
+
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        Sai.comboStrikeAbility(hero, target, 0.45f, this);
+    }
 
 }

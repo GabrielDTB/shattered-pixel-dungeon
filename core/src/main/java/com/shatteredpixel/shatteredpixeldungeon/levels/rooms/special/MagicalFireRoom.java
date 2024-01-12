@@ -49,231 +49,236 @@ import com.watabou.utils.Random;
 
 public class MagicalFireRoom extends SpecialRoom {
 
-	@Override
-	public int minWidth() { return 7; }
-	public int minHeight() { return 7; }
+    private static Item prize(Level level) {
 
-	@Override
-	public void paint(Level level) {
+        if (Random.Int(3) != 0) {
+            Item prize = level.findPrizeItem();
+            if (prize != null)
+                return prize;
+        }
 
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.EMPTY );
+        return Generator.random(Random.oneOf(
+                Generator.Category.POTION,
+                Generator.Category.SCROLL,
+                Generator.Category.FOOD,
+                Generator.Category.GOLD
+        ));
+    }
 
-		Door door = entrance();
-		door.set( Door.Type.REGULAR );
+    @Override
+    public int minWidth() {
+        return 7;
+    }
 
-		Point firePos = center();
-		Room behindFire = new EmptyRoom();
+    public int minHeight() {
+        return 7;
+    }
 
-		if (door.x == left || door.x == right){
-			firePos.y = top+1;
-			while (firePos.y != bottom){
-				Blob.seed(level.pointToCell(firePos), 1, EternalFire.class, level);
-				Painter.set(level, firePos, Terrain.EMPTY_SP);
-				firePos.y++;
-			}
-			if (door.x == left){
-				behindFire.set(firePos.x+1, top+1, right-1, bottom-1);
-			} else {
-				behindFire.set(left+1, top+1, firePos.x-1, bottom-1);
-			}
-		} else {
-			firePos.x = left+1;
-			while (firePos.x != right){
-				Blob.seed(level.pointToCell(firePos), 1, EternalFire.class, level);
-				Painter.set(level, firePos, Terrain.EMPTY_SP);
-				firePos.x++;
-			}
-			if (door.y == top){
-				behindFire.set(left+1, firePos.y+1, right-1, bottom-1);
-			} else {
-				behindFire.set(left+1, top+1, right-1, firePos.y-1);
-			}
-		}
+    @Override
+    public void paint(Level level) {
 
-		Painter.fill(level, behindFire, Terrain.EMPTY_SP);
+        Painter.fill(level, this, Terrain.WALL);
+        Painter.fill(level, this, 1, Terrain.EMPTY);
 
-		boolean honeyPot = Random.Int( 2 ) == 0;
+        Door door = entrance();
+        door.set(Door.Type.REGULAR);
 
-		int n = Random.IntRange( 3, 4 );
+        Point firePos = center();
+        Room behindFire = new EmptyRoom();
 
-		for (int i=0; i < n; i++) {
-			int pos;
-			do {
-				pos = level.pointToCell(behindFire.random(0));
-			} while (level.heaps.get(pos) != null);
-			if (honeyPot){
-				level.drop( new Honeypot(), pos);
-				honeyPot = false;
-			} else
-				level.drop( prize( level ), pos );
-		}
+        if (door.x == left || door.x == right) {
+            firePos.y = top + 1;
+            while (firePos.y != bottom) {
+                Blob.seed(level.pointToCell(firePos), 1, EternalFire.class, level);
+                Painter.set(level, firePos, Terrain.EMPTY_SP);
+                firePos.y++;
+            }
+            if (door.x == left) {
+                behindFire.set(firePos.x + 1, top + 1, right - 1, bottom - 1);
+            } else {
+                behindFire.set(left + 1, top + 1, firePos.x - 1, bottom - 1);
+            }
+        } else {
+            firePos.x = left + 1;
+            while (firePos.x != right) {
+                Blob.seed(level.pointToCell(firePos), 1, EternalFire.class, level);
+                Painter.set(level, firePos, Terrain.EMPTY_SP);
+                firePos.x++;
+            }
+            if (door.y == top) {
+                behindFire.set(left + 1, firePos.y + 1, right - 1, bottom - 1);
+            } else {
+                behindFire.set(left + 1, top + 1, right - 1, firePos.y - 1);
+            }
+        }
 
-		level.addItemToSpawn(new PotionOfFrost());
+        Painter.fill(level, behindFire, Terrain.EMPTY_SP);
 
-	}
+        boolean honeyPot = Random.Int(2) == 0;
 
-	private static Item prize( Level level ) {
+        int n = Random.IntRange(3, 4);
 
-		if (Random.Int(3) != 0){
-			Item prize = level.findPrizeItem();
-			if (prize != null)
-				return prize;
-		}
+        for (int i = 0; i < n; i++) {
+            int pos;
+            do {
+                pos = level.pointToCell(behindFire.random(0));
+            } while (level.heaps.get(pos) != null);
+            if (honeyPot) {
+                level.drop(new Honeypot(), pos);
+                honeyPot = false;
+            } else
+                level.drop(prize(level), pos);
+        }
 
-		return Generator.random( Random.oneOf(
-				Generator.Category.POTION,
-				Generator.Category.SCROLL,
-				Generator.Category.FOOD,
-				Generator.Category.GOLD
-		) );
-	}
+        level.addItemToSpawn(new PotionOfFrost());
 
-	@Override
-	public boolean canPlaceGrass(Point p) {
-		return false;
-	}
+    }
 
-	@Override
-	public boolean canPlaceCharacter(Point p, Level l) {
-		Blob fire = l.blobs.get(EternalFire.class);
+    @Override
+    public boolean canPlaceGrass(Point p) {
+        return false;
+    }
 
-		//disallow placing on special tiles or next to fire if fire is present.
-		//note that this is slightly brittle, assumes the fire is either all there or totally gone
-		if (fire != null && fire.volume > 0){
-			int cell = l.pointToCell(p);
-			if (l.map[cell] == Terrain.EMPTY_SP) return false;
+    @Override
+    public boolean canPlaceCharacter(Point p, Level l) {
+        Blob fire = l.blobs.get(EternalFire.class);
 
-			if (fire.cur[cell] > 0)     return false;
-			for (int i : PathFinder.NEIGHBOURS4){
-				if (fire.cur[cell+i] > 0)   return false;
-			}
-		}
+        //disallow placing on special tiles or next to fire if fire is present.
+        //note that this is slightly brittle, assumes the fire is either all there or totally gone
+        if (fire != null && fire.volume > 0) {
+            int cell = l.pointToCell(p);
+            if (l.map[cell] == Terrain.EMPTY_SP) return false;
 
-		return super.canPlaceCharacter(p, l);
-	}
+            if (fire.cur[cell] > 0) return false;
+            for (int i : PathFinder.NEIGHBOURS4) {
+                if (fire.cur[cell + i] > 0) return false;
+            }
+        }
 
-	public static class EternalFire extends Blob {
+        return super.canPlaceCharacter(p, l);
+    }
 
-		@Override
-		protected void evolve() {
+    public static class EternalFire extends Blob {
 
-			int cell;
+        @Override
+        protected void evolve() {
 
-			Freezing freeze = (Freezing)Dungeon.level.blobs.get( Freezing.class );
-			Blizzard bliz = (Blizzard)Dungeon.level.blobs.get( Blizzard.class );
+            int cell;
 
-			Fire fire = (Fire)Dungeon.level.blobs.get( Fire.class );
+            Freezing freeze = (Freezing) Dungeon.level.blobs.get(Freezing.class);
+            Blizzard bliz = (Blizzard) Dungeon.level.blobs.get(Blizzard.class);
 
-			//if any part of the fire is cleared, cleanse the whole thing
-			//Note that this is a bit brittle atm, it assumes only one group of eternal fire per floor
-			boolean clearAll = false;
+            Fire fire = (Fire) Dungeon.level.blobs.get(Fire.class);
 
-			Level l = Dungeon.level;
-			for (int i = area.left - 1; i <= area.right; i++){
-				for (int j = area.top - 1; j <= area.bottom; j++){
-					cell = i + j*l.width();
+            //if any part of the fire is cleared, cleanse the whole thing
+            //Note that this is a bit brittle atm, it assumes only one group of eternal fire per floor
+            boolean clearAll = false;
 
-					if (cur[cell] > 0){
-						//evaporates in the presence of water, frost, or blizzard
-						//this blob is not considered interchangeable with fire, so those blobs do not interact with it otherwise
-						//potion of purity can cleanse it though
-						if (l.water[cell]){
-							cur[cell] = 0;
-							clearAll = true;
-						}
-						//overrides fire
-						if (fire != null && fire.volume > 0 && fire.cur[cell] > 0){
-							fire.clear(cell);
-						}
-						if (freeze != null && freeze.volume > 0 && freeze.cur[cell] > 0){
-							freeze.clear(cell);
-							cur[cell] = 0;
-							clearAll = true;
-						}
-						if (bliz != null && bliz.volume > 0 && bliz.cur[cell] > 0){
-							bliz.clear(cell);
-							cur[cell] = 0;
-							clearAll = true;
-						}
-						l.passable[cell] = cur[cell] == 0 && (Terrain.flags[l.map[cell]] & Terrain.PASSABLE) != 0;
-					}
+            Level l = Dungeon.level;
+            for (int i = area.left - 1; i <= area.right; i++) {
+                for (int j = area.top - 1; j <= area.bottom; j++) {
+                    cell = i + j * l.width();
 
-					if (cur[cell] > 0
-							|| cur[cell-1] > 0
-							|| cur[cell+1] > 0
-							|| cur[cell-Dungeon.level.width()] > 0
-							|| cur[cell+Dungeon.level.width()] > 0) {
+                    if (cur[cell] > 0) {
+                        //evaporates in the presence of water, frost, or blizzard
+                        //this blob is not considered interchangeable with fire, so those blobs do not interact with it otherwise
+                        //potion of purity can cleanse it though
+                        if (l.water[cell]) {
+                            cur[cell] = 0;
+                            clearAll = true;
+                        }
+                        //overrides fire
+                        if (fire != null && fire.volume > 0 && fire.cur[cell] > 0) {
+                            fire.clear(cell);
+                        }
+                        if (freeze != null && freeze.volume > 0 && freeze.cur[cell] > 0) {
+                            freeze.clear(cell);
+                            cur[cell] = 0;
+                            clearAll = true;
+                        }
+                        if (bliz != null && bliz.volume > 0 && bliz.cur[cell] > 0) {
+                            bliz.clear(cell);
+                            cur[cell] = 0;
+                            clearAll = true;
+                        }
+                        l.passable[cell] = cur[cell] == 0 && (Terrain.flags[l.map[cell]] & Terrain.PASSABLE) != 0;
+                    }
 
-						//spread fire to nearby flammable cells
-						if (Dungeon.level.flamable[cell] && (fire == null || fire.volume == 0 || fire.cur[cell] == 0)){
-							GameScene.add(Blob.seed(cell, 4, Fire.class));
-						}
+                    if (cur[cell] > 0
+                            || cur[cell - 1] > 0
+                            || cur[cell + 1] > 0
+                            || cur[cell - Dungeon.level.width()] > 0
+                            || cur[cell + Dungeon.level.width()] > 0) {
 
-						//ignite adjacent chars
-						Char ch = Actor.findChar(cell);
-						if (ch != null && !ch.isImmune(getClass())) {
-							Buff.affect(ch, Burning.class).reignite(ch, 4f);
-						}
+                        //spread fire to nearby flammable cells
+                        if (Dungeon.level.flamable[cell] && (fire == null || fire.volume == 0 || fire.cur[cell] == 0)) {
+                            GameScene.add(Blob.seed(cell, 4, Fire.class));
+                        }
 
-						//burn adjacent heaps, but only on outside and non-water cells
-						if (Dungeon.level.heaps.get(cell) != null
-							&& Dungeon.level.map[cell] != Terrain.EMPTY_SP
-							&& Dungeon.level.map[cell] != Terrain.WATER){
-							Dungeon.level.heaps.get(cell).burn();
-						}
-					}
+                        //ignite adjacent chars
+                        Char ch = Actor.findChar(cell);
+                        if (ch != null && !ch.isImmune(getClass())) {
+                            Buff.affect(ch, Burning.class).reignite(ch, 4f);
+                        }
 
-					off[cell] = cur[cell];
-					volume += off[cell];
-				}
-			}
+                        //burn adjacent heaps, but only on outside and non-water cells
+                        if (Dungeon.level.heaps.get(cell) != null
+                                && Dungeon.level.map[cell] != Terrain.EMPTY_SP
+                                && Dungeon.level.map[cell] != Terrain.WATER) {
+                            Dungeon.level.heaps.get(cell).burn();
+                        }
+                    }
 
-			if (clearAll){
-				fullyClear();
-				return;
-			}
+                    off[cell] = cur[cell];
+                    volume += off[cell];
+                }
+            }
 
-		}
+            if (clearAll) {
+                fullyClear();
+                return;
+            }
 
-		@Override
-		public void seed(Level level, int cell, int amount) {
-			super.seed(level, cell, amount);
-			level.passable[cell] = cur[cell] == 0 && (Terrain.flags[level.map[cell]] & Terrain.PASSABLE) != 0;
-		}
+        }
 
-		@Override
-		public void clear(int cell) {
-			if (volume > 0 && cur[cell] > 0) {
-				fullyClear();
-			}
-		}
+        @Override
+        public void seed(Level level, int cell, int amount) {
+            super.seed(level, cell, amount);
+            level.passable[cell] = cur[cell] == 0 && (Terrain.flags[level.map[cell]] & Terrain.PASSABLE) != 0;
+        }
 
-		@Override
-		public void fullyClear() {
-			super.fullyClear();
-			Dungeon.level.buildFlagMaps();
-		}
+        @Override
+        public void clear(int cell) {
+            if (volume > 0 && cur[cell] > 0) {
+                fullyClear();
+            }
+        }
 
-		@Override
-		public void use( BlobEmitter emitter ) {
-			super.use( emitter );
-			emitter.pour( ElmoParticle.FACTORY, 0.02f );
-		}
+        @Override
+        public void fullyClear() {
+            super.fullyClear();
+            Dungeon.level.buildFlagMaps();
+        }
 
-		@Override
-		public String tileDesc() {
-			return Messages.get(this, "desc");
-		}
+        @Override
+        public void use(BlobEmitter emitter) {
+            super.use(emitter);
+            emitter.pour(ElmoParticle.FACTORY, 0.02f);
+        }
 
-		@Override
-		public void onBuildFlagMaps( Level l ) {
-			if (volume > 0){
-				for (int i=0; i < l.length(); i++) {
-					l.passable[i] = l.passable[i] && cur[i] == 0;
-				}
-			}
-		}
-	}
+        @Override
+        public String tileDesc() {
+            return Messages.get(this, "desc");
+        }
+
+        @Override
+        public void onBuildFlagMaps(Level l) {
+            if (volume > 0) {
+                for (int i = 0; i < l.length(); i++) {
+                    l.passable[i] = l.passable[i] && cur[i] == 0;
+                }
+            }
+        }
+    }
 
 }

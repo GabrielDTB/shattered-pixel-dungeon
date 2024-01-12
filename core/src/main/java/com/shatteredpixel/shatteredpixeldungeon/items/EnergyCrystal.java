@@ -33,57 +33,57 @@ import java.util.ArrayList;
 
 public class EnergyCrystal extends Item {
 
-	private static final String TXT_VALUE	= "%+d";
+    private static final String TXT_VALUE = "%+d";
 
-	{
-		image = ItemSpriteSheet.ENERGY;
-		stackable = true;
-	}
+    {
+        image = ItemSpriteSheet.ENERGY;
+        stackable = true;
+    }
 
-	public EnergyCrystal() {
-		this( 1 );
-	}
+    public EnergyCrystal() {
+        this(1);
+    }
 
-	public EnergyCrystal( int value ) {
-		this.quantity = value;
-	}
+    public EnergyCrystal(int value) {
+        this.quantity = value;
+    }
 
-	@Override
-	public ArrayList<String> actions(Hero hero ) {
-		return new ArrayList<>();
-	}
+    @Override
+    public ArrayList<String> actions(Hero hero) {
+        return new ArrayList<>();
+    }
 
-	@Override
-	public boolean doPickUp(Hero hero, int pos) {
+    @Override
+    public boolean doPickUp(Hero hero, int pos) {
 
-		Dungeon.energy += quantity;
-		//TODO track energy collected maybe? We do already track recipes crafted though..
+        Dungeon.energy += quantity;
+        //TODO track energy collected maybe? We do already track recipes crafted though..
 
-		GameScene.pickUp( this, pos );
-		hero.sprite.showStatus( 0x44CCFF, TXT_VALUE, quantity );
-		hero.spendAndNext( TIME_TO_PICK_UP );
+        GameScene.pickUp(this, pos);
+        hero.sprite.showStatus(0x44CCFF, TXT_VALUE, quantity);
+        hero.spendAndNext(TIME_TO_PICK_UP);
 
-		Sample.INSTANCE.play( Assets.Sounds.ITEM );
+        Sample.INSTANCE.play(Assets.Sounds.ITEM);
 
-		updateQuickslot();
+        updateQuickslot();
 
-		return true;
-	}
+        return true;
+    }
 
-	@Override
-	public boolean isUpgradable() {
-		return false;
-	}
+    @Override
+    public boolean isUpgradable() {
+        return false;
+    }
 
-	@Override
-	public boolean isIdentified() {
-		return true;
-	}
+    @Override
+    public boolean isIdentified() {
+        return true;
+    }
 
-	@Override
-	public Item random() {
-		quantity = Random.IntRange( 4, 6 );
-		return this;
-	}
+    @Override
+    public Item random() {
+        quantity = Random.IntRange(4, 6);
+        return this;
+    }
 
 }

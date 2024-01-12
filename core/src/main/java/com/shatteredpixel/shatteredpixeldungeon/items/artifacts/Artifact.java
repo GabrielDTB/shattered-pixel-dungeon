@@ -35,231 +35,228 @@ import com.watabou.utils.Random;
 
 public class Artifact extends KindofMisc {
 
-	protected Buff passiveBuff;
-	protected Buff activeBuff;
+    private static final String EXP = "exp";
+    private static final String CHARGE = "charge";
+    private static final String PARTIALCHARGE = "partialcharge";
+    protected Buff passiveBuff;
+    protected Buff activeBuff;
+    //level is used internally to track upgrades to artifacts, size/logic varies per artifact.
+    //already inherited from item superclass
+    //exp is used to count progress towards levels for some artifacts
+    protected int exp = 0;
+    //levelCap is the artifact's maximum level
+    protected int levelCap = 0;
+    //the current artifact charge
+    protected int charge = 0;
+    //the build towards next charge, usually rolls over at 1.
+    //better to keep charge as an int and use a separate float than casting.
+    protected float partialCharge = 0;
+    //the maximum charge, varies per artifact, not all artifacts use this.
+    protected int chargeCap = 0;
+    //used by some artifacts to keep track of duration of effects or cooldowns to use.
+    protected int cooldown = 0;
 
-	//level is used internally to track upgrades to artifacts, size/logic varies per artifact.
-	//already inherited from item superclass
-	//exp is used to count progress towards levels for some artifacts
-	protected int exp = 0;
-	//levelCap is the artifact's maximum level
-	protected int levelCap = 0;
+    @Override
+    public boolean doEquip(final Hero hero) {
 
-	//the current artifact charge
-	protected int charge = 0;
-	//the build towards next charge, usually rolls over at 1.
-	//better to keep charge as an int and use a separate float than casting.
-	protected float partialCharge = 0;
-	//the maximum charge, varies per artifact, not all artifacts use this.
-	protected int chargeCap = 0;
+        if ((hero.belongings.artifact != null && hero.belongings.artifact.getClass() == this.getClass())
+                || (hero.belongings.misc != null && hero.belongings.misc.getClass() == this.getClass())) {
 
-	//used by some artifacts to keep track of duration of effects or cooldowns to use.
-	protected int cooldown = 0;
+            GLog.w(Messages.get(Artifact.class, "cannot_wear_two"));
+            return false;
 
-	@Override
-	public boolean doEquip( final Hero hero ) {
+        } else {
 
-		if ((hero.belongings.artifact != null && hero.belongings.artifact.getClass() == this.getClass())
-				|| (hero.belongings.misc != null && hero.belongings.misc.getClass() == this.getClass())){
+            if (super.doEquip(hero)) {
 
-			GLog.w( Messages.get(Artifact.class, "cannot_wear_two") );
-			return false;
+                identify();
+                return true;
 
-		} else {
+            } else {
 
-			if (super.doEquip( hero )){
+                return false;
 
-				identify();
-				return true;
+            }
 
-			} else {
+        }
 
-				return false;
+    }
 
-			}
+    public void activate(Char ch) {
+        if (passiveBuff != null) {
+            passiveBuff.detach();
+            passiveBuff = null;
+        }
+        passiveBuff = passiveBuff();
+        passiveBuff.attachTo(ch);
+    }
 
-		}
+    @Override
+    public boolean doUnequip(Hero hero, boolean collect, boolean single) {
+        if (super.doUnequip(hero, collect, single)) {
 
-	}
+            if (passiveBuff != null) {
+                passiveBuff.detach();
+                passiveBuff = null;
+            }
 
-	public void activate( Char ch ) {
-		if (passiveBuff != null){
-			passiveBuff.detach();
-			passiveBuff = null;
-		}
-		passiveBuff = passiveBuff();
-		passiveBuff.attachTo(ch);
-	}
+            return true;
 
-	@Override
-	public boolean doUnequip( Hero hero, boolean collect, boolean single ) {
-		if (super.doUnequip( hero, collect, single )) {
+        } else {
 
-			if (passiveBuff != null) {
-				passiveBuff.detach();
-				passiveBuff = null;
-			}
+            return false;
 
-			return true;
+        }
+    }
 
-		} else {
+    @Override
+    public boolean isUpgradable() {
+        return false;
+    }
 
-			return false;
+    @Override
+    public int visiblyUpgraded() {
+        return levelKnown ? Math.round((level() * 10) / (float) levelCap) : 0;
+    }
 
-		}
-	}
+    @Override
+    public int buffedVisiblyUpgraded() {
+        return visiblyUpgraded();
+    }
 
-	@Override
-	public boolean isUpgradable() {
-		return false;
-	}
+    @Override
+    public int buffedLvl() {
+        //level isn't affected by buffs/debuffs
+        return level();
+    }
 
-	@Override
-	public int visiblyUpgraded() {
-		return levelKnown ? Math.round((level()*10)/(float)levelCap): 0;
-	}
+    //transfers upgrades from another artifact, transfer level will equal the displayed level
+    public void transferUpgrade(int transferLvl) {
+        upgrade(Math.round((transferLvl * levelCap) / 10f));
+    }
 
-	@Override
-	public int buffedVisiblyUpgraded() {
-		return visiblyUpgraded();
-	}
+    @Override
+    public String info() {
+        if (cursed && cursedKnown && !isEquipped(Dungeon.hero)) {
+            return desc() + "\n\n" + Messages.get(Artifact.class, "curse_known");
 
-	@Override
-	public int buffedLvl() {
-		//level isn't affected by buffs/debuffs
-		return level();
-	}
+        } else if (!isIdentified() && cursedKnown && !isEquipped(Dungeon.hero)) {
+            return desc() + "\n\n" + Messages.get(Artifact.class, "not_cursed");
 
-	//transfers upgrades from another artifact, transfer level will equal the displayed level
-	public void transferUpgrade(int transferLvl) {
-		upgrade(Math.round((transferLvl*levelCap)/10f));
-	}
+        } else {
+            return desc();
 
-	@Override
-	public String info() {
-		if (cursed && cursedKnown && !isEquipped( Dungeon.hero )) {
-			return desc() + "\n\n" + Messages.get(Artifact.class, "curse_known");
-			
-		} else if (!isIdentified() && cursedKnown && !isEquipped( Dungeon.hero)) {
-			return desc()+ "\n\n" + Messages.get(Artifact.class, "not_cursed");
-			
-		} else {
-			return desc();
-			
-		}
-	}
+        }
+    }
 
-	@Override
-	public String status() {
-		
-		//if the artifact isn't IDed, or is cursed, don't display anything
-		if (!isIdentified() || cursed){
-			return null;
-		}
+    @Override
+    public String status() {
 
-		//display the current cooldown
-		if (cooldown != 0)
-			return Messages.format( "%d", cooldown );
+        //if the artifact isn't IDed, or is cursed, don't display anything
+        if (!isIdentified() || cursed) {
+            return null;
+        }
 
-		//display as percent
-		if (chargeCap == 100)
-			return Messages.format( "%d%%", charge );
+        //display the current cooldown
+        if (cooldown != 0)
+            return Messages.format("%d", cooldown);
 
-		//display as #/#
-		if (chargeCap > 0)
-			return Messages.format( "%d/%d", charge, chargeCap );
+        //display as percent
+        if (chargeCap == 100)
+            return Messages.format("%d%%", charge);
 
-		//if there's no cap -
-		//- but there is charge anyway, display that charge
-		if (charge != 0)
-			return Messages.format( "%d", charge );
+        //display as #/#
+        if (chargeCap > 0)
+            return Messages.format("%d/%d", charge, chargeCap);
 
-		//otherwise, if there's no charge, return null.
-		return null;
-	}
+        //if there's no cap -
+        //- but there is charge anyway, display that charge
+        if (charge != 0)
+            return Messages.format("%d", charge);
 
-	@Override
-	public Item random() {
-		//always +0
-		
-		//30% chance to be cursed
-		if (Random.Float() < 0.3f) {
-			cursed = true;
-		}
-		return this;
-	}
+        //otherwise, if there's no charge, return null.
+        return null;
+    }
 
-	@Override
-	public int value() {
-		int price = 100;
-		if (level() > 0)
-			price += 20*visiblyUpgraded();
-		if (cursed && cursedKnown) {
-			price /= 2;
-		}
-		if (price < 1) {
-			price = 1;
-		}
-		return price;
-	}
+    @Override
+    public Item random() {
+        //always +0
 
+        //30% chance to be cursed
+        if (Random.Float() < 0.3f) {
+            cursed = true;
+        }
+        return this;
+    }
 
-	protected ArtifactBuff passiveBuff() {
-		return null;
-	}
+    @Override
+    public int value() {
+        int price = 100;
+        if (level() > 0)
+            price += 20 * visiblyUpgraded();
+        if (cursed && cursedKnown) {
+            price /= 2;
+        }
+        if (price < 1) {
+            price = 1;
+        }
+        return price;
+    }
 
-	protected ArtifactBuff activeBuff() {return null; }
-	
-	public void charge(Hero target, float amount){
-		//do nothing by default;
-	}
+    protected ArtifactBuff passiveBuff() {
+        return null;
+    }
 
-	public class ArtifactBuff extends Buff {
+    protected ArtifactBuff activeBuff() {
+        return null;
+    }
 
-		@Override
-		public boolean attachTo( Char target ) {
-			if (super.attachTo( target )) {
-				//if we're loading in and the hero has partially spent a turn, delay for 1 turn
-				if (target instanceof Hero && Dungeon.hero == null && cooldown() == 0 && target.cooldown() > 0) {
-					spend(TICK);
-				}
-				return true;
-			}
-			return false;
-		}
+    public void charge(Hero target, float amount) {
+        //do nothing by default;
+    }
 
-		public int itemLevel() {
-			return level();
-		}
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(EXP, exp);
+        bundle.put(CHARGE, charge);
+        bundle.put(PARTIALCHARGE, partialCharge);
+    }
 
-		public boolean isCursed() {
-			return target.buff(MagicImmune.class) == null && cursed;
-		}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        exp = bundle.getInt(EXP);
+        if (chargeCap > 0) charge = Math.min(chargeCap, bundle.getInt(CHARGE));
+        else charge = bundle.getInt(CHARGE);
+        partialCharge = bundle.getFloat(PARTIALCHARGE);
+    }
 
-		public void charge(Hero target, float amount){
-			Artifact.this.charge(target, amount);
-		}
+    public class ArtifactBuff extends Buff {
 
-	}
-	
-	private static final String EXP = "exp";
-	private static final String CHARGE = "charge";
-	private static final String PARTIALCHARGE = "partialcharge";
+        @Override
+        public boolean attachTo(Char target) {
+            if (super.attachTo(target)) {
+                //if we're loading in and the hero has partially spent a turn, delay for 1 turn
+                if (target instanceof Hero && Dungeon.hero == null && cooldown() == 0 && target.cooldown() > 0) {
+                    spend(TICK);
+                }
+                return true;
+            }
+            return false;
+        }
 
-	@Override
-	public void storeInBundle( Bundle bundle ) {
-		super.storeInBundle(bundle);
-		bundle.put( EXP , exp );
-		bundle.put( CHARGE , charge );
-		bundle.put( PARTIALCHARGE , partialCharge );
-	}
+        public int itemLevel() {
+            return level();
+        }
 
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		super.restoreFromBundle(bundle);
-		exp = bundle.getInt( EXP );
-		if (chargeCap > 0)  charge = Math.min( chargeCap, bundle.getInt( CHARGE ));
-		else                charge = bundle.getInt( CHARGE );
-		partialCharge = bundle.getFloat( PARTIALCHARGE );
-	}
+        public boolean isCursed() {
+            return target.buff(MagicImmune.class) == null && cursed;
+        }
+
+        public void charge(Hero target, float amount) {
+            Artifact.this.charge(target, amount);
+        }
+
+    }
 }

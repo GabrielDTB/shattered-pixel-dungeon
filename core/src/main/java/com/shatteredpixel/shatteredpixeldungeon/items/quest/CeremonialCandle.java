@@ -47,156 +47,154 @@ import java.util.ArrayList;
 
 public class CeremonialCandle extends Item {
 
-	//generated with the wandmaker quest
-	public static int ritualPos;
+    //generated with the wandmaker quest
+    public static int ritualPos;
+    public static String AFLAME = "aflame";
+    public boolean aflame = false;
 
-	{
-		image = ItemSpriteSheet.CANDLE;
+    {
+        image = ItemSpriteSheet.CANDLE;
 
-		defaultAction = AC_THROW;
+        defaultAction = AC_THROW;
 
-		unique = true;
-		stackable = true;
-	}
+        unique = true;
+        stackable = true;
+    }
 
-	@Override
-	public boolean isUpgradable() {
-		return false;
-	}
+    private static void checkCandles() {
+        if (!(Dungeon.level instanceof RegularLevel)) {
+            return;
+        }
 
-	@Override
-	public boolean isIdentified() {
-		return true;
-	}
+        if (!(((RegularLevel) Dungeon.level).room(ritualPos) instanceof RitualSiteRoom)) {
+            return;
+        }
 
-	@Override
-	public void doDrop(Hero hero) {
-		super.doDrop(hero);
-		aflame = false;
-		checkCandles();
-	}
+        Heap[] candleHeaps = new Heap[4];
 
-	@Override
-	protected void onThrow(int cell) {
-		super.onThrow(cell);
-		aflame = false;
-		checkCandles();
-	}
+        candleHeaps[0] = Dungeon.level.heaps.get(ritualPos - Dungeon.level.width());
+        candleHeaps[1] = Dungeon.level.heaps.get(ritualPos + 1);
+        candleHeaps[2] = Dungeon.level.heaps.get(ritualPos + Dungeon.level.width());
+        candleHeaps[3] = Dungeon.level.heaps.get(ritualPos - 1);
 
-	@Override
-	public boolean doPickUp(Hero hero, int pos) {
-		if (super.doPickUp(hero, pos)){
-			aflame = false;
-			return true;
-		}
-		return false;
-	}
+        boolean allCandles = true;
+        for (Heap h : candleHeaps) {
+            if (h != null && h.type == Heap.Type.HEAP) {
+                boolean foundCandle = false;
+                for (Item i : h.items) {
+                    if (i instanceof CeremonialCandle) {
+                        if (!((CeremonialCandle) i).aflame) {
+                            ((CeremonialCandle) i).aflame = true;
+                            h.sprite.view(h).place(h.pos);
+                        }
+                        foundCandle = true;
+                    }
+                }
+                if (!foundCandle) {
+                    allCandles = false;
+                }
+            } else {
+                allCandles = false;
+            }
+        }
 
-	public boolean aflame = false;
+        if (allCandles) {
 
-	public static String AFLAME = "aflame";
+            for (Heap h : candleHeaps) {
+                for (Item i : h.items.toArray(new Item[0])) {
+                    if (i instanceof CeremonialCandle) {
+                        h.remove(i);
+                    }
+                }
+            }
 
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put(AFLAME, aflame);
-	}
+            Elemental.NewbornFireElemental elemental = new Elemental.NewbornFireElemental();
+            Char ch = Actor.findChar(ritualPos);
+            if (ch != null) {
+                ArrayList<Integer> candidates = new ArrayList<>();
+                for (int n : PathFinder.NEIGHBOURS8) {
+                    int cell = ritualPos + n;
+                    if ((Dungeon.level.passable[cell] || Dungeon.level.avoid[cell]) && Actor.findChar(cell) == null) {
+                        candidates.add(cell);
+                    }
+                }
+                if (candidates.size() > 0) {
+                    elemental.pos = Random.element(candidates);
+                } else {
+                    elemental.pos = ritualPos;
+                }
+            } else {
+                elemental.pos = ritualPos;
+            }
+            elemental.state = elemental.HUNTING;
+            GameScene.add(elemental, 1);
 
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		aflame = bundle.getBoolean(AFLAME);
-	}
+            if (Dungeon.level instanceof PrisonLevel) {
+                ((PrisonLevel) Dungeon.level).updateWandmakerQuestMusic();
+            }
 
-	@Override
-	public Emitter emitter() {
-		if (aflame) {
-			Emitter emitter = new Emitter();
-			emitter.pos(6, 0);
-			emitter.fillTarget = false;
-			emitter.pour(ElmoParticle.FACTORY, 0.25f);
-			return emitter;
-		}
-		return super.emitter();
-	}
+            for (int i : PathFinder.NEIGHBOURS9) {
+                CellEmitter.get(ritualPos + i).burst(ElmoParticle.FACTORY, 10);
+            }
+            Sample.INSTANCE.play(Assets.Sounds.BURNING);
+        }
 
-	private static void checkCandles(){
-		if (!(Dungeon.level instanceof RegularLevel)){
-			return;
-		}
+    }
 
-		if (!(((RegularLevel) Dungeon.level).room(ritualPos) instanceof RitualSiteRoom)){
-			return;
-		}
+    @Override
+    public boolean isUpgradable() {
+        return false;
+    }
 
-		Heap[] candleHeaps = new Heap[4];
+    @Override
+    public boolean isIdentified() {
+        return true;
+    }
 
-		candleHeaps[0] = Dungeon.level.heaps.get(ritualPos - Dungeon.level.width());
-		candleHeaps[1] = Dungeon.level.heaps.get(ritualPos + 1);
-		candleHeaps[2] = Dungeon.level.heaps.get(ritualPos + Dungeon.level.width());
-		candleHeaps[3] = Dungeon.level.heaps.get(ritualPos - 1);
+    @Override
+    public void doDrop(Hero hero) {
+        super.doDrop(hero);
+        aflame = false;
+        checkCandles();
+    }
 
-		boolean allCandles = true;
-		for (Heap h : candleHeaps){
-			if (h != null && h.type == Heap.Type.HEAP){
-				boolean foundCandle = false;
-				for (Item i : h.items){
-					if (i instanceof CeremonialCandle){
-						if (!((CeremonialCandle) i).aflame) {
-							((CeremonialCandle) i).aflame = true;
-							h.sprite.view(h).place(h.pos);
-						}
-						foundCandle = true;
-					}
-				}
-				if (!foundCandle){
-					allCandles = false;
-				}
-			} else {
-				allCandles = false;
-			}
-		}
+    @Override
+    protected void onThrow(int cell) {
+        super.onThrow(cell);
+        aflame = false;
+        checkCandles();
+    }
 
-		if (allCandles){
+    @Override
+    public boolean doPickUp(Hero hero, int pos) {
+        if (super.doPickUp(hero, pos)) {
+            aflame = false;
+            return true;
+        }
+        return false;
+    }
 
-			for (Heap h : candleHeaps) {
-				for (Item i : h.items.toArray(new Item[0])){
-					if (i instanceof CeremonialCandle){
-						h.remove(i);
-					}
-				}
-			}
-				
-			Elemental.NewbornFireElemental elemental = new Elemental.NewbornFireElemental();
-			Char ch = Actor.findChar( ritualPos );
-			if (ch != null) {
-				ArrayList<Integer> candidates = new ArrayList<>();
-				for (int n : PathFinder.NEIGHBOURS8) {
-					int cell = ritualPos + n;
-					if ((Dungeon.level.passable[cell] || Dungeon.level.avoid[cell]) && Actor.findChar( cell ) == null) {
-						candidates.add( cell );
-					}
-				}
-				if (candidates.size() > 0) {
-					elemental.pos = Random.element( candidates );
-				} else {
-					elemental.pos = ritualPos;
-				}
-			} else {
-				elemental.pos = ritualPos;
-			}
-			elemental.state = elemental.HUNTING;
-			GameScene.add(elemental, 1);
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(AFLAME, aflame);
+    }
 
-			if (Dungeon.level instanceof PrisonLevel){
-				((PrisonLevel) Dungeon.level).updateWandmakerQuestMusic();
-			}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        aflame = bundle.getBoolean(AFLAME);
+    }
 
-			for (int i : PathFinder.NEIGHBOURS9){
-				CellEmitter.get(ritualPos+i).burst(ElmoParticle.FACTORY, 10);
-			}
-			Sample.INSTANCE.play(Assets.Sounds.BURNING);
-		}
-
-	}
+    @Override
+    public Emitter emitter() {
+        if (aflame) {
+            Emitter emitter = new Emitter();
+            emitter.pos(6, 0);
+            emitter.fillTarget = false;
+            emitter.pour(ElmoParticle.FACTORY, 0.25f);
+            return emitter;
+        }
+        return super.emitter();
+    }
 }

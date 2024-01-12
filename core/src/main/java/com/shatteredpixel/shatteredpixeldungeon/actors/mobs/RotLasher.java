@@ -33,89 +33,89 @@ import com.watabou.utils.Random;
 
 public class RotLasher extends Mob {
 
-	{
-		spriteClass = RotLasherSprite.class;
+    {
+        spriteClass = RotLasherSprite.class;
 
-		HP = HT = 80;
-		defenseSkill = 0;
+        HP = HT = 80;
+        defenseSkill = 0;
 
-		EXP = 1;
+        EXP = 1;
 
-		loot = Generator.Category.SEED;
-		lootChance = 0.75f;
+        loot = Generator.Category.SEED;
+        lootChance = 0.75f;
 
-		state = WANDERING = new Waiting();
-		viewDistance = 1;
+        state = WANDERING = new Waiting();
+        viewDistance = 1;
 
-		properties.add(Property.IMMOVABLE);
-		properties.add(Property.MINIBOSS);
-	}
+        properties.add(Property.IMMOVABLE);
+        properties.add(Property.MINIBOSS);
+    }
 
-	@Override
-	protected boolean act() {
-		if (enemy == null || !Dungeon.level.adjacent(pos, enemy.pos)) {
-			HP = Math.min(HT, HP + 5);
-		}
-		return super.act();
-	}
+    {
+        immunities.add(ToxicGas.class);
+    }
 
-	@Override
-	public void damage(int dmg, Object src) {
-		if (src instanceof Burning) {
-			destroy();
-			sprite.die();
-		} else {
-			super.damage(dmg, src);
-		}
-	}
+    @Override
+    protected boolean act() {
+        if (enemy == null || !Dungeon.level.adjacent(pos, enemy.pos)) {
+            HP = Math.min(HT, HP + 5);
+        }
+        return super.act();
+    }
 
-	@Override
-	public int attackProc(Char enemy, int damage) {
-		damage = super.attackProc( enemy, damage );
-		Buff.affect( enemy, Cripple.class, 2f );
-		return super.attackProc(enemy, damage);
-	}
+    @Override
+    public void damage(int dmg, Object src) {
+        if (src instanceof Burning) {
+            destroy();
+            sprite.die();
+        } else {
+            super.damage(dmg, src);
+        }
+    }
 
-	@Override
-	public boolean reset() {
-		return true;
-	}
+    @Override
+    public int attackProc(Char enemy, int damage) {
+        damage = super.attackProc(enemy, damage);
+        Buff.affect(enemy, Cripple.class, 2f);
+        return super.attackProc(enemy, damage);
+    }
 
-	@Override
-	protected boolean getCloser(int target) {
-		return false;
-	}
+    @Override
+    public boolean reset() {
+        return true;
+    }
 
-	@Override
-	protected boolean getFurther(int target) {
-		return false;
-	}
+    @Override
+    protected boolean getCloser(int target) {
+        return false;
+    }
 
-	@Override
-	public int damageRoll() {
-		return Random.NormalIntRange(10, 20);
-	}
+    @Override
+    protected boolean getFurther(int target) {
+        return false;
+    }
 
-	@Override
-	public int attackSkill( Char target ) {
-		return 25;
-	}
+    @Override
+    public int damageRoll() {
+        return Random.NormalIntRange(10, 20);
+    }
 
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 8);
-	}
-	
-	{
-		immunities.add( ToxicGas.class );
-	}
+    @Override
+    public int attackSkill(Char target) {
+        return 25;
+    }
 
-	private class Waiting extends Mob.Wandering{
+    @Override
+    public int drRoll() {
+        return super.drRoll() + Random.NormalIntRange(0, 8);
+    }
 
-		@Override
-		protected boolean noticeEnemy() {
-			spend(TICK);
-			return super.noticeEnemy();
-		}
-	}
+    private class Waiting extends Mob.Wandering {
+
+        @Override
+        protected boolean noticeEnemy() {
+            spend(TICK);
+            return super.noticeEnemy();
+        }
+    }
 }

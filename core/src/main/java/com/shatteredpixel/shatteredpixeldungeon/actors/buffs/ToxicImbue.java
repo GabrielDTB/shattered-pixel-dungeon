@@ -31,85 +31,83 @@ import com.watabou.noosa.Image;
 import com.watabou.utils.Bundle;
 
 public class ToxicImbue extends Buff {
-	
-	{
-		type = buffType.POSITIVE;
-		announced = true;
-	}
 
-	public static final float DURATION	= 50f;
+    public static final float DURATION = 50f;
+    private static final String LEFT = "left";
+    protected float left;
 
-	protected float left;
+    {
+        type = buffType.POSITIVE;
+        announced = true;
+    }
 
-	private static final String LEFT	= "left";
+    {
+        immunities.add(ToxicGas.class);
+        immunities.add(Poison.class);
+    }
 
-	@Override
-	public void storeInBundle( Bundle bundle ) {
-		super.storeInBundle( bundle );
-		bundle.put( LEFT, left );
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(LEFT, left);
 
-	}
+    }
 
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		super.restoreFromBundle( bundle );
-		left = bundle.getFloat( LEFT );
-	}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        left = bundle.getFloat(LEFT);
+    }
 
-	public void set( float duration ) {
-		this.left = duration;
-	}
+    public void set(float duration) {
+        this.left = duration;
+    }
 
-	@Override
-	public boolean act() {
-		GameScene.add(Blob.seed(target.pos, 50, ToxicGas.class));
+    @Override
+    public boolean act() {
+        GameScene.add(Blob.seed(target.pos, 50, ToxicGas.class));
 
-		spend(TICK);
-		left -= TICK;
-		if (left <= 0){
-			detach();
-		}
+        spend(TICK);
+        left -= TICK;
+        if (left <= 0) {
+            detach();
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	@Override
-	public int icon() {
-		return BuffIndicator.IMBUE;
-	}
+    @Override
+    public int icon() {
+        return BuffIndicator.IMBUE;
+    }
 
-	@Override
-	public void tintIcon(Image icon) {
-		icon.hardlight(1f, 1.5f, 0f);
-	}
+    @Override
+    public void tintIcon(Image icon) {
+        icon.hardlight(1f, 1.5f, 0f);
+    }
 
-	@Override
-	public float iconFadePercent() {
-		return Math.max(0, (DURATION - left) / DURATION);
-	}
+    @Override
+    public float iconFadePercent() {
+        return Math.max(0, (DURATION - left) / DURATION);
+    }
 
-	@Override
-	public String iconTextDisplay() {
-		return Integer.toString((int)left);
-	}
+    @Override
+    public String iconTextDisplay() {
+        return Integer.toString((int) left);
+    }
 
-	@Override
-	public String desc() {
-		return Messages.get(this, "desc", dispTurns(left));
-	}
+    @Override
+    public String desc() {
+        return Messages.get(this, "desc", dispTurns(left));
+    }
 
-	{
-		immunities.add( ToxicGas.class );
-		immunities.add( Poison.class );
-	}
-
-	@Override
-	public boolean attachTo(Char target) {
-		if (super.attachTo(target)){
-			Buff.detach(target, Poison.class);
-			return true;
-		} else {
-			return false;
-		}
-	}
+    @Override
+    public boolean attachTo(Char target) {
+        if (super.attachTo(target)) {
+            Buff.detach(target, Poison.class);
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

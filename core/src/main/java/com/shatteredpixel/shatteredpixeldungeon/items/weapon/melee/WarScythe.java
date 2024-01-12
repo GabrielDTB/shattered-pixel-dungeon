@@ -29,34 +29,34 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class WarScythe extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.WAR_SCYTHE;
-		hitSound = Assets.Sounds.HIT_SLASH;
-		hitSoundPitch = 0.9f;
+    {
+        image = ItemSpriteSheet.WAR_SCYTHE;
+        hitSound = Assets.Sounds.HIT_SLASH;
+        hitSoundPitch = 0.9f;
 
-		tier = 5;
-		ACC = 0.8f; //20% penalty to accuracy
-	}
+        tier = 5;
+        ACC = 0.8f; //20% penalty to accuracy
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  Math.round(6.67f*(tier+1)) +    //40 base, up from 30
-				lvl*(tier+1);                   //scaling unchanged
-	}
+    @Override
+    public int max(int lvl) {
+        return Math.round(6.67f * (tier + 1)) +    //40 base, up from 30
+                lvl * (tier + 1);                   //scaling unchanged
+    }
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		return 2;
-	}
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        return 2;
+    }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		Sickle.harvestAbility(hero, target, 0.9f, this);
-	}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        Sickle.harvestAbility(hero, target, 0.9f, this);
+    }
 
 }

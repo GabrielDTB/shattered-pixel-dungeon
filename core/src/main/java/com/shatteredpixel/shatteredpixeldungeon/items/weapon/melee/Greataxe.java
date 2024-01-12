@@ -36,70 +36,70 @@ import com.watabou.utils.Callback;
 
 public class Greataxe extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.GREATAXE;
-		hitSound = Assets.Sounds.HIT_SLASH;
-		hitSoundPitch = 1f;
+    {
+        image = ItemSpriteSheet.GREATAXE;
+        hitSound = Assets.Sounds.HIT_SLASH;
+        hitSoundPitch = 1f;
 
-		tier = 5;
-	}
+        tier = 5;
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  5*(tier+4) +    //45 base, up from 30
-				lvl*(tier+1);   //scaling unchanged
-	}
+    @Override
+    public int max(int lvl) {
+        return 5 * (tier + 4) +    //45 base, up from 30
+                lvl * (tier + 1);   //scaling unchanged
+    }
 
-	@Override
-	public int STRReq(int lvl) {
-		return STRReq(tier+1, lvl); //20 base strength req, up from 18
-	}
+    @Override
+    public int STRReq(int lvl) {
+        return STRReq(tier + 1, lvl); //20 base strength req, up from 18
+    }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		if (hero.HP / (float)hero.HT >= 0.5f){
-			GLog.w(Messages.get(this, "ability_cant_use"));
-			return;
-		}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        if (hero.HP / (float) hero.HT >= 0.5f) {
+            GLog.w(Messages.get(this, "ability_cant_use"));
+            return;
+        }
 
-		if (target == null) {
-			return;
-		}
+        if (target == null) {
+            return;
+        }
 
-		Char enemy = Actor.findChar(target);
-		if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
-			GLog.w(Messages.get(this, "ability_no_target"));
-			return;
-		}
+        Char enemy = Actor.findChar(target);
+        if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
+            GLog.w(Messages.get(this, "ability_no_target"));
+            return;
+        }
 
-		hero.belongings.abilityWeapon = this;
-		if (!hero.canAttack(enemy)){
-			GLog.w(Messages.get(this, "ability_bad_position"));
-			hero.belongings.abilityWeapon = null;
-			return;
-		}
-		hero.belongings.abilityWeapon = null;
+        hero.belongings.abilityWeapon = this;
+        if (!hero.canAttack(enemy)) {
+            GLog.w(Messages.get(this, "ability_bad_position"));
+            hero.belongings.abilityWeapon = null;
+            return;
+        }
+        hero.belongings.abilityWeapon = null;
 
-		hero.sprite.attack(enemy.pos, new Callback() {
-			@Override
-			public void call() {
-				beforeAbilityUsed(hero, enemy);
-				AttackIndicator.target(enemy);
-				if (hero.attack(enemy, 1.50f, 0, Char.INFINITE_ACCURACY)){
-					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-					if (!enemy.isAlive()){
-						onAbilityKill(hero, enemy);
-					}
-				}
-				Invisibility.dispel();
-				hero.spendAndNext(hero.attackDelay());
-				afterAbilityUsed(hero);
-			}
-		});
-	}
+        hero.sprite.attack(enemy.pos, new Callback() {
+            @Override
+            public void call() {
+                beforeAbilityUsed(hero, enemy);
+                AttackIndicator.target(enemy);
+                if (hero.attack(enemy, 1.50f, 0, Char.INFINITE_ACCURACY)) {
+                    Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
+                    if (!enemy.isAlive()) {
+                        onAbilityKill(hero, enemy);
+                    }
+                }
+                Invisibility.dispel();
+                hero.spendAndNext(hero.attackDelay());
+                afterAbilityUsed(hero);
+            }
+        });
+    }
 }

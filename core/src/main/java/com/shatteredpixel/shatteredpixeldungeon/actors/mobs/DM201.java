@@ -33,95 +33,95 @@ import com.watabou.utils.Random;
 
 public class DM201 extends DM200 {
 
-	{
-		spriteClass = DM201Sprite.class;
+    private boolean threatened = false;
 
-		HP = HT = 120;
+    {
+        spriteClass = DM201Sprite.class;
 
-		properties.add(Property.IMMOVABLE);
+        HP = HT = 120;
 
-		HUNTING = new Mob.Hunting();
-	}
+        properties.add(Property.IMMOVABLE);
 
-	@Override
-	public int damageRoll() {
-		return Random.NormalIntRange( 15, 25 );
-	}
+        HUNTING = new Mob.Hunting();
+    }
 
-	private boolean threatened = false;
+    @Override
+    public int damageRoll() {
+        return Random.NormalIntRange(15, 25);
+    }
 
-	@Override
-	protected boolean act() {
+    @Override
+    protected boolean act() {
 
-		//in case DM-201 hasn't been able to act yet
-		if (fieldOfView == null || fieldOfView.length != Dungeon.level.length()){
-			fieldOfView = new boolean[Dungeon.level.length()];
-			Dungeon.level.updateFieldOfView( this, fieldOfView );
-		}
+        //in case DM-201 hasn't been able to act yet
+        if (fieldOfView == null || fieldOfView.length != Dungeon.level.length()) {
+            fieldOfView = new boolean[Dungeon.level.length()];
+            Dungeon.level.updateFieldOfView(this, fieldOfView);
+        }
 
-		if (paralysed <= 0 && state == HUNTING && enemy != null && enemySeen && threatened
-				&& canVent(enemy.pos) && !Dungeon.level.adjacent(pos, enemy.pos)
-				&& fieldOfView[enemy.pos] && enemy.invisible <= 0){
-			enemySeen = enemy.isAlive() && fieldOfView[enemy.pos] && enemy.invisible <= 0;
-			if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
-				sprite.zap( enemy.pos );
-				return false;
-			} else {
-				zap();
-				return true;
-			}
-		}
-		return super.act();
-	}
+        if (paralysed <= 0 && state == HUNTING && enemy != null && enemySeen && threatened
+                && canVent(enemy.pos) && !Dungeon.level.adjacent(pos, enemy.pos)
+                && fieldOfView[enemy.pos] && enemy.invisible <= 0) {
+            enemySeen = enemy.isAlive() && fieldOfView[enemy.pos] && enemy.invisible <= 0;
+            if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
+                sprite.zap(enemy.pos);
+                return false;
+            } else {
+                zap();
+                return true;
+            }
+        }
+        return super.act();
+    }
 
-	@Override
-	public void damage(int dmg, Object src) {
-		if ((src instanceof Char && !Dungeon.level.adjacent(pos, ((Char)src).pos))
-				|| enemy == null || !Dungeon.level.adjacent(pos, enemy.pos)){
-			threatened = true;
-		}
-		super.damage(dmg, src);
-	}
+    @Override
+    public void damage(int dmg, Object src) {
+        if ((src instanceof Char && !Dungeon.level.adjacent(pos, ((Char) src).pos))
+                || enemy == null || !Dungeon.level.adjacent(pos, enemy.pos)) {
+            threatened = true;
+        }
+        super.damage(dmg, src);
+    }
 
-	public void onZapComplete(){
-		zap();
-		next();
-	}
+    public void onZapComplete() {
+        zap();
+        next();
+    }
 
-	private void zap( ){
-		threatened = false;
-		spend(TICK);
+    private void zap() {
+        threatened = false;
+        spend(TICK);
 
-		GameScene.add(Blob.seed(enemy.pos, 15, CorrosiveGas.class).setStrength(8));
-		for (int i : PathFinder.NEIGHBOURS8){
-			if (!Dungeon.level.solid[enemy.pos+i]) {
-				GameScene.add(Blob.seed(enemy.pos + i, 5, CorrosiveGas.class).setStrength(8));
-			}
-		}
+        GameScene.add(Blob.seed(enemy.pos, 15, CorrosiveGas.class).setStrength(8));
+        for (int i : PathFinder.NEIGHBOURS8) {
+            if (!Dungeon.level.solid[enemy.pos + i]) {
+                GameScene.add(Blob.seed(enemy.pos + i, 5, CorrosiveGas.class).setStrength(8));
+            }
+        }
 
-	}
+    }
 
-	@Override
-	protected boolean getCloser(int target) {
-		return true;
-	}
+    @Override
+    protected boolean getCloser(int target) {
+        return true;
+    }
 
-	@Override
-	protected boolean getFurther(int target) {
-		return true;
-	}
+    @Override
+    protected boolean getFurther(int target) {
+        return true;
+    }
 
-	@Override
-	public void rollToDropLoot() {
-		if (Dungeon.hero.lvl > maxLvl + 2) return;
+    @Override
+    public void rollToDropLoot() {
+        if (Dungeon.hero.lvl > maxLvl + 2) return;
 
-		super.rollToDropLoot();
+        super.rollToDropLoot();
 
-		int ofs;
-		do {
-			ofs = PathFinder.NEIGHBOURS8[Random.Int(8)];
-		} while (Dungeon.level.solid[pos + ofs] && !Dungeon.level.passable[pos + ofs]);
-		Dungeon.level.drop( new MetalShard(), pos + ofs ).sprite.drop( pos );
-	}
+        int ofs;
+        do {
+            ofs = PathFinder.NEIGHBOURS8[Random.Int(8)];
+        } while (Dungeon.level.solid[pos + ofs] && !Dungeon.level.passable[pos + ofs]);
+        Dungeon.level.drop(new MetalShard(), pos + ofs).sprite.drop(pos);
+    }
 
 }

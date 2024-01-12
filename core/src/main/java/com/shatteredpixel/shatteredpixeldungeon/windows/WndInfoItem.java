@@ -29,98 +29,98 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 
 public class WndInfoItem extends Window {
-	
-	private static final float GAP	= 2;
 
-	private static final int WIDTH_MIN = 120;
-	private static final int WIDTH_MAX = 220;
+    private static final float GAP = 2;
 
-	//only one WndInfoItem can appear at a time
-	private static WndInfoItem INSTANCE;
+    private static final int WIDTH_MIN = 120;
+    private static final int WIDTH_MAX = 220;
 
-	public WndInfoItem( Heap heap ) {
+    //only one WndInfoItem can appear at a time
+    private static WndInfoItem INSTANCE;
 
-		super();
+    public WndInfoItem(Heap heap) {
 
-		if (INSTANCE != null){
-			INSTANCE.hide();
-		}
-		INSTANCE = this;
+        super();
 
-		if (heap.type == Heap.Type.HEAP) {
-			fillFields( heap.peek() );
+        if (INSTANCE != null) {
+            INSTANCE.hide();
+        }
+        INSTANCE = this;
 
-		} else {
-			fillFields( heap );
+        if (heap.type == Heap.Type.HEAP) {
+            fillFields(heap.peek());
 
-		}
-	}
-	
-	public WndInfoItem( Item item ) {
-		super();
+        } else {
+            fillFields(heap);
 
-		if (INSTANCE != null){
-			INSTANCE.hide();
-		}
-		INSTANCE = this;
-		
-		fillFields( item );
-	}
+        }
+    }
 
-	@Override
-	public void hide() {
-		super.hide();
-		if (INSTANCE == this){
-			INSTANCE = null;
-		}
-	}
+    public WndInfoItem(Item item) {
+        super();
 
-	private void fillFields(Heap heap ) {
-		
-		IconTitle titlebar = new IconTitle( heap );
-		titlebar.color( TITLE_COLOR );
-		
-		RenderedTextBlock txtInfo = PixelScene.renderTextBlock( heap.info(), 6 );
+        if (INSTANCE != null) {
+            INSTANCE.hide();
+        }
+        INSTANCE = this;
 
-		layoutFields(titlebar, txtInfo);
-	}
-	
-	private void fillFields( Item item ) {
-		
-		int color = TITLE_COLOR;
-		if (item.levelKnown && item.level() > 0) {
-			color = ItemSlot.UPGRADED;
-		} else if (item.levelKnown && item.level() < 0) {
-			color = ItemSlot.DEGRADED;
-		}
+        fillFields(item);
+    }
 
-		IconTitle titlebar = new IconTitle( item );
-		titlebar.color( color );
-		
-		RenderedTextBlock txtInfo = PixelScene.renderTextBlock( item.info(), 6 );
-		
-		layoutFields(titlebar, txtInfo);
-	}
+    @Override
+    public void hide() {
+        super.hide();
+        if (INSTANCE == this) {
+            INSTANCE = null;
+        }
+    }
 
-	private void layoutFields(IconTitle title, RenderedTextBlock info){
-		int width = WIDTH_MIN;
+    private void fillFields(Heap heap) {
 
-		info.maxWidth(width);
+        IconTitle titlebar = new IconTitle(heap);
+        titlebar.color(TITLE_COLOR);
 
-		//window can go out of the screen on landscape, so widen it as appropriate
-		while (PixelScene.landscape()
-				&& info.height() > 100
-				&& width < WIDTH_MAX){
-			width += 20;
-			info.maxWidth(width);
-		}
+        RenderedTextBlock txtInfo = PixelScene.renderTextBlock(heap.info(), 6);
 
-		title.setRect( 0, 0, width, 0 );
-		add( title );
+        layoutFields(titlebar, txtInfo);
+    }
 
-		info.setPos(title.left(), title.bottom() + GAP);
-		add( info );
+    private void fillFields(Item item) {
 
-		resize( width, (int)(info.bottom() + 2) );
-	}
+        int color = TITLE_COLOR;
+        if (item.levelKnown && item.level() > 0) {
+            color = ItemSlot.UPGRADED;
+        } else if (item.levelKnown && item.level() < 0) {
+            color = ItemSlot.DEGRADED;
+        }
+
+        IconTitle titlebar = new IconTitle(item);
+        titlebar.color(color);
+
+        RenderedTextBlock txtInfo = PixelScene.renderTextBlock(item.info(), 6);
+
+        layoutFields(titlebar, txtInfo);
+    }
+
+    private void layoutFields(IconTitle title, RenderedTextBlock info) {
+        int width = WIDTH_MIN;
+
+        info.maxWidth(width);
+
+        //window can go out of the screen on landscape, so widen it as appropriate
+        while (PixelScene.landscape()
+                && info.height() > 100
+                && width < WIDTH_MAX) {
+            width += 20;
+            info.maxWidth(width);
+        }
+
+        title.setRect(0, 0, width, 0);
+        add(title);
+
+        info.setPos(title.left(), title.bottom() + GAP);
+        add(info);
+
+        resize(width, (int) (info.bottom() + 2));
+    }
 }

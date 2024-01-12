@@ -38,103 +38,102 @@ import com.watabou.noosa.audio.Sample;
 import java.util.ArrayList;
 
 public class Stylus extends Item {
-	
-	private static final float TIME_TO_INSCRIBE = 2;
-	
-	private static final String AC_INSCRIBE = "INSCRIBE";
-	
-	{
-		image = ItemSpriteSheet.STYLUS;
-		
-		stackable = true;
 
-		defaultAction = AC_INSCRIBE;
+    private static final float TIME_TO_INSCRIBE = 2;
 
-		bones = true;
-	}
-	
-	@Override
-	public ArrayList<String> actions( Hero hero ) {
-		ArrayList<String> actions = super.actions( hero );
-		actions.add( AC_INSCRIBE );
-		return actions;
-	}
-	
-	@Override
-	public void execute( Hero hero, String action ) {
+    private static final String AC_INSCRIBE = "INSCRIBE";
+    private final WndBag.ItemSelector itemSelector = new WndBag.ItemSelector() {
 
-		super.execute( hero, action );
+        @Override
+        public String textPrompt() {
+            return Messages.get(Stylus.class, "prompt");
+        }
 
-		if (action.equals(AC_INSCRIBE)) {
+        @Override
+        public Class<? extends Bag> preferredBag() {
+            return Belongings.Backpack.class;
+        }
 
-			curUser = hero;
-			GameScene.selectItem( itemSelector );
-			
-		}
-	}
-	
-	@Override
-	public boolean isUpgradable() {
-		return false;
-	}
-	
-	@Override
-	public boolean isIdentified() {
-		return true;
-	}
-	
-	private void inscribe( Armor armor ) {
+        @Override
+        public boolean itemSelectable(Item item) {
+            return item instanceof Armor;
+        }
 
-		if (!armor.isIdentified() ){
-			GLog.w( Messages.get(this, "identify"));
-			return;
-		} else if (armor.cursed || armor.hasCurseGlyph()){
-			GLog.w( Messages.get(this, "cursed"));
-			return;
-		}
-		
-		detach(curUser.belongings.backpack);
+        @Override
+        public void onSelect(Item item) {
+            if (item != null) {
+                Stylus.this.inscribe((Armor) item);
+            }
+        }
+    };
 
-		GLog.w( Messages.get(this, "inscribed"));
+    {
+        image = ItemSpriteSheet.STYLUS;
 
-		armor.inscribe();
-		
-		curUser.sprite.operate(curUser.pos);
-		curUser.sprite.centerEmitter().start(PurpleParticle.BURST, 0.05f, 10);
-		Enchanting.show(curUser, armor);
-		Sample.INSTANCE.play(Assets.Sounds.BURNING);
-		
-		curUser.spend(TIME_TO_INSCRIBE);
-		curUser.busy();
-	}
-	
-	@Override
-	public int value() {
-		return 30 * quantity;
-	}
+        stackable = true;
 
-	private final WndBag.ItemSelector itemSelector = new WndBag.ItemSelector() {
+        defaultAction = AC_INSCRIBE;
 
-		@Override
-		public String textPrompt() {
-			return Messages.get(Stylus.class, "prompt");
-		}
+        bones = true;
+    }
 
-		@Override
-		public Class<?extends Bag> preferredBag(){
-			return Belongings.Backpack.class;
-		}
+    @Override
+    public ArrayList<String> actions(Hero hero) {
+        ArrayList<String> actions = super.actions(hero);
+        actions.add(AC_INSCRIBE);
+        return actions;
+    }
 
-		@Override
-		public boolean itemSelectable(Item item) {
-			return item instanceof Armor;
-		}
+    @Override
+    public void execute(Hero hero, String action) {
 
-		@Override
-		public void onSelect( Item item ) {
-			if (item != null) {
-				Stylus.this.inscribe( (Armor)item );
-			}
-		}
-	};
+        super.execute(hero, action);
+
+        if (action.equals(AC_INSCRIBE)) {
+
+            curUser = hero;
+            GameScene.selectItem(itemSelector);
+
+        }
+    }
+
+    @Override
+    public boolean isUpgradable() {
+        return false;
+    }
+
+    @Override
+    public boolean isIdentified() {
+        return true;
+    }
+
+    private void inscribe(Armor armor) {
+
+        if (!armor.isIdentified()) {
+            GLog.w(Messages.get(this, "identify"));
+            return;
+        } else if (armor.cursed || armor.hasCurseGlyph()) {
+            GLog.w(Messages.get(this, "cursed"));
+            return;
+        }
+
+        detach(curUser.belongings.backpack);
+
+        GLog.w(Messages.get(this, "inscribed"));
+
+        armor.inscribe();
+
+        curUser.sprite.operate(curUser.pos);
+        curUser.sprite.centerEmitter().start(PurpleParticle.BURST, 0.05f, 10);
+        Enchanting.show(curUser, armor);
+        Sample.INSTANCE.play(Assets.Sounds.BURNING);
+
+        curUser.spend(TIME_TO_INSCRIBE);
+        curUser.busy();
+    }
+
+    @Override
+    public int value() {
+        return 30 * quantity;
+    }
 }

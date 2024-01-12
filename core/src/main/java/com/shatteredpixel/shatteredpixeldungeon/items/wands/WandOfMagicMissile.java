@@ -40,127 +40,126 @@ import com.watabou.utils.Random;
 
 public class WandOfMagicMissile extends DamageWand {
 
-	{
-		image = ItemSpriteSheet.WAND_MAGIC_MISSILE;
-	}
+    {
+        image = ItemSpriteSheet.WAND_MAGIC_MISSILE;
+    }
 
-	public int min(int lvl){
-		return 2+lvl;
-	}
+    public int min(int lvl) {
+        return 2 + lvl;
+    }
 
-	public int max(int lvl){
-		return 8+2*lvl;
-	}
-	
-	@Override
-	public void onZap(Ballistica bolt) {
-				
-		Char ch = Actor.findChar( bolt.collisionPos );
-		if (ch != null) {
+    public int max(int lvl) {
+        return 8 + 2 * lvl;
+    }
 
-			wandProc(ch, chargesPerCast());
-			ch.damage(damageRoll(), this);
-			Sample.INSTANCE.play( Assets.Sounds.HIT_MAGIC, 1, Random.Float(0.87f, 1.15f) );
+    @Override
+    public void onZap(Ballistica bolt) {
 
-			ch.sprite.burst(0xFFFFFFFF, buffedLvl() / 2 + 2);
+        Char ch = Actor.findChar(bolt.collisionPos);
+        if (ch != null) {
 
-			//apply the magic charge buff if we have another wand in inventory of a lower level, or already have the buff
-			for (Wand.Charger wandCharger : curUser.buffs(Wand.Charger.class)){
-				if (wandCharger.wand().buffedLvl() < buffedLvl() || curUser.buff(MagicCharge.class) != null){
-					Buff.prolong(curUser, MagicCharge.class, MagicCharge.DURATION).setup(this);
-					break;
-				}
-			}
+            wandProc(ch, chargesPerCast());
+            ch.damage(damageRoll(), this);
+            Sample.INSTANCE.play(Assets.Sounds.HIT_MAGIC, 1, Random.Float(0.87f, 1.15f));
 
-		} else {
-			Dungeon.level.pressCell(bolt.collisionPos);
-		}
-	}
+            ch.sprite.burst(0xFFFFFFFF, buffedLvl() / 2 + 2);
 
-	@Override
-	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
-		SpellSprite.show(attacker, SpellSprite.CHARGE);
-		for (Wand.Charger c : attacker.buffs(Wand.Charger.class)){
-			if (c.wand() != this){
-				c.gainCharge(0.5f * procChanceMultiplier(attacker));
-			}
-		}
+            //apply the magic charge buff if we have another wand in inventory of a lower level, or already have the buff
+            for (Wand.Charger wandCharger : curUser.buffs(Wand.Charger.class)) {
+                if (wandCharger.wand().buffedLvl() < buffedLvl() || curUser.buff(MagicCharge.class) != null) {
+                    Buff.prolong(curUser, MagicCharge.class, MagicCharge.DURATION).setup(this);
+                    break;
+                }
+            }
 
-	}
-	
-	protected int initialCharges() {
-		return 3;
-	}
+        } else {
+            Dungeon.level.pressCell(bolt.collisionPos);
+        }
+    }
 
-	public static class MagicCharge extends FlavourBuff {
+    @Override
+    public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
+        SpellSprite.show(attacker, SpellSprite.CHARGE);
+        for (Wand.Charger c : attacker.buffs(Wand.Charger.class)) {
+            if (c.wand() != this) {
+                c.gainCharge(0.5f * procChanceMultiplier(attacker));
+            }
+        }
 
-		{
-			type = buffType.POSITIVE;
-			announced = true;
-		}
+    }
 
-		public static float DURATION = 4f;
+    protected int initialCharges() {
+        return 3;
+    }
 
-		private int level = 0;
-		private Wand wandJustApplied; //we don't bundle this as it's only used right as the buff is applied
+    public static class MagicCharge extends FlavourBuff {
 
-		public void setup(Wand wand){
-			if (level < wand.buffedLvl()){
-				this.level = wand.buffedLvl();
-				this.wandJustApplied = wand;
-			}
-		}
+        private static final String LEVEL = "level";
+        public static float DURATION = 4f;
 
-		@Override
-		public void detach() {
-			super.detach();
-			updateQuickslot();
-		}
+        private int level = 0;
+        private Wand wandJustApplied; //we don't bundle this as it's only used right as the buff is applied
 
-		public int level(){
-			return this.level;
-		}
+        {
+            type = buffType.POSITIVE;
+            announced = true;
+        }
 
-		//this is used briefly so that a wand of magic missile can't clear the buff it just applied
-		public Wand wandJustApplied(){
-			Wand result = this.wandJustApplied;
-			this.wandJustApplied = null;
-			return result;
-		}
+        public void setup(Wand wand) {
+            if (level < wand.buffedLvl()) {
+                this.level = wand.buffedLvl();
+                this.wandJustApplied = wand;
+            }
+        }
 
-		@Override
-		public int icon() {
-			return BuffIndicator.UPGRADE;
-		}
+        @Override
+        public void detach() {
+            super.detach();
+            updateQuickslot();
+        }
 
-		@Override
-		public void tintIcon(Image icon) {
-			icon.hardlight(0.2f, 0.6f, 1f);
-		}
+        public int level() {
+            return this.level;
+        }
 
-		@Override
-		public float iconFadePercent() {
-			return Math.max(0, (DURATION - visualcooldown()) / DURATION);
-		}
+        //this is used briefly so that a wand of magic missile can't clear the buff it just applied
+        public Wand wandJustApplied() {
+            Wand result = this.wandJustApplied;
+            this.wandJustApplied = null;
+            return result;
+        }
 
-		@Override
-		public String desc() {
-			return Messages.get(this, "desc", level(), dispTurns());
-		}
+        @Override
+        public int icon() {
+            return BuffIndicator.UPGRADE;
+        }
 
-		private static final String LEVEL = "level";
+        @Override
+        public void tintIcon(Image icon) {
+            icon.hardlight(0.2f, 0.6f, 1f);
+        }
 
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(LEVEL, level);
-		}
+        @Override
+        public float iconFadePercent() {
+            return Math.max(0, (DURATION - visualcooldown()) / DURATION);
+        }
 
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			level = bundle.getInt(LEVEL);
-		}
-	}
+        @Override
+        public String desc() {
+            return Messages.get(this, "desc", level(), dispTurns());
+        }
+
+        @Override
+        public void storeInBundle(Bundle bundle) {
+            super.storeInBundle(bundle);
+            bundle.put(LEVEL, level);
+        }
+
+        @Override
+        public void restoreFromBundle(Bundle bundle) {
+            super.restoreFromBundle(bundle);
+            level = bundle.getInt(LEVEL);
+        }
+    }
 
 }

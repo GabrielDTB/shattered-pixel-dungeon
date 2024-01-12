@@ -32,54 +32,52 @@ import com.watabou.utils.Bundle;
 
 public abstract class Key extends Item {
 
-	public static final float TIME_TO_UNLOCK = 1f;
-	
-	{
-		stackable = true;
-		unique = true;
-	}
+    public static final float TIME_TO_UNLOCK = 1f;
+    private static final String DEPTH = "depth";
+    //TODO currently keys can only appear on branch = 0, add branch support here if that changes
+    public int depth;
 
-	//TODO currently keys can only appear on branch = 0, add branch support here if that changes
-	public int depth;
-	
-	@Override
-	public boolean isSimilar( Item item ) {
-		return super.isSimilar(item) && ((Key)item).depth == depth;
-	}
+    {
+        stackable = true;
+        unique = true;
+    }
 
-	@Override
-	public boolean doPickUp(Hero hero, int pos) {
-		GameScene.pickUpJournal(this, pos);
-		WndJournal.last_index = 2;
-		Notes.add(this);
-		Sample.INSTANCE.play( Assets.Sounds.ITEM );
-		hero.spendAndNext( TIME_TO_PICK_UP );
-		GameScene.updateKeyDisplay();
-		return true;
-	}
+    @Override
+    public boolean isSimilar(Item item) {
+        return super.isSimilar(item) && ((Key) item).depth == depth;
+    }
 
-	private static final String DEPTH = "depth";
-	
-	@Override
-	public void storeInBundle( Bundle bundle ) {
-		super.storeInBundle( bundle );
-		bundle.put( DEPTH, depth );
-	}
-	
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		super.restoreFromBundle( bundle );
-		depth = bundle.getInt( DEPTH );
-	}
-	
-	@Override
-	public boolean isUpgradable() {
-		return false;
-	}
-	
-	@Override
-	public boolean isIdentified() {
-		return true;
-	}
+    @Override
+    public boolean doPickUp(Hero hero, int pos) {
+        GameScene.pickUpJournal(this, pos);
+        WndJournal.last_index = 2;
+        Notes.add(this);
+        Sample.INSTANCE.play(Assets.Sounds.ITEM);
+        hero.spendAndNext(TIME_TO_PICK_UP);
+        GameScene.updateKeyDisplay();
+        return true;
+    }
+
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(DEPTH, depth);
+    }
+
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        depth = bundle.getInt(DEPTH);
+    }
+
+    @Override
+    public boolean isUpgradable() {
+        return false;
+    }
+
+    @Override
+    public boolean isIdentified() {
+        return true;
+    }
 
 }

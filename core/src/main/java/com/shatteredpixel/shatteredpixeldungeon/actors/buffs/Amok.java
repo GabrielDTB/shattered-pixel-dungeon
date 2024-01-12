@@ -26,21 +26,21 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class Amok extends FlavourBuff {
 
-	{
-		type = buffType.NEGATIVE;
-		announced = true;
-	}
-	
-	@Override
-	public int icon() {
-		return BuffIndicator.AMOK;
-	}
+    {
+        type = buffType.NEGATIVE;
+        announced = true;
+    }
 
-	@Override
-	public void detach() {
-		super.detach();
-		if (target instanceof Mob && target.isAlive()) {
-			((Mob) target).aggro(null);
-		}
-	}
+    @Override
+    public int icon() {
+        return BuffIndicator.AMOK;
+    }
+
+    @Override
+    public void detach() {
+        super.detach();
+        if (target instanceof Mob && target.isAlive()) {
+            ((Mob) target).aggro(null);
+        }
+    }
 }

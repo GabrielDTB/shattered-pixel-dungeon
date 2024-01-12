@@ -33,33 +33,33 @@ import com.watabou.utils.BArray;
 import com.watabou.utils.PathFinder;
 
 public class Icecap extends Plant {
-	
-	{
-		image = 4;
-		seedClass = Seed.class;
-	}
-	
-	@Override
-	public void activate( Char ch ) {
-		
-		if (ch instanceof Hero && ((Hero) ch).subClass == HeroSubClass.WARDEN){
-			Buff.affect(ch, FrostImbue.class, FrostImbue.DURATION*0.3f);
-		}
-		
-		PathFinder.buildDistanceMap( pos, BArray.not( Dungeon.level.losBlocking, null ), 1 );
 
-		for (int i=0; i < PathFinder.distance.length; i++) {
-			if (PathFinder.distance[i] < Integer.MAX_VALUE) {
-				Freezing.affect( i );
-			}
-		}
-	}
-	
-	public static class Seed extends Plant.Seed {
-		{
-			image = ItemSpriteSheet.SEED_ICECAP;
+    {
+        image = 4;
+        seedClass = Seed.class;
+    }
 
-			plantClass = Icecap.class;
-		}
-	}
+    @Override
+    public void activate(Char ch) {
+
+        if (ch instanceof Hero && ((Hero) ch).subClass == HeroSubClass.WARDEN) {
+            Buff.affect(ch, FrostImbue.class, FrostImbue.DURATION * 0.3f);
+        }
+
+        PathFinder.buildDistanceMap(pos, BArray.not(Dungeon.level.losBlocking, null), 1);
+
+        for (int i = 0; i < PathFinder.distance.length; i++) {
+            if (PathFinder.distance[i] < Integer.MAX_VALUE) {
+                Freezing.affect(i);
+            }
+        }
+    }
+
+    public static class Seed extends Plant.Seed {
+        {
+            image = ItemSpriteSheet.SEED_ICECAP;
+
+            plantClass = Icecap.class;
+        }
+    }
 }

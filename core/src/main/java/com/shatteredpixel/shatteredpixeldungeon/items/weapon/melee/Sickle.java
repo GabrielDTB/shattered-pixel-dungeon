@@ -38,80 +38,82 @@ import com.watabou.utils.Callback;
 
 public class Sickle extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.SICKLE;
-		hitSound = Assets.Sounds.HIT_SLASH;
-		hitSoundPitch = 1f;
+    {
+        image = ItemSpriteSheet.SICKLE;
+        hitSound = Assets.Sounds.HIT_SLASH;
+        hitSoundPitch = 1f;
 
-		tier = 2;
-		ACC = 0.68f; //32% penalty to accuracy
-	}
+        tier = 2;
+        ACC = 0.68f; //32% penalty to accuracy
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  Math.round(6.67f*(tier+1)) +    //20 base, up from 15
-				lvl*(tier+1);                   //scaling unchanged
-	}
+    public static void harvestAbility(Hero hero, Integer target, float bleedFactor, MeleeWeapon wep) {
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		return 2;
-	}
+        if (target == null) {
+            return;
+        }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+        Char enemy = Actor.findChar(target);
+        if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
+            GLog.w(Messages.get(wep, "ability_no_target"));
+            return;
+        }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		harvestAbility(hero, target, 1f, this);
-	}
+        hero.belongings.abilityWeapon = wep;
+        if (!hero.canAttack(enemy)) {
+            GLog.w(Messages.get(wep, "ability_bad_position"));
+            hero.belongings.abilityWeapon = null;
+            return;
+        }
+        hero.belongings.abilityWeapon = null;
 
-	public static void harvestAbility(Hero hero, Integer target, float bleedFactor, MeleeWeapon wep){
+        hero.sprite.attack(enemy.pos, new Callback() {
+            @Override
+            public void call() {
+                wep.beforeAbilityUsed(hero, enemy);
+                AttackIndicator.target(enemy);
 
-		if (target == null) {
-			return;
-		}
+                Buff.affect(enemy, HarvestBleedTracker.class, 0).bleedFactor = bleedFactor;
+                if (hero.attack(enemy, 1.1f, 0, Char.INFINITE_ACCURACY)) {
+                    Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
+                }
 
-		Char enemy = Actor.findChar(target);
-		if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
-			GLog.w(Messages.get(wep, "ability_no_target"));
-			return;
-		}
+                Invisibility.dispel();
+                hero.spendAndNext(hero.attackDelay());
+                if (!enemy.isAlive()) {
+                    wep.onAbilityKill(hero, enemy);
+                }
+                wep.afterAbilityUsed(hero);
+            }
+        });
 
-		hero.belongings.abilityWeapon = wep;
-		if (!hero.canAttack(enemy)){
-			GLog.w(Messages.get(wep, "ability_bad_position"));
-			hero.belongings.abilityWeapon = null;
-			return;
-		}
-		hero.belongings.abilityWeapon = null;
+    }
 
-		hero.sprite.attack(enemy.pos, new Callback() {
-			@Override
-			public void call() {
-				wep.beforeAbilityUsed(hero, enemy);
-				AttackIndicator.target(enemy);
+    @Override
+    public int max(int lvl) {
+        return Math.round(6.67f * (tier + 1)) +    //20 base, up from 15
+                lvl * (tier + 1);                   //scaling unchanged
+    }
 
-				Buff.affect(enemy, HarvestBleedTracker.class, 0).bleedFactor = bleedFactor;
-				if (hero.attack(enemy, 1.1f, 0, Char.INFINITE_ACCURACY)){
-					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-				}
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        return 2;
+    }
 
-				Invisibility.dispel();
-				hero.spendAndNext(hero.attackDelay());
-				if (!enemy.isAlive()){
-					wep.onAbilityKill(hero, enemy);
-				}
-				wep.afterAbilityUsed(hero);
-			}
-		});
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-	}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        harvestAbility(hero, target, 1f, this);
+    }
 
-	public static class HarvestBleedTracker extends FlavourBuff{
-		public float bleedFactor;
-	};
+    public static class HarvestBleedTracker extends FlavourBuff {
+        public float bleedFactor;
+    }
+
+    ;
 
 }

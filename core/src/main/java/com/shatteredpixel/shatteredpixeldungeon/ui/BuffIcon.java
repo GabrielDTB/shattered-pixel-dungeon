@@ -28,39 +28,37 @@ import com.watabou.noosa.TextureFilm;
 
 public class BuffIcon extends Image {
 
-	private static TextureFilm smallFilm;
-	private static final int SML_SIZE = 7;
+    private static final int SML_SIZE = 7;
+    private static final int LRG_SIZE = 16;
+    private static TextureFilm smallFilm;
+    private static TextureFilm largeFilm;
+    private final boolean large;
 
-	private static TextureFilm largeFilm;
-	private static final int LRG_SIZE = 16;
+    public BuffIcon(Buff buff, boolean large) {
+        super(large ? Assets.Interfaces.BUFFS_LARGE : Assets.Interfaces.BUFFS_SMALL);
+        this.large = large;
+        refresh(buff);
+    }
 
-	private final boolean large;
+    public BuffIcon(int icon, boolean large) {
+        super(large ? Assets.Interfaces.BUFFS_LARGE : Assets.Interfaces.BUFFS_SMALL);
+        this.large = large;
+        refresh(icon);
+    }
 
-	public BuffIcon(Buff buff, boolean large){
-		super( large ? Assets.Interfaces.BUFFS_LARGE : Assets.Interfaces.BUFFS_SMALL );
-		this.large = large;
-		refresh(buff);
-	}
+    public void refresh(Buff buff) {
+        refresh(buff.icon());
+        buff.tintIcon(this);
+    }
 
-	public BuffIcon(int icon, boolean large){
-		super( large ? Assets.Interfaces.BUFFS_LARGE : Assets.Interfaces.BUFFS_SMALL );
-		this.large = large;
-		refresh(icon);
-	}
-
-	public void refresh(Buff buff){
-		refresh(buff.icon());
-		buff.tintIcon(this);
-	}
-
-	public void refresh(int icon){
-		if (large){
-			if (largeFilm == null) largeFilm = new TextureFilm(texture, LRG_SIZE, LRG_SIZE);
-			frame(largeFilm.get(icon));
-		} else {
-			if (smallFilm == null ) smallFilm = new TextureFilm(texture, SML_SIZE, SML_SIZE);
-			frame(smallFilm.get(icon));
-		}
-	}
+    public void refresh(int icon) {
+        if (large) {
+            if (largeFilm == null) largeFilm = new TextureFilm(texture, LRG_SIZE, LRG_SIZE);
+            frame(largeFilm.get(icon));
+        } else {
+            if (smallFilm == null) smallFilm = new TextureFilm(texture, SML_SIZE, SML_SIZE);
+            frame(smallFilm.get(icon));
+        }
+    }
 
 }

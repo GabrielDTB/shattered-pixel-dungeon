@@ -37,70 +37,78 @@ import com.watabou.utils.Random;
 
 public class SacrificeRoom extends SpecialRoom {
 
-	@Override
-	public int minWidth() { return 7; }
-	public int minHeight() { return 7; }
+    public static Item prize(Level level) {
 
-	@Override
-	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1, Terrain.CHASM );
+        //1 floor set higher than normal
+        Weapon prize = Generator.randomWeapon((Dungeon.depth / 5) + 1);
 
-		Point c = center();
-		Door door = entrance();
-		if (door.x == left || door.x == right) {
-			if (door.y == c.y) c.y += Random.Int(2) == 0 ? -1 : +1;
-			Point p = Painter.drawInside( level, this, door, Math.abs( door.x - c.x ) - 2, Terrain.EMPTY_SP );
-			for (; p.y != c.y; p.y += p.y < c.y ? +1 : -1) {
-				Painter.set( level, p, Terrain.EMPTY_SP );
-			}
-		} else {
-			if (door.x == c.x) c.x += Random.Int(2) == 0 ? -1 : +1;
-			Point p = Painter.drawInside( level, this, door, Math.abs( door.y - c.y ) - 2, Terrain.EMPTY_SP );
-			for (; p.x != c.x; p.x += p.x < c.x ? +1 : -1) {
-				Painter.set( level, p, Terrain.EMPTY_SP );
-			}
-		}
+        if (Challenges.isItemBlocked(prize)) {
+            return new Gold().random();
+        }
 
-		//we add four statues to give some cover from ranged enemies
-		Point statue = new Point(c);
-		statue.x -= 2;
-		if (statue.x > left) Painter.set( level, statue, Terrain.STATUE );
-		statue.x += 2; statue.y -= 2;
-		if (statue.y > top) Painter.set( level, statue, Terrain.STATUE );
-		statue.y += 2; statue.x += 2;
-		if (statue.x < right) Painter.set( level, statue, Terrain.STATUE );
-		statue.x -= 2; statue.y += 2;
-		if (statue.y < bottom) Painter.set( level, statue, Terrain.STATUE );
+        //if it isn't already cursed, give it a free upgrade
+        if (!prize.cursed) {
+            prize.upgrade();
+            //curse the weapon, unless it has a glyph
+            if (!prize.hasGoodEnchant()) {
+                prize.enchant(Weapon.Enchantment.randomCurse());
+            }
+        }
+        prize.cursed = prize.cursedKnown = true;
 
-		Painter.fill( level, c.x - 1, c.y - 1, 3, 3, Terrain.EMBERS );
-		Painter.set( level, c, Terrain.PEDESTAL );
+        return prize;
+    }
 
-		Blob.seed( level.pointToCell(c), 6 + Dungeon.depth * 4, SacrificialFire.class, level ).setPrize(prize(level));
+    @Override
+    public int minWidth() {
+        return 7;
+    }
 
-		door.set( Door.Type.EMPTY );
-	}
+    public int minHeight() {
+        return 7;
+    }
 
-	public static Item prize( Level level ) {
+    @Override
+    public void paint(Level level) {
+        Painter.fill(level, this, Terrain.WALL);
+        Painter.fill(level, this, 1, Terrain.CHASM);
 
-		//1 floor set higher than normal
-		Weapon prize = Generator.randomWeapon( (Dungeon.depth / 5) + 1);
+        Point c = center();
+        Door door = entrance();
+        if (door.x == left || door.x == right) {
+            if (door.y == c.y) c.y += Random.Int(2) == 0 ? -1 : +1;
+            Point p = Painter.drawInside(level, this, door, Math.abs(door.x - c.x) - 2, Terrain.EMPTY_SP);
+            for (; p.y != c.y; p.y += p.y < c.y ? +1 : -1) {
+                Painter.set(level, p, Terrain.EMPTY_SP);
+            }
+        } else {
+            if (door.x == c.x) c.x += Random.Int(2) == 0 ? -1 : +1;
+            Point p = Painter.drawInside(level, this, door, Math.abs(door.y - c.y) - 2, Terrain.EMPTY_SP);
+            for (; p.x != c.x; p.x += p.x < c.x ? +1 : -1) {
+                Painter.set(level, p, Terrain.EMPTY_SP);
+            }
+        }
 
-		if (Challenges.isItemBlocked(prize)){
-			return new Gold().random();
-		}
+        //we add four statues to give some cover from ranged enemies
+        Point statue = new Point(c);
+        statue.x -= 2;
+        if (statue.x > left) Painter.set(level, statue, Terrain.STATUE);
+        statue.x += 2;
+        statue.y -= 2;
+        if (statue.y > top) Painter.set(level, statue, Terrain.STATUE);
+        statue.y += 2;
+        statue.x += 2;
+        if (statue.x < right) Painter.set(level, statue, Terrain.STATUE);
+        statue.x -= 2;
+        statue.y += 2;
+        if (statue.y < bottom) Painter.set(level, statue, Terrain.STATUE);
 
-		//if it isn't already cursed, give it a free upgrade
-		if (!prize.cursed){
-			prize.upgrade();
-			//curse the weapon, unless it has a glyph
-			if (!prize.hasGoodEnchant()){
-				prize.enchant(Weapon.Enchantment.randomCurse());
-			}
-		}
-		prize.cursed = prize.cursedKnown = true;
+        Painter.fill(level, c.x - 1, c.y - 1, 3, 3, Terrain.EMBERS);
+        Painter.set(level, c, Terrain.PEDESTAL);
 
-		return prize;
-	}
+        Blob.seed(level.pointToCell(c), 6 + Dungeon.depth * 4, SacrificialFire.class, level).setPrize(prize(level));
+
+        door.set(Door.Type.EMPTY);
+    }
 
 }

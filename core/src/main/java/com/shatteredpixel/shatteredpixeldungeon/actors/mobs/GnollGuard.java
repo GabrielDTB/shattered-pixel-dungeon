@@ -30,44 +30,44 @@ import com.watabou.utils.Random;
 
 public class GnollGuard extends Mob {
 
-	{
-		spriteClass = GnollGuardSprite.class;
+    {
+        spriteClass = GnollGuardSprite.class;
 
-		HP = HT = 35;
-		defenseSkill = 15;
+        HP = HT = 35;
+        defenseSkill = 15;
 
-		EXP = 7;
-		maxLvl = -2;
+        EXP = 7;
+        maxLvl = -2;
 
-		loot = Spear.class;
-		lootChance = 0.1f;
-	}
+        loot = Spear.class;
+        lootChance = 0.1f;
+    }
 
-	@Override
-	public int damageRoll() {
-		if (enemy != null && !Dungeon.level.adjacent(pos, enemy.pos)){
-			return Random.NormalIntRange( 15, 25 );
-		} else {
-			return Random.NormalIntRange( 5, 15 );
-		}
-	}
+    @Override
+    public int damageRoll() {
+        if (enemy != null && !Dungeon.level.adjacent(pos, enemy.pos)) {
+            return Random.NormalIntRange(15, 25);
+        } else {
+            return Random.NormalIntRange(5, 15);
+        }
+    }
 
-	@Override
-	public int attackSkill( Char target ) {
-		return 20;
-	}
+    @Override
+    public int attackSkill(Char target) {
+        return 20;
+    }
 
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 6);
-	}
+    @Override
+    public int drRoll() {
+        return super.drRoll() + Random.NormalIntRange(0, 6);
+    }
 
-	@Override
-	protected boolean canAttack( Char enemy ) {
-		//cannot 'curve' spear hits like the hero, requires fairly open space to hit at a distance
-		return Dungeon.level.distance(enemy.pos, pos) <= 2
-				&& new Ballistica( pos, enemy.pos, Ballistica.PROJECTILE).collisionPos == enemy.pos
-				&& new Ballistica( enemy.pos, pos, Ballistica.PROJECTILE).collisionPos == pos;
-	}
+    @Override
+    protected boolean canAttack(Char enemy) {
+        //cannot 'curve' spear hits like the hero, requires fairly open space to hit at a distance
+        return Dungeon.level.distance(enemy.pos, pos) <= 2
+                && new Ballistica(pos, enemy.pos, Ballistica.PROJECTILE).collisionPos == enemy.pos
+                && new Ballistica(enemy.pos, pos, Ballistica.PROJECTILE).collisionPos == pos;
+    }
 
 }

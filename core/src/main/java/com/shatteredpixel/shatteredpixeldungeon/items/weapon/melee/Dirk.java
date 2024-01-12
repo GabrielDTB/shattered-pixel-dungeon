@@ -31,58 +31,58 @@ import com.watabou.utils.Random;
 
 public class Dirk extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.DIRK;
-		hitSound = Assets.Sounds.HIT_STAB;
-		hitSoundPitch = 1f;
+    {
+        image = ItemSpriteSheet.DIRK;
+        hitSound = Assets.Sounds.HIT_STAB;
+        hitSoundPitch = 1f;
 
-		tier = 2;
-	}
+        tier = 2;
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  4*(tier+1) +    //12 base, down from 15
-				lvl*(tier+1);   //scaling unchanged
-	}
-	
-	@Override
-	public int damageRoll(Char owner) {
-		if (owner instanceof Hero) {
-			Hero hero = (Hero)owner;
-			Char enemy = hero.enemy();
-			if (enemy instanceof Mob && ((Mob) enemy).surprisedBy(hero)) {
-				//deals 67% toward max to max on surprise, instead of min to max.
-				int diff = max() - min();
-				int damage = augment.damageFactor(Random.NormalIntRange(
-						min() + Math.round(diff*0.67f),
-						max()));
-				int exStr = hero.STR() - STRReq();
-				if (exStr > 0) {
-					damage += Random.IntRange(0, exStr);
-				}
-				return damage;
-			}
-		}
-		return super.damageRoll(owner);
-	}
+    @Override
+    public int max(int lvl) {
+        return 4 * (tier + 1) +    //12 base, down from 15
+                lvl * (tier + 1);   //scaling unchanged
+    }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+    @Override
+    public int damageRoll(Char owner) {
+        if (owner instanceof Hero) {
+            Hero hero = (Hero) owner;
+            Char enemy = hero.enemy();
+            if (enemy instanceof Mob && ((Mob) enemy).surprisedBy(hero)) {
+                //deals 67% toward max to max on surprise, instead of min to max.
+                int diff = max() - min();
+                int damage = augment.damageFactor(Random.NormalIntRange(
+                        min() + Math.round(diff * 0.67f),
+                        max()));
+                int exStr = hero.STR() - STRReq();
+                if (exStr > 0) {
+                    damage += Random.IntRange(0, exStr);
+                }
+                return damage;
+            }
+        }
+        return super.damageRoll(owner);
+    }
 
-	public boolean useTargeting(){
-		return false;
-	}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		return 2;
-	}
+    public boolean useTargeting() {
+        return false;
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		Dagger.sneakAbility(hero, target, 5, this);
-	}
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        return 2;
+    }
+
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        Dagger.sneakAbility(hero, target, 5, this);
+    }
 
 }

@@ -41,94 +41,94 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class Dagger extends MeleeWeapon {
-	
-	{
-		image = ItemSpriteSheet.DAGGER;
-		hitSound = Assets.Sounds.HIT_STAB;
-		hitSoundPitch = 1.1f;
 
-		tier = 1;
-		
-		bones = false;
-	}
+    {
+        image = ItemSpriteSheet.DAGGER;
+        hitSound = Assets.Sounds.HIT_STAB;
+        hitSoundPitch = 1.1f;
 
-	@Override
-	public int max(int lvl) {
-		return  4*(tier+1) +    //8 base, down from 10
-				lvl*(tier+1);   //scaling unchanged
-	}
-	
-	@Override
-	public int damageRoll(Char owner) {
-		if (owner instanceof Hero) {
-			Hero hero = (Hero)owner;
-			Char enemy = hero.enemy();
-			if (enemy instanceof Mob && ((Mob) enemy).surprisedBy(hero)) {
-				//deals 75% toward max to max on surprise, instead of min to max.
-				int diff = max() - min();
-				int damage = augment.damageFactor(Random.NormalIntRange(
-						min() + Math.round(diff*0.75f),
-						max()));
-				int exStr = hero.STR() - STRReq();
-				if (exStr > 0) {
-					damage += Random.IntRange(0, exStr);
-				}
-				return damage;
-			}
-		}
-		return super.damageRoll(owner);
-	}
+        tier = 1;
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+        bones = false;
+    }
 
-	public boolean useTargeting(){
-		return false;
-	}
+    public static void sneakAbility(Hero hero, Integer target, int maxDist, MeleeWeapon wep) {
+        if (target == null) {
+            return;
+        }
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		return 2;
-	}
+        if (Actor.findChar(target) != null || !Dungeon.level.heroFOV[target]) {
+            GLog.w(Messages.get(wep, "ability_bad_position"));
+            return;
+        }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		sneakAbility(hero, target, 6, this);
-	}
+        PathFinder.buildDistanceMap(Dungeon.hero.pos, BArray.or(Dungeon.level.passable, Dungeon.level.avoid, null), maxDist);
+        if (PathFinder.distance[target] == Integer.MAX_VALUE) {
+            GLog.w(Messages.get(wep, "ability_bad_position"));
+            return;
+        }
 
-	public static void sneakAbility(Hero hero, Integer target, int maxDist, MeleeWeapon wep){
-		if (target == null) {
-			return;
-		}
+        wep.beforeAbilityUsed(hero, null);
+        Buff.affect(hero, Invisibility.class, Actor.TICK);
+        hero.next();
 
-		if (Actor.findChar(target) != null || !Dungeon.level.heroFOV[target]) {
-			GLog.w(Messages.get(wep, "ability_bad_position"));
-			return;
-		}
+        Dungeon.hero.sprite.turnTo(Dungeon.hero.pos, target);
+        Dungeon.hero.pos = target;
+        Dungeon.level.occupyCell(Dungeon.hero);
+        Dungeon.observe();
+        GameScene.updateFog();
+        Dungeon.hero.checkVisibleMobs();
 
-		PathFinder.buildDistanceMap(Dungeon.hero.pos, BArray.or(Dungeon.level.passable, Dungeon.level.avoid, null), maxDist);
-		if (PathFinder.distance[target] == Integer.MAX_VALUE) {
-			GLog.w(Messages.get(wep, "ability_bad_position"));
-			return;
-		}
+        Dungeon.hero.sprite.place(Dungeon.hero.pos);
+        CellEmitter.get(Dungeon.hero.pos).burst(Speck.factory(Speck.WOOL), 6);
+        Sample.INSTANCE.play(Assets.Sounds.PUFF);
 
-		wep.beforeAbilityUsed(hero, null);
-		Buff.affect(hero, Invisibility.class, Actor.TICK);
-		hero.next();
+        wep.afterAbilityUsed(hero);
+    }
 
-		Dungeon.hero.sprite.turnTo( Dungeon.hero.pos, target);
-		Dungeon.hero.pos = target;
-		Dungeon.level.occupyCell(Dungeon.hero);
-		Dungeon.observe();
-		GameScene.updateFog();
-		Dungeon.hero.checkVisibleMobs();
+    @Override
+    public int max(int lvl) {
+        return 4 * (tier + 1) +    //8 base, down from 10
+                lvl * (tier + 1);   //scaling unchanged
+    }
 
-		Dungeon.hero.sprite.place( Dungeon.hero.pos );
-		CellEmitter.get( Dungeon.hero.pos ).burst( Speck.factory( Speck.WOOL ), 6 );
-		Sample.INSTANCE.play( Assets.Sounds.PUFF );
+    @Override
+    public int damageRoll(Char owner) {
+        if (owner instanceof Hero) {
+            Hero hero = (Hero) owner;
+            Char enemy = hero.enemy();
+            if (enemy instanceof Mob && ((Mob) enemy).surprisedBy(hero)) {
+                //deals 75% toward max to max on surprise, instead of min to max.
+                int diff = max() - min();
+                int damage = augment.damageFactor(Random.NormalIntRange(
+                        min() + Math.round(diff * 0.75f),
+                        max()));
+                int exStr = hero.STR() - STRReq();
+                if (exStr > 0) {
+                    damage += Random.IntRange(0, exStr);
+                }
+                return damage;
+            }
+        }
+        return super.damageRoll(owner);
+    }
 
-		wep.afterAbilityUsed(hero);
-	}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
+
+    public boolean useTargeting() {
+        return false;
+    }
+
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        return 2;
+    }
+
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        sneakAbility(hero, target, 6, this);
+    }
 }

@@ -39,93 +39,93 @@ import com.watabou.utils.Callback;
 
 public class Mace extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.MACE;
-		hitSound = Assets.Sounds.HIT_CRUSH;
-		hitSoundPitch = 1f;
+    {
+        image = ItemSpriteSheet.MACE;
+        hitSound = Assets.Sounds.HIT_CRUSH;
+        hitSoundPitch = 1f;
 
-		tier = 3;
-		ACC = 1.28f; //28% boost to accuracy
-	}
+        tier = 3;
+        ACC = 1.28f; //28% boost to accuracy
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  4*(tier+1) +    //16 base, down from 20
-				lvl*(tier+1);   //scaling unchanged
-	}
+    public static void heavyBlowAbility(Hero hero, Integer target, float dmgMulti, MeleeWeapon wep) {
+        if (target == null) {
+            return;
+        }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+        Char enemy = Actor.findChar(target);
+        if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
+            GLog.w(Messages.get(wep, "ability_no_target"));
+            return;
+        }
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		if (target == null || (target instanceof Mob && ((Mob) target).surprisedBy(hero))) {
-			return 1;
-		} else {
-			return 2;
-		}
-	}
+        hero.belongings.abilityWeapon = wep;
+        if (!hero.canAttack(enemy)) {
+            GLog.w(Messages.get(wep, "ability_bad_position"));
+            hero.belongings.abilityWeapon = null;
+            return;
+        }
+        hero.belongings.abilityWeapon = null;
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		Mace.heavyBlowAbility(hero, target, 1.40f, this);
-	}
+        //need to separately check charges here, as non-surprise attacks cost 2
+        if (enemy instanceof Mob && !((Mob) enemy).surprisedBy(hero)) {
+            Charger charger = Buff.affect(hero, Charger.class);
+            if (Dungeon.hero.belongings.weapon == wep) {
+                if (charger.charges + charger.partialCharge < wep.abilityChargeUse(hero, enemy)) {
+                    GLog.w(Messages.get(wep, "ability_no_charge"));
+                    return;
+                }
+            } else {
+                if (charger.secondCharges + charger.secondPartialCharge < wep.abilityChargeUse(hero, enemy)) {
+                    GLog.w(Messages.get(wep, "ability_no_charge"));
+                    return;
+                }
+            }
+        }
 
-	public static void heavyBlowAbility(Hero hero, Integer target, float dmgMulti, MeleeWeapon wep){
-		if (target == null) {
-			return;
-		}
+        hero.sprite.attack(enemy.pos, new Callback() {
+            @Override
+            public void call() {
+                wep.beforeAbilityUsed(hero, enemy);
+                AttackIndicator.target(enemy);
+                if (hero.attack(enemy, dmgMulti, 0, Char.INFINITE_ACCURACY)) {
+                    Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
+                    if (enemy.isAlive()) {
+                        Buff.affect(enemy, Daze.class, Daze.DURATION);
+                    } else {
+                        wep.onAbilityKill(hero, enemy);
+                    }
+                }
+                Invisibility.dispel();
+                hero.spendAndNext(hero.attackDelay());
+                wep.afterAbilityUsed(hero);
+            }
+        });
+    }
 
-		Char enemy = Actor.findChar(target);
-		if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
-			GLog.w(Messages.get(wep, "ability_no_target"));
-			return;
-		}
+    @Override
+    public int max(int lvl) {
+        return 4 * (tier + 1) +    //16 base, down from 20
+                lvl * (tier + 1);   //scaling unchanged
+    }
 
-		hero.belongings.abilityWeapon = wep;
-		if (!hero.canAttack(enemy)){
-			GLog.w(Messages.get(wep, "ability_bad_position"));
-			hero.belongings.abilityWeapon = null;
-			return;
-		}
-		hero.belongings.abilityWeapon = null;
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-		//need to separately check charges here, as non-surprise attacks cost 2
-		if (enemy instanceof Mob && !((Mob) enemy).surprisedBy(hero)){
-			Charger charger = Buff.affect(hero, Charger.class);
-			if (Dungeon.hero.belongings.weapon == wep) {
-				if (charger.charges + charger.partialCharge < wep.abilityChargeUse(hero, enemy)){
-					GLog.w(Messages.get(wep, "ability_no_charge"));
-					return;
-				}
-			} else {
-				if (charger.secondCharges + charger.secondPartialCharge < wep.abilityChargeUse(hero, enemy)){
-					GLog.w(Messages.get(wep, "ability_no_charge"));
-					return;
-				}
-			}
-		}
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        if (target == null || (target instanceof Mob && ((Mob) target).surprisedBy(hero))) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
 
-		hero.sprite.attack(enemy.pos, new Callback() {
-			@Override
-			public void call() {
-				wep.beforeAbilityUsed(hero, enemy);
-				AttackIndicator.target(enemy);
-				if (hero.attack(enemy, dmgMulti, 0, Char.INFINITE_ACCURACY)) {
-					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-					if (enemy.isAlive()){
-						Buff.affect(enemy, Daze.class, Daze.DURATION);
-					} else {
-						wep.onAbilityKill(hero, enemy);
-					}
-				}
-				Invisibility.dispel();
-				hero.spendAndNext(hero.attackDelay());
-				wep.afterAbilityUsed(hero);
-			}
-		});
-	}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        Mace.heavyBlowAbility(hero, target, 1.40f, this);
+    }
 
 }

@@ -33,61 +33,61 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class RoundShield extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.ROUND_SHIELD;
-		hitSound = Assets.Sounds.HIT;
-		hitSoundPitch = 1f;
+    {
+        image = ItemSpriteSheet.ROUND_SHIELD;
+        hitSound = Assets.Sounds.HIT;
+        hitSoundPitch = 1f;
 
-		tier = 3;
-	}
+        tier = 3;
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  Math.round(3f*(tier+1)) +   //12 base, down from 20
-				lvl*(tier-1);               //+2 per level, down from +4
-	}
+    public static void guardAbility(Hero hero, int duration, MeleeWeapon wep) {
+        wep.beforeAbilityUsed(hero, null);
+        Buff.prolong(hero, GuardTracker.class, duration);
+        hero.sprite.operate(hero.pos);
+        hero.spendAndNext(Actor.TICK);
+        wep.afterAbilityUsed(hero);
+    }
 
-	@Override
-	public int defenseFactor( Char owner ) {
-		return 4+buffedLvl();               //4 extra defence, plus 1 per level
-	}
-	
-	public String statsInfo(){
-		if (isIdentified()){
-			return Messages.get(this, "stats_desc", 4+buffedLvl());
-		} else {
-			return Messages.get(this, "typical_stats_desc", 4);
-		}
-	}
+    @Override
+    public int max(int lvl) {
+        return Math.round(3f * (tier + 1)) +   //12 base, down from 20
+                lvl * (tier - 1);               //+2 per level, down from +4
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		RoundShield.guardAbility(hero, 8, this);
-	}
+    @Override
+    public int defenseFactor(Char owner) {
+        return 4 + buffedLvl();               //4 extra defence, plus 1 per level
+    }
 
-	public static void guardAbility(Hero hero, int duration, MeleeWeapon wep){
-		wep.beforeAbilityUsed(hero, null);
-		Buff.prolong(hero, GuardTracker.class, duration);
-		hero.sprite.operate(hero.pos);
-		hero.spendAndNext(Actor.TICK);
-		wep.afterAbilityUsed(hero);
-	}
+    public String statsInfo() {
+        if (isIdentified()) {
+            return Messages.get(this, "stats_desc", 4 + buffedLvl());
+        } else {
+            return Messages.get(this, "typical_stats_desc", 4);
+        }
+    }
 
-	public static class GuardTracker extends FlavourBuff {
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        RoundShield.guardAbility(hero, 8, this);
+    }
 
-		{
-			announced = true;
-			type = buffType.POSITIVE;
-		}
+    public static class GuardTracker extends FlavourBuff {
 
-		@Override
-		public int icon() {
-			return BuffIndicator.DUEL_GUARD;
-		}
+        {
+            announced = true;
+            type = buffType.POSITIVE;
+        }
 
-		@Override
-		public float iconFadePercent() {
-			return Math.max(0, (7 - visualcooldown()) / 7);
-		}
-	}
+        @Override
+        public int icon() {
+            return BuffIndicator.DUEL_GUARD;
+        }
+
+        @Override
+        public float iconFadePercent() {
+            return Math.max(0, (7 - visualcooldown()) / 7);
+        }
+    }
 }

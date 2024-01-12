@@ -26,49 +26,46 @@ import com.watabou.utils.Bundle;
 
 public class Terror extends FlavourBuff {
 
-	public int object = 0;
+    public static final float DURATION = 20f;
+    private static final String OBJECT = "object";
+    public int object = 0;
+    public boolean ignoreNextHit = false;
 
-	private static final String OBJECT    = "object";
+    {
+        type = buffType.NEGATIVE;
+        announced = true;
+    }
 
-	public static final float DURATION = 20f;
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(OBJECT, object);
+    }
 
-	{
-		type = buffType.NEGATIVE;
-		announced = true;
-	}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        object = bundle.getInt(OBJECT);
+    }
 
-	@Override
-	public void storeInBundle( Bundle bundle ) {
-		super.storeInBundle(bundle);
-		bundle.put(OBJECT, object);
-	}
+    @Override
+    public int icon() {
+        return BuffIndicator.TERROR;
+    }
 
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		super.restoreFromBundle( bundle );
-		object = bundle.getInt( OBJECT );
-	}
+    @Override
+    public float iconFadePercent() {
+        return Math.max(0, (DURATION - visualcooldown()) / DURATION);
+    }
 
-	@Override
-	public int icon() {
-		return BuffIndicator.TERROR;
-	}
-
-	@Override
-	public float iconFadePercent() {
-		return Math.max(0, (DURATION - visualcooldown()) / DURATION);
-	}
-
-	public boolean ignoreNextHit = false;
-
-	public void recover() {
-		if (ignoreNextHit){
-			ignoreNextHit = false;
-			return;
-		}
-		spend(-5f);
-		if (cooldown() <= 0){
-			detach();
-		}
-	}
+    public void recover() {
+        if (ignoreNextHit) {
+            ignoreNextHit = false;
+            return;
+        }
+        spend(-5f);
+        if (cooldown() <= 0) {
+            detach();
+        }
+    }
 }

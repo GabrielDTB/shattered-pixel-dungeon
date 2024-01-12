@@ -28,33 +28,33 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class RingOfHaste extends Ring {
 
-	{
-		icon = ItemSpriteSheet.Icons.RING_HASTE;
-	}
+    {
+        icon = ItemSpriteSheet.Icons.RING_HASTE;
+    }
 
-	public String statsInfo() {
-		if (isIdentified()){
-			String info = Messages.get(this, "stats",
-					Messages.decimalFormat("#.##", 100f * (Math.pow(1.2f, soloBuffedBonus()) - 1f)));
-			if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Haste.class)){
-				info += "\n\n" + Messages.get(this, "combined_stats",
-						Messages.decimalFormat("#.##", 100f * (Math.pow(1.2f, combinedBuffedBonus(Dungeon.hero, Haste.class)) - 1f)));
-			}
-			return info;
-		} else {
-			return Messages.get(this, "typical_stats", Messages.decimalFormat("#.##", 20f));
-		}
-	}
-	
-	@Override
-	protected RingBuff buff( ) {
-		return new Haste();
-	}
-	
-	public static float speedMultiplier( Char target ){
-		return (float)Math.pow(1.2, getBuffedBonus(target, Haste.class));
-	}
-	
-	public class Haste extends RingBuff {
-	}
+    public static float speedMultiplier(Char target) {
+        return (float) Math.pow(1.2, getBuffedBonus(target, Haste.class));
+    }
+
+    public String statsInfo() {
+        if (isIdentified()) {
+            String info = Messages.get(this, "stats",
+                    Messages.decimalFormat("#.##", 100f * (Math.pow(1.2f, soloBuffedBonus()) - 1f)));
+            if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Haste.class)) {
+                info += "\n\n" + Messages.get(this, "combined_stats",
+                        Messages.decimalFormat("#.##", 100f * (Math.pow(1.2f, combinedBuffedBonus(Dungeon.hero, Haste.class)) - 1f)));
+            }
+            return info;
+        } else {
+            return Messages.get(this, "typical_stats", Messages.decimalFormat("#.##", 20f));
+        }
+    }
+
+    @Override
+    protected RingBuff buff() {
+        return new Haste();
+    }
+
+    public class Haste extends RingBuff {
+    }
 }

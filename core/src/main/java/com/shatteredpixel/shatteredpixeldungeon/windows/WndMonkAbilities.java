@@ -33,66 +33,64 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 
 public class WndMonkAbilities extends Window {
 
-	private static final int WIDTH_P = 120;
-	private static final int WIDTH_L = 160;
+    private static final int WIDTH_P = 120;
+    private static final int WIDTH_L = 160;
 
-	private static final int MARGIN  = 2;
+    private static final int MARGIN = 2;
+    MonkEnergy.MonkAbility abilityBeingUsed;
+    private CellSelector.Listener listener = new CellSelector.Listener() {
 
-	public WndMonkAbilities( MonkEnergy energyBuff ){
-		super();
+        @Override
+        public void onSelect(Integer cell) {
+            abilityBeingUsed.doAbility(Dungeon.hero, cell);
+        }
 
-		int width = PixelScene.landscape() ? WIDTH_L : WIDTH_P;
+        @Override
+        public String prompt() {
+            return abilityBeingUsed.targetingPrompt();
+        }
+    };
 
-		float pos = MARGIN;
-		RenderedTextBlock title = PixelScene.renderTextBlock(Messages.titleCase(Messages.get(this, "title")), 9);
-		title.hardlight(TITLE_COLOR);
-		title.setPos((width-title.width())/2, pos);
-		title.maxWidth(width - MARGIN * 2);
-		add(title);
+    public WndMonkAbilities(MonkEnergy energyBuff) {
+        super();
 
-		pos = title.bottom() + 3*MARGIN;
+        int width = PixelScene.landscape() ? WIDTH_L : WIDTH_P;
 
-		for (MonkEnergy.MonkAbility abil : MonkEnergy.MonkAbility.abilities) {
-			String text = "_" + Messages.titleCase(abil.name()) + " " + Messages.get(this, "energycost", abil.energyCost()) + ":_ " + abil.desc();
-			RedButton moveBtn = new RedButton(text, 6){
-				@Override
-				protected void onClick() {
-					super.onClick();
-					hide();
-					if (abil.targetingPrompt() != null) {
-						abilityBeingUsed = abil;
-						GameScene.selectCell(listener);
-					} else {
-						abil.doAbility(Dungeon.hero, null);
-					}
-				}
-			};
-			moveBtn.leftJustify = true;
-			moveBtn.multiline = true;
-			moveBtn.setSize(width, moveBtn.reqHeight());
-			moveBtn.setRect(0, pos, width, moveBtn.reqHeight());
-			moveBtn.enable(energyBuff.energy >= abil.energyCost());
-			add(moveBtn);
-			pos = moveBtn.bottom() + MARGIN;
-		}
+        float pos = MARGIN;
+        RenderedTextBlock title = PixelScene.renderTextBlock(Messages.titleCase(Messages.get(this, "title")), 9);
+        title.hardlight(TITLE_COLOR);
+        title.setPos((width - title.width()) / 2, pos);
+        title.maxWidth(width - MARGIN * 2);
+        add(title);
 
-		resize(width, (int)pos);
+        pos = title.bottom() + 3 * MARGIN;
 
-	}
+        for (MonkEnergy.MonkAbility abil : MonkEnergy.MonkAbility.abilities) {
+            String text = "_" + Messages.titleCase(abil.name()) + " " + Messages.get(this, "energycost", abil.energyCost()) + ":_ " + abil.desc();
+            RedButton moveBtn = new RedButton(text, 6) {
+                @Override
+                protected void onClick() {
+                    super.onClick();
+                    hide();
+                    if (abil.targetingPrompt() != null) {
+                        abilityBeingUsed = abil;
+                        GameScene.selectCell(listener);
+                    } else {
+                        abil.doAbility(Dungeon.hero, null);
+                    }
+                }
+            };
+            moveBtn.leftJustify = true;
+            moveBtn.multiline = true;
+            moveBtn.setSize(width, moveBtn.reqHeight());
+            moveBtn.setRect(0, pos, width, moveBtn.reqHeight());
+            moveBtn.enable(energyBuff.energy >= abil.energyCost());
+            add(moveBtn);
+            pos = moveBtn.bottom() + MARGIN;
+        }
 
-	MonkEnergy.MonkAbility abilityBeingUsed;
+        resize(width, (int) pos);
 
-	private CellSelector.Listener listener = new CellSelector.Listener() {
-
-		@Override
-		public void onSelect(Integer cell) {
-			abilityBeingUsed.doAbility(Dungeon.hero, cell);
-		}
-
-		@Override
-		public String prompt() {
-			return abilityBeingUsed.targetingPrompt();
-		}
-	};
+    }
 
 }

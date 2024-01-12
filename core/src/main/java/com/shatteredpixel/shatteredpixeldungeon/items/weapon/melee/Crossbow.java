@@ -30,64 +30,64 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 
 public class Crossbow extends MeleeWeapon {
-	
-	{
-		image = ItemSpriteSheet.CROSSBOW;
-		hitSound = Assets.Sounds.HIT;
-		hitSoundPitch = 1f;
-		
-		//check Dart.class for additional properties
-		
-		tier = 4;
-	}
 
-	@Override
-	public boolean doUnequip(Hero hero, boolean collect, boolean single) {
-		if (super.doUnequip(hero, collect, single)){
-			if (hero.buff(ChargedShot.class) != null &&
-					!(hero.belongings.weapon() instanceof Crossbow)
-					&& !(hero.belongings.secondWep() instanceof Crossbow)){
-				//clear charged shot if no crossbow is equipped
-				hero.buff(ChargedShot.class).detach();
-			}
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	@Override
-	public int max(int lvl) {
-		return  4*(tier+1) +    //20 base, down from 25
-				lvl*(tier);     //+4 per level, down from +5
-	}
+    {
+        image = ItemSpriteSheet.CROSSBOW;
+        hitSound = Assets.Sounds.HIT;
+        hitSoundPitch = 1f;
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		if (hero.buff(ChargedShot.class) != null){
-			GLog.w(Messages.get(this, "ability_cant_use"));
-			return;
-		}
+        //check Dart.class for additional properties
 
-		beforeAbilityUsed(hero, null);
-		Buff.affect(hero, ChargedShot.class);
-		hero.sprite.operate(hero.pos);
-		hero.next();
-		afterAbilityUsed(hero);
-	}
+        tier = 4;
+    }
 
-	public static class ChargedShot extends Buff{
+    @Override
+    public boolean doUnequip(Hero hero, boolean collect, boolean single) {
+        if (super.doUnequip(hero, collect, single)) {
+            if (hero.buff(ChargedShot.class) != null &&
+                    !(hero.belongings.weapon() instanceof Crossbow)
+                    && !(hero.belongings.secondWep() instanceof Crossbow)) {
+                //clear charged shot if no crossbow is equipped
+                hero.buff(ChargedShot.class).detach();
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-		{
-			announced = true;
-			type = buffType.POSITIVE;
-		}
+    @Override
+    public int max(int lvl) {
+        return 4 * (tier + 1) +    //20 base, down from 25
+                lvl * (tier);     //+4 per level, down from +5
+    }
 
-		@Override
-		public int icon() {
-			return BuffIndicator.DUEL_XBOW;
-		}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        if (hero.buff(ChargedShot.class) != null) {
+            GLog.w(Messages.get(this, "ability_cant_use"));
+            return;
+        }
 
-	}
+        beforeAbilityUsed(hero, null);
+        Buff.affect(hero, ChargedShot.class);
+        hero.sprite.operate(hero.pos);
+        hero.next();
+        afterAbilityUsed(hero);
+    }
+
+    public static class ChargedShot extends Buff {
+
+        {
+            announced = true;
+            type = buffType.POSITIVE;
+        }
+
+        @Override
+        public int icon() {
+            return BuffIndicator.DUEL_XBOW;
+        }
+
+    }
 
 }

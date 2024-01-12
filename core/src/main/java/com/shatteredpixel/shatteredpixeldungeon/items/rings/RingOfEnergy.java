@@ -31,48 +31,48 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class RingOfEnergy extends Ring {
 
-	{
-		icon = ItemSpriteSheet.Icons.RING_ENERGY;
-	}
+    {
+        icon = ItemSpriteSheet.Icons.RING_ENERGY;
+    }
 
-	public String statsInfo() {
-		if (isIdentified()){
-			String info = Messages.get(this, "stats",
-					Messages.decimalFormat("#.##", 100f * (Math.pow(1.15f, soloBuffedBonus()) - 1f)));
-			if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Energy.class)){
-				info += "\n\n" + Messages.get(this, "combined_stats",
-						Messages.decimalFormat("#.##", 100f * (Math.pow(1.15f, combinedBuffedBonus(Dungeon.hero, Energy.class)) - 1f)));
-			}
-			return info;
-		} else {
-			return Messages.get(this, "typical_stats",
-					Messages.decimalFormat("#.##", 15f));
-		}
-	}
-	
-	@Override
-	protected RingBuff buff( ) {
-		return new Energy();
-	}
-	
-	public static float wandChargeMultiplier( Char target ){
-		return (float)Math.pow(1.15, getBuffedBonus(target, Energy.class));
-	}
+    public static float wandChargeMultiplier(Char target) {
+        return (float) Math.pow(1.15, getBuffedBonus(target, Energy.class));
+    }
 
-	public static float artifactChargeMultiplier( Char target ){
-		float bonus = (float)Math.pow(1.15, getBuffedBonus(target, Energy.class));
+    public static float artifactChargeMultiplier(Char target) {
+        float bonus = (float) Math.pow(1.15, getBuffedBonus(target, Energy.class));
 
-		if (target instanceof Hero && ((Hero) target).heroClass != HeroClass.ROGUE && ((Hero) target).hasTalent(Talent.LIGHT_CLOAK)){
-			bonus *= 1f + (0.2f * ((Hero) target).pointsInTalent(Talent.LIGHT_CLOAK)/3f);
-		}
+        if (target instanceof Hero && ((Hero) target).heroClass != HeroClass.ROGUE && ((Hero) target).hasTalent(Talent.LIGHT_CLOAK)) {
+            bonus *= 1f + (0.2f * ((Hero) target).pointsInTalent(Talent.LIGHT_CLOAK) / 3f);
+        }
 
-		return bonus;
-	}
+        return bonus;
+    }
 
-	public static float armorChargeMultiplier( Char target ){
-		return (float)Math.pow(1.15, getBuffedBonus(target, Energy.class));
-	}
-	
-	public class Energy extends RingBuff {
-	}
+    public static float armorChargeMultiplier(Char target) {
+        return (float) Math.pow(1.15, getBuffedBonus(target, Energy.class));
+    }
+
+    public String statsInfo() {
+        if (isIdentified()) {
+            String info = Messages.get(this, "stats",
+                    Messages.decimalFormat("#.##", 100f * (Math.pow(1.15f, soloBuffedBonus()) - 1f)));
+            if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Energy.class)) {
+                info += "\n\n" + Messages.get(this, "combined_stats",
+                        Messages.decimalFormat("#.##", 100f * (Math.pow(1.15f, combinedBuffedBonus(Dungeon.hero, Energy.class)) - 1f)));
+            }
+            return info;
+        } else {
+            return Messages.get(this, "typical_stats",
+                    Messages.decimalFormat("#.##", 15f));
+        }
+    }
+
+    @Override
+    protected RingBuff buff() {
+        return new Energy();
+    }
+
+    public class Energy extends RingBuff {
+    }
 }

@@ -59,181 +59,180 @@ import java.util.ArrayList;
 
 public class SummonElemental extends Spell {
 
-	public static final String AC_IMBUE = "IMBUE";
+    public static final String AC_IMBUE = "IMBUE";
+    private static final String SUMMON_CLASS = "summon_class";
+    private Class<? extends Elemental> summonClass = Elemental.AllyNewBornElemental.class;
+    public WndBag.ItemSelector selector = new WndBag.ItemSelector() {
+        @Override
+        public String textPrompt() {
+            return Messages.get(SummonElemental.class, "imbue_prompt");
+        }
 
-	{
-		image = ItemSpriteSheet.SUMMON_ELE;
-	}
+        @Override
+        public boolean itemSelectable(Item item) {
+            return item.isIdentified() && (item instanceof PotionOfLiquidFlame
+                    || item instanceof PotionOfFrost
+                    || item instanceof ScrollOfRecharging
+                    || item instanceof ScrollOfTransmutation);
+        }
 
-	private Class<? extends Elemental> summonClass = Elemental.AllyNewBornElemental.class;
+        @Override
+        public void onSelect(Item item) {
 
-	@Override
-	public ArrayList<String> actions(Hero hero) {
-		ArrayList<String> actions = super.actions(hero);
-		actions.add(AC_IMBUE);
-		return actions;
-	}
+            if (item == null) {
+                return;
+            }
 
-	@Override
-	public void execute(Hero hero, String action) {
-		super.execute(hero, action);
+            item.detach(Dungeon.hero.belongings.backpack);
+            if (item instanceof PotionOfLiquidFlame) {
+                Sample.INSTANCE.play(Assets.Sounds.BURNING);
+                curUser.sprite.emitter().burst(FlameParticle.FACTORY, 12);
+                summonClass = Elemental.FireElemental.class;
 
-		if (action.equals(AC_IMBUE)){
-			GameScene.selectItem(selector);
-		}
-	}
+            } else if (item instanceof PotionOfFrost) {
+                Sample.INSTANCE.play(Assets.Sounds.SHATTER);
+                curUser.sprite.emitter().burst(MagicMissile.MagicParticle.FACTORY, 12);
+                summonClass = Elemental.FrostElemental.class;
 
-	@Override
-	protected void onCast(Hero hero) {
+            } else if (item instanceof ScrollOfRecharging) {
+                Sample.INSTANCE.play(Assets.Sounds.ZAP);
+                curUser.sprite.emitter().burst(ShaftParticle.FACTORY, 12);
+                summonClass = Elemental.ShockElemental.class;
 
-		ArrayList<Integer> spawnPoints = new ArrayList<>();
+            } else if (item instanceof ScrollOfTransmutation) {
+                Sample.INSTANCE.play(Assets.Sounds.READ);
+                curUser.sprite.emitter().burst(RainbowParticle.BURST, 12);
+                summonClass = Elemental.ChaosElemental.class;
+            }
 
-		for (int i = 0; i < PathFinder.NEIGHBOURS8.length; i++) {
-			int p = hero.pos + PathFinder.NEIGHBOURS8[i];
-			if (Actor.findChar( p ) == null && Dungeon.level.passable[p]) {
-				spawnPoints.add( p );
-			}
-		}
+            curUser.sprite.operate(curUser.pos);
 
-		if (!spawnPoints.isEmpty()){
+            updateQuickslot();
+        }
+    };
 
-			for (Char ch : Actor.chars()){
-				if (ch instanceof Elemental && ch.buff(InvisAlly.class) != null){
-					ScrollOfTeleportation.appear( ch, Random.element(spawnPoints) );
-					((Elemental) ch).state = ((Elemental) ch).HUNTING;
-					curUser.spendAndNext(Actor.TICK);
-					return;
-				}
-			}
+    {
+        image = ItemSpriteSheet.SUMMON_ELE;
+    }
 
-			Elemental elemental = Reflection.newInstance(summonClass);
-			GameScene.add( elemental );
-			Buff.affect(elemental, InvisAlly.class);
-			elemental.setSummonedALly();
-			elemental.HP = elemental.HT;
-			ScrollOfTeleportation.appear( elemental, Random.element(spawnPoints) );
-			Invisibility.dispel(curUser);
-			curUser.sprite.operate(curUser.pos);
-			curUser.spendAndNext(Actor.TICK);
+    @Override
+    public ArrayList<String> actions(Hero hero) {
+        ArrayList<String> actions = super.actions(hero);
+        actions.add(AC_IMBUE);
+        return actions;
+    }
 
-			summonClass = Elemental.AllyNewBornElemental.class;
+    @Override
+    public void execute(Hero hero, String action) {
+        super.execute(hero, action);
 
-			detach(Dungeon.hero.belongings.backpack);
+        if (action.equals(AC_IMBUE)) {
+            GameScene.selectItem(selector);
+        }
+    }
 
-		} else {
-			GLog.w(Messages.get(SpiritHawk.class, "no_space"));
-		}
+    @Override
+    protected void onCast(Hero hero) {
 
-	}
+        ArrayList<Integer> spawnPoints = new ArrayList<>();
 
-	@Override
-	public ItemSprite.Glowing glowing() {
-		if (summonClass == Elemental.FireElemental.class)   return new ItemSprite.Glowing(0xFFBB33);
-		if (summonClass == Elemental.FrostElemental.class)  return new ItemSprite.Glowing(0x8EE3FF);
-		if (summonClass == Elemental.ShockElemental.class)  return new ItemSprite.Glowing(0xFFFF85);
-		if (summonClass == Elemental.ChaosElemental.class)  return new ItemSprite.Glowing(0xE3E3E3, 0.5f);
-		return super.glowing();
-	}
+        for (int i = 0; i < PathFinder.NEIGHBOURS8.length; i++) {
+            int p = hero.pos + PathFinder.NEIGHBOURS8[i];
+            if (Actor.findChar(p) == null && Dungeon.level.passable[p]) {
+                spawnPoints.add(p);
+            }
+        }
 
-	@Override
-	public String desc() {
-		String desc = super.desc();
+        if (!spawnPoints.isEmpty()) {
 
-		desc += "\n\n";
+            for (Char ch : Actor.chars()) {
+                if (ch instanceof Elemental && ch.buff(InvisAlly.class) != null) {
+                    ScrollOfTeleportation.appear(ch, Random.element(spawnPoints));
+                    ((Elemental) ch).state = ((Elemental) ch).HUNTING;
+                    curUser.spendAndNext(Actor.TICK);
+                    return;
+                }
+            }
 
-		if (summonClass == Elemental.AllyNewBornElemental.class)    desc += Messages.get(this, "desc_newborn");
-		if (summonClass == Elemental.FireElemental.class)           desc += Messages.get(this, "desc_fire");
-		if (summonClass == Elemental.FrostElemental.class)          desc += Messages.get(this, "desc_frost");
-		if (summonClass == Elemental.ShockElemental.class)          desc += Messages.get(this, "desc_shock");
-		if (summonClass == Elemental.ChaosElemental.class)          desc += Messages.get(this, "desc_chaos");
+            Elemental elemental = Reflection.newInstance(summonClass);
+            GameScene.add(elemental);
+            Buff.affect(elemental, InvisAlly.class);
+            elemental.setSummonedALly();
+            elemental.HP = elemental.HT;
+            ScrollOfTeleportation.appear(elemental, Random.element(spawnPoints));
+            Invisibility.dispel(curUser);
+            curUser.sprite.operate(curUser.pos);
+            curUser.spendAndNext(Actor.TICK);
 
-		return desc;
-	}
+            summonClass = Elemental.AllyNewBornElemental.class;
 
-	private static final String SUMMON_CLASS = "summon_class";
+            detach(Dungeon.hero.belongings.backpack);
 
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put(SUMMON_CLASS, summonClass);
-	}
+        } else {
+            GLog.w(Messages.get(SpiritHawk.class, "no_space"));
+        }
 
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		if (bundle.contains(SUMMON_CLASS)) summonClass = bundle.getClass(SUMMON_CLASS);
-	}
+    }
 
-	public WndBag.ItemSelector selector = new WndBag.ItemSelector() {
-		@Override
-		public String textPrompt() {
-			return Messages.get(SummonElemental.class, "imbue_prompt");
-		}
+    @Override
+    public ItemSprite.Glowing glowing() {
+        if (summonClass == Elemental.FireElemental.class) return new ItemSprite.Glowing(0xFFBB33);
+        if (summonClass == Elemental.FrostElemental.class) return new ItemSprite.Glowing(0x8EE3FF);
+        if (summonClass == Elemental.ShockElemental.class) return new ItemSprite.Glowing(0xFFFF85);
+        if (summonClass == Elemental.ChaosElemental.class)
+            return new ItemSprite.Glowing(0xE3E3E3, 0.5f);
+        return super.glowing();
+    }
 
-		@Override
-		public boolean itemSelectable(Item item) {
-			return item.isIdentified() && (item instanceof PotionOfLiquidFlame
-					|| item instanceof PotionOfFrost
-					|| item instanceof ScrollOfRecharging
-					|| item instanceof ScrollOfTransmutation);
-		}
+    @Override
+    public String desc() {
+        String desc = super.desc();
 
-		@Override
-		public void onSelect(Item item) {
+        desc += "\n\n";
 
-			if (item == null){
-				return;
-			}
+        if (summonClass == Elemental.AllyNewBornElemental.class)
+            desc += Messages.get(this, "desc_newborn");
+        if (summonClass == Elemental.FireElemental.class) desc += Messages.get(this, "desc_fire");
+        if (summonClass == Elemental.FrostElemental.class) desc += Messages.get(this, "desc_frost");
+        if (summonClass == Elemental.ShockElemental.class) desc += Messages.get(this, "desc_shock");
+        if (summonClass == Elemental.ChaosElemental.class) desc += Messages.get(this, "desc_chaos");
 
-			item.detach(Dungeon.hero.belongings.backpack);
-			if (item instanceof PotionOfLiquidFlame) {
-				Sample.INSTANCE.play(Assets.Sounds.BURNING);
-				curUser.sprite.emitter().burst( FlameParticle.FACTORY, 12 );
-				summonClass = Elemental.FireElemental.class;
+        return desc;
+    }
 
-			} else if (item instanceof PotionOfFrost){
-				Sample.INSTANCE.play(Assets.Sounds.SHATTER);
-				curUser.sprite.emitter().burst( MagicMissile.MagicParticle.FACTORY, 12 );
-				summonClass = Elemental.FrostElemental.class;
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(SUMMON_CLASS, summonClass);
+    }
 
-			} else if (item instanceof ScrollOfRecharging){
-				Sample.INSTANCE.play(Assets.Sounds.ZAP);
-				curUser.sprite.emitter().burst( ShaftParticle.FACTORY, 12 );
-				summonClass = Elemental.ShockElemental.class;
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        if (bundle.contains(SUMMON_CLASS)) summonClass = bundle.getClass(SUMMON_CLASS);
+    }
 
-			} else if (item instanceof ScrollOfTransmutation){
-				Sample.INSTANCE.play(Assets.Sounds.READ);
-				curUser.sprite.emitter().burst( RainbowParticle.BURST, 12 );
-				summonClass = Elemental.ChaosElemental.class;
-			}
+    public static class InvisAlly extends AllyBuff {
 
-			curUser.sprite.operate(curUser.pos);
+        @Override
+        public void fx(boolean on) {
+            if (on) target.sprite.add(CharSprite.State.HEARTS);
+            else target.sprite.remove(CharSprite.State.HEARTS);
+        }
 
-			updateQuickslot();
-		}
-	};
+    }
 
-	public static class InvisAlly extends AllyBuff{
+    public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {
 
-		@Override
-		public void fx(boolean on) {
-			if (on) target.sprite.add(CharSprite.State.HEARTS);
-			else    target.sprite.remove(CharSprite.State.HEARTS);
-		}
+        {
+            inputs = new Class[]{Embers.class, ArcaneCatalyst.class};
+            inQuantity = new int[]{1, 1};
 
-	}
+            cost = 6;
 
-	public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {
+            output = SummonElemental.class;
+            outQuantity = 5;
+        }
 
-		{
-			inputs =  new Class[]{Embers.class, ArcaneCatalyst.class};
-			inQuantity = new int[]{1, 1};
-
-			cost = 6;
-
-			output = SummonElemental.class;
-			outQuantity = 5;
-		}
-
-	}
+    }
 }

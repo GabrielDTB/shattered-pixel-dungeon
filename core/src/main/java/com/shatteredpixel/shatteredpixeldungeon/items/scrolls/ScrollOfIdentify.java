@@ -30,30 +30,30 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 
 public class ScrollOfIdentify extends InventoryScroll {
 
-	{
-		icon = ItemSpriteSheet.Icons.SCROLL_IDENTIFY;
+    {
+        icon = ItemSpriteSheet.Icons.SCROLL_IDENTIFY;
 
-		bones = true;
-	}
+        bones = true;
+    }
 
-	@Override
-	protected boolean usableOnItem(Item item) {
-		return !item.isIdentified();
-	}
+    @Override
+    protected boolean usableOnItem(Item item) {
+        return !item.isIdentified();
+    }
 
-	@Override
-	protected void onItemSelected( Item item ) {
-		
-		curUser.sprite.parent.add( new Identification( curUser.sprite.center().offset( 0, -16 ) ) );
-		
-		item.identify();
-		GLog.i( Messages.get(this, "it_is", item.title()) );
-		
-		Badges.validateItemLevelAquired( item );
-	}
-	
-	@Override
-	public int value() {
-		return isKnown() ? 30 * quantity : super.value();
-	}
+    @Override
+    protected void onItemSelected(Item item) {
+
+        curUser.sprite.parent.add(new Identification(curUser.sprite.center().offset(0, -16)));
+
+        item.identify();
+        GLog.i(Messages.get(this, "it_is", item.title()));
+
+        Badges.validateItemLevelAquired(item);
+    }
+
+    @Override
+    public int value() {
+        return isKnown() ? 30 * quantity : super.value();
+    }
 }

@@ -30,33 +30,33 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 
 public class PotionOfStrength extends Potion {
 
-	{
-		icon = ItemSpriteSheet.Icons.POTION_STRENGTH;
+    {
+        icon = ItemSpriteSheet.Icons.POTION_STRENGTH;
 
-		unique = true;
+        unique = true;
 
-		talentFactor = 2f;
-	}
-	
-	@Override
-	public void apply( Hero hero ) {
-		identify();
-		
-		hero.STR++;
-		hero.sprite.showStatus( CharSprite.POSITIVE, Messages.get(this, "msg_1") );
-		GLog.p( Messages.get(this, "msg_2") );
-		
-		Badges.validateStrengthAttained();
-		Badges.validateDuelistUnlock();
-	}
+        talentFactor = 2f;
+    }
 
-	@Override
-	public int value() {
-		return isKnown() ? 50 * quantity : super.value();
-	}
+    @Override
+    public void apply(Hero hero) {
+        identify();
 
-	@Override
-	public int energyVal() {
-		return isKnown() ? 8 * quantity : super.energyVal();
-	}
+        hero.STR++;
+        hero.sprite.showStatus(CharSprite.POSITIVE, Messages.get(this, "msg_1"));
+        GLog.p(Messages.get(this, "msg_2"));
+
+        Badges.validateStrengthAttained();
+        Badges.validateDuelistUnlock();
+    }
+
+    @Override
+    public int value() {
+        return isKnown() ? 50 * quantity : super.value();
+    }
+
+    @Override
+    public int energyVal() {
+        return isKnown() ? 8 * quantity : super.energyVal();
+    }
 }

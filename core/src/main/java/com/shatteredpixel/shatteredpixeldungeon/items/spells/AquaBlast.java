@@ -28,42 +28,42 @@ import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class AquaBlast extends TargetedSpell {
-	
-	{
-		image = ItemSpriteSheet.AQUA_BLAST;
-		usesTargeting = true;
-	}
-	
-	@Override
-	protected void affectTarget(Ballistica bolt, Hero hero) {
-		int cell = bolt.collisionPos;
 
-		GeyserTrap geyser = new GeyserTrap();
-		geyser.pos = cell;
-		geyser.source = this;
-		if (bolt.path.size() > bolt.dist+1) {
-			geyser.centerKnockBackDirection = bolt.path.get(bolt.dist + 1);
-		}
-		geyser.activate();
-	}
-	
-	@Override
-	public int value() {
-		//prices of ingredients, divided by output quantity, rounds down
-		return (int)((60 + 40) * (quantity/8f));
-	}
-	
-	public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {
-		
-		{
-			inputs =  new Class[]{PotionOfStormClouds.class, ArcaneCatalyst.class};
-			inQuantity = new int[]{1, 1};
-			
-			cost = 2;
-			
-			output = AquaBlast.class;
-			outQuantity = 8;
-		}
-		
-	}
+    {
+        image = ItemSpriteSheet.AQUA_BLAST;
+        usesTargeting = true;
+    }
+
+    @Override
+    protected void affectTarget(Ballistica bolt, Hero hero) {
+        int cell = bolt.collisionPos;
+
+        GeyserTrap geyser = new GeyserTrap();
+        geyser.pos = cell;
+        geyser.source = this;
+        if (bolt.path.size() > bolt.dist + 1) {
+            geyser.centerKnockBackDirection = bolt.path.get(bolt.dist + 1);
+        }
+        geyser.activate();
+    }
+
+    @Override
+    public int value() {
+        //prices of ingredients, divided by output quantity, rounds down
+        return (int) ((60 + 40) * (quantity / 8f));
+    }
+
+    public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {
+
+        {
+            inputs = new Class[]{PotionOfStormClouds.class, ArcaneCatalyst.class};
+            inQuantity = new int[]{1, 1};
+
+            cost = 2;
+
+            output = AquaBlast.class;
+            outQuantity = 8;
+        }
+
+    }
 }

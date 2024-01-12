@@ -25,16 +25,16 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 
 public abstract class NPC extends Mob {
 
-	{
-		HP = HT = 1;
-		EXP = 0;
+    {
+        HP = HT = 1;
+        EXP = 0;
 
-		alignment = Alignment.NEUTRAL;
-		state = PASSIVE;
-	}
+        alignment = Alignment.NEUTRAL;
+        state = PASSIVE;
+    }
 
-	@Override
-	public void beckon( int cell ) {
-	}
-	
+    @Override
+    public void beckon(int cell) {
+    }
+
 }

@@ -36,113 +36,112 @@ import com.watabou.utils.Bundle;
 
 public class SnipersMark extends FlavourBuff implements ActionIndicator.Action {
 
-	public int object = 0;
-	public int level = 0;
+    public static final float DURATION = 4f;
+    private static final String OBJECT = "object";
+    private static final String LEVEL = "level";
+    public int object = 0;
+    public int level = 0;
 
-	private static final String OBJECT    = "object";
-	private static final String LEVEL    = "level";
+    {
+        type = buffType.POSITIVE;
+    }
 
-	public static final float DURATION = 4f;
+    public void set(int object, int level) {
+        this.object = object;
+        this.level = level;
+    }
 
-	{
-		type = buffType.POSITIVE;
-	}
+    @Override
+    public boolean attachTo(Char target) {
+        ActionIndicator.setAction(this);
+        return super.attachTo(target);
+    }
 
-	public void set(int object, int level){
-		this.object = object;
-		this.level = level;
-	}
-	
-	@Override
-	public boolean attachTo(Char target) {
-		ActionIndicator.setAction(this);
-		return super.attachTo(target);
-	}
-	
-	@Override
-	public void detach() {
-		super.detach();
-		ActionIndicator.clearAction(this);
-	}
-	
-	@Override
-	public void storeInBundle( Bundle bundle ) {
-		super.storeInBundle( bundle );
-		bundle.put( OBJECT, object );
-		bundle.put( LEVEL, level );
-	}
+    @Override
+    public void detach() {
+        super.detach();
+        ActionIndicator.clearAction(this);
+    }
 
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		super.restoreFromBundle( bundle );
-		object = bundle.getInt( OBJECT );
-		level = bundle.getInt( LEVEL );
-	}
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(OBJECT, object);
+        bundle.put(LEVEL, level);
+    }
 
-	@Override
-	public int icon() {
-		return BuffIndicator.MARK;
-	}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        object = bundle.getInt(OBJECT);
+        level = bundle.getInt(LEVEL);
+    }
 
-	@Override
-	public float iconFadePercent() {
-		return Math.max(0, (DURATION - visualcooldown()) / DURATION);
-	}
+    @Override
+    public int icon() {
+        return BuffIndicator.MARK;
+    }
 
-	@Override
-	public String desc() {
-		return Messages.get(this, "desc");
-	}
-	
-	@Override
-	public String actionName() {
-		SpiritBow bow = Dungeon.hero.belongings.getItem(SpiritBow.class);
+    @Override
+    public float iconFadePercent() {
+        return Math.max(0, (DURATION - visualcooldown()) / DURATION);
+    }
 
-		if (bow == null) return null;
+    @Override
+    public String desc() {
+        return Messages.get(this, "desc");
+    }
 
-		switch (bow.augment){
-			case NONE: default:
-				return Messages.get(this, "action_name_snapshot");
-			case SPEED:
-				return Messages.get(this, "action_name_volley");
-			case DAMAGE:
-				return Messages.get(this, "action_name_sniper");
-		}
-	}
+    @Override
+    public String actionName() {
+        SpiritBow bow = Dungeon.hero.belongings.getItem(SpiritBow.class);
 
-	@Override
-	public int actionIcon() {
-		return HeroIcon.SNIPERS_MARK;
-	}
+        if (bow == null) return null;
 
-	@Override
-	public int indicatorColor() {
-		return 0x444444;
-	}
+        switch (bow.augment) {
+            case NONE:
+            default:
+                return Messages.get(this, "action_name_snapshot");
+            case SPEED:
+                return Messages.get(this, "action_name_volley");
+            case DAMAGE:
+                return Messages.get(this, "action_name_sniper");
+        }
+    }
 
-	@Override
-	public void doAction() {
-		
-		Hero hero = Dungeon.hero;
-		if (hero == null) return;
-		
-		SpiritBow bow = hero.belongings.getItem(SpiritBow.class);
-		if (bow == null) return;
-		
-		SpiritBow.SpiritArrow arrow = bow.knockArrow();
-		if (arrow == null) return;
-		
-		Char ch = (Char) Actor.findById(object);
-		if (ch == null) return;
-		
-		int cell = QuickSlotButton.autoAim(ch, arrow);
-		if (cell == -1) return;
-		
-		bow.sniperSpecial = true;
-		bow.sniperSpecialBonusDamage = level*Dungeon.hero.pointsInTalent(Talent.SHARED_UPGRADES)/10f;
-		
-		arrow.cast(hero, cell);
-		detach();
-		
-	}
+    @Override
+    public int actionIcon() {
+        return HeroIcon.SNIPERS_MARK;
+    }
+
+    @Override
+    public int indicatorColor() {
+        return 0x444444;
+    }
+
+    @Override
+    public void doAction() {
+
+        Hero hero = Dungeon.hero;
+        if (hero == null) return;
+
+        SpiritBow bow = hero.belongings.getItem(SpiritBow.class);
+        if (bow == null) return;
+
+        SpiritBow.SpiritArrow arrow = bow.knockArrow();
+        if (arrow == null) return;
+
+        Char ch = (Char) Actor.findById(object);
+        if (ch == null) return;
+
+        int cell = QuickSlotButton.autoAim(ch, arrow);
+        if (cell == -1) return;
+
+        bow.sniperSpecial = true;
+        bow.sniperSpecialBonusDamage = level * Dungeon.hero.pointsInTalent(Talent.SHARED_UPGRADES) / 10f;
+
+        arrow.cast(hero, cell);
+        detach();
+
+    }
 }

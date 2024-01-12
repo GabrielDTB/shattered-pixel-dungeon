@@ -34,58 +34,58 @@ import com.watabou.utils.Callback;
 
 public class WndInfoTalent extends Window {
 
-	private static final float GAP	= 2;
+    private static final float GAP = 2;
 
-	private static final int WIDTH = 120;
+    private static final int WIDTH = 120;
 
-	public WndInfoTalent(Talent talent, int points, TalentButtonCallback buttonCallback){
-		super();
+    public WndInfoTalent(Talent talent, int points, TalentButtonCallback buttonCallback) {
+        super();
 
-		IconTitle titlebar = new IconTitle();
+        IconTitle titlebar = new IconTitle();
 
-		titlebar.icon( new TalentIcon( talent ) );
-		String title = Messages.titleCase(talent.title());
-		if (points > 0){
-			title += " +" + points;
-		}
-		titlebar.label( title, Window.TITLE_COLOR );
-		titlebar.setRect( 0, 0, WIDTH, 0 );
-		add( titlebar );
+        titlebar.icon(new TalentIcon(talent));
+        String title = Messages.titleCase(talent.title());
+        if (points > 0) {
+            title += " +" + points;
+        }
+        titlebar.label(title, Window.TITLE_COLOR);
+        titlebar.setRect(0, 0, WIDTH, 0);
+        add(titlebar);
 
-		boolean metaDesc = (buttonCallback != null && buttonCallback.metamorphDesc()) ||
-				(Dungeon.hero != null && Dungeon.hero.metamorphedTalents.containsValue(talent));
+        boolean metaDesc = (buttonCallback != null && buttonCallback.metamorphDesc()) ||
+                (Dungeon.hero != null && Dungeon.hero.metamorphedTalents.containsValue(talent));
 
-		RenderedTextBlock txtInfo = PixelScene.renderTextBlock(talent.desc(metaDesc), 6);
-		txtInfo.maxWidth(WIDTH);
-		txtInfo.setPos(titlebar.left(), titlebar.bottom() + 2*GAP);
-		add( txtInfo );
-		resize( WIDTH, (int)(txtInfo.bottom() + GAP) );
+        RenderedTextBlock txtInfo = PixelScene.renderTextBlock(talent.desc(metaDesc), 6);
+        txtInfo.maxWidth(WIDTH);
+        txtInfo.setPos(titlebar.left(), titlebar.bottom() + 2 * GAP);
+        add(txtInfo);
+        resize(WIDTH, (int) (txtInfo.bottom() + GAP));
 
-		if (buttonCallback != null) {
-			RedButton button = new RedButton( buttonCallback.prompt() ) {
-				@Override
-				protected void onClick() {
-					super.onClick();
-					hide();
-					buttonCallback.call();
-				}
-			};
-			button.icon(Icons.get(Icons.TALENT));
-			button.setRect(0, txtInfo.bottom() + 2*GAP, WIDTH, 18);
-			add(button);
-			resize( WIDTH, (int)button.bottom()+1 );
-		}
+        if (buttonCallback != null) {
+            RedButton button = new RedButton(buttonCallback.prompt()) {
+                @Override
+                protected void onClick() {
+                    super.onClick();
+                    hide();
+                    buttonCallback.call();
+                }
+            };
+            button.icon(Icons.get(Icons.TALENT));
+            button.setRect(0, txtInfo.bottom() + 2 * GAP, WIDTH, 18);
+            add(button);
+            resize(WIDTH, (int) button.bottom() + 1);
+        }
 
-	}
+    }
 
-	public static abstract class TalentButtonCallback implements Callback {
+    public static abstract class TalentButtonCallback implements Callback {
 
-		public abstract String prompt();
+        public abstract String prompt();
 
-		public boolean metamorphDesc(){
-			return false;
-		}
+        public boolean metamorphDesc() {
+            return false;
+        }
 
-	}
+    }
 
 }

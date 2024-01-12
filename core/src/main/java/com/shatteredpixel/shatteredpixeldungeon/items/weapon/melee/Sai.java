@@ -39,162 +39,161 @@ import com.watabou.utils.Callback;
 
 public class Sai extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.SAI;
-		hitSound = Assets.Sounds.HIT_STAB;
-		hitSoundPitch = 1.3f;
+    {
+        image = ItemSpriteSheet.SAI;
+        hitSound = Assets.Sounds.HIT_STAB;
+        hitSoundPitch = 1.3f;
 
-		tier = 3;
-		DLY = 0.5f; //2x speed
-	}
+        tier = 3;
+        DLY = 0.5f; //2x speed
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  Math.round(2.5f*(tier+1)) +     //10 base, down from 20
-				lvl*Math.round(0.5f*(tier+1));  //+2 per level, down from +4
-	}
+    public static void comboStrikeAbility(Hero hero, Integer target, float boostPerHit, MeleeWeapon wep) {
+        if (target == null) {
+            return;
+        }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+        Char enemy = Actor.findChar(target);
+        if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
+            GLog.w(Messages.get(wep, "ability_no_target"));
+            return;
+        }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		Sai.comboStrikeAbility(hero, target, 0.40f, this);
-	}
+        hero.belongings.abilityWeapon = wep;
+        if (!hero.canAttack(enemy)) {
+            GLog.w(Messages.get(wep, "ability_bad_position"));
+            hero.belongings.abilityWeapon = null;
+            return;
+        }
+        hero.belongings.abilityWeapon = null;
 
-	public static void comboStrikeAbility(Hero hero, Integer target, float boostPerHit, MeleeWeapon wep){
-		if (target == null) {
-			return;
-		}
+        hero.sprite.attack(enemy.pos, new Callback() {
+            @Override
+            public void call() {
+                wep.beforeAbilityUsed(hero, enemy);
+                AttackIndicator.target(enemy);
 
-		Char enemy = Actor.findChar(target);
-		if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
-			GLog.w(Messages.get(wep, "ability_no_target"));
-			return;
-		}
+                int recentHits = 0;
+                ComboStrikeTracker buff = hero.buff(ComboStrikeTracker.class);
+                if (buff != null) {
+                    recentHits = buff.totalHits();
+                    buff.detach();
+                }
 
-		hero.belongings.abilityWeapon = wep;
-		if (!hero.canAttack(enemy)){
-			GLog.w(Messages.get(wep, "ability_bad_position"));
-			hero.belongings.abilityWeapon = null;
-			return;
-		}
-		hero.belongings.abilityWeapon = null;
+                boolean hit = hero.attack(enemy, 1f + boostPerHit * recentHits, 0, Char.INFINITE_ACCURACY);
+                if (hit && !enemy.isAlive()) {
+                    wep.onAbilityKill(hero, enemy);
+                }
 
-		hero.sprite.attack(enemy.pos, new Callback() {
-			@Override
-			public void call() {
-				wep.beforeAbilityUsed(hero, enemy);
-				AttackIndicator.target(enemy);
+                Invisibility.dispel();
+                hero.spendAndNext(hero.attackDelay());
+                if (recentHits >= 2 && hit) {
+                    Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
+                }
 
-				int recentHits = 0;
-				ComboStrikeTracker buff = hero.buff(ComboStrikeTracker.class);
-				if (buff != null){
-					recentHits = buff.totalHits();
-					buff.detach();
-				}
+                wep.afterAbilityUsed(hero);
+            }
+        });
+    }
 
-				boolean hit = hero.attack(enemy, 1f + boostPerHit*recentHits, 0, Char.INFINITE_ACCURACY);
-				if (hit && !enemy.isAlive()){
-					wep.onAbilityKill(hero, enemy);
-				}
+    @Override
+    public int max(int lvl) {
+        return Math.round(2.5f * (tier + 1)) +     //10 base, down from 20
+                lvl * Math.round(0.5f * (tier + 1));  //+2 per level, down from +4
+    }
 
-				Invisibility.dispel();
-				hero.spendAndNext(hero.attackDelay());
-				if (recentHits >= 2 && hit){
-					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-				}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-				wep.afterAbilityUsed(hero);
-			}
-		});
-	}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        Sai.comboStrikeAbility(hero, target, 0.40f, this);
+    }
 
-	public static class ComboStrikeTracker extends Buff {
+    public static class ComboStrikeTracker extends Buff {
 
-		{
-			type = buffType.POSITIVE;
-		}
+        public static int DURATION = 6; //to account for the turn the attack is made in
+        public static String RECENT_HITS = "recent_hits";
+        public int[] hits = new int[DURATION];
 
-		public static int DURATION = 6; //to account for the turn the attack is made in
-		public int[] hits = new int[DURATION];
+        {
+            type = buffType.POSITIVE;
+        }
 
-		@Override
-		public int icon() {
-			//pre-v2.1 saves
-			if (totalHits() == 0) return BuffIndicator.NONE;
+        @Override
+        public int icon() {
+            //pre-v2.1 saves
+            if (totalHits() == 0) return BuffIndicator.NONE;
 
-			if (Dungeon.hero.belongings.weapon() instanceof Gloves
-					|| Dungeon.hero.belongings.weapon() instanceof Sai
-					|| Dungeon.hero.belongings.weapon() instanceof Gauntlet
-					|| Dungeon.hero.belongings.secondWep() instanceof Gloves
-					|| Dungeon.hero.belongings.secondWep() instanceof Sai
-					|| Dungeon.hero.belongings.secondWep() instanceof Gauntlet) {
-				return BuffIndicator.DUEL_COMBO;
-			} else {
-				return BuffIndicator.NONE;
-			}
-		}
+            if (Dungeon.hero.belongings.weapon() instanceof Gloves
+                    || Dungeon.hero.belongings.weapon() instanceof Sai
+                    || Dungeon.hero.belongings.weapon() instanceof Gauntlet
+                    || Dungeon.hero.belongings.secondWep() instanceof Gloves
+                    || Dungeon.hero.belongings.secondWep() instanceof Sai
+                    || Dungeon.hero.belongings.secondWep() instanceof Gauntlet) {
+                return BuffIndicator.DUEL_COMBO;
+            } else {
+                return BuffIndicator.NONE;
+            }
+        }
 
-		@Override
-		public boolean act() {
+        @Override
+        public boolean act() {
 
-			//shuffle all hits down one turn
-			for (int i = 0; i < DURATION; i++){
-				if (i == DURATION-1){
-					hits[i] = 0;
-				} else {
-					hits[i] =  hits[i+1];
-				}
-			}
+            //shuffle all hits down one turn
+            for (int i = 0; i < DURATION; i++) {
+                if (i == DURATION - 1) {
+                    hits[i] = 0;
+                } else {
+                    hits[i] = hits[i + 1];
+                }
+            }
 
-			if (totalHits() == 0){
-				detach();
-			}
+            if (totalHits() == 0) {
+                detach();
+            }
 
-			spend(TICK);
-			return true;
-		}
+            spend(TICK);
+            return true;
+        }
 
-		public void addHit(){
-			hits[DURATION-1]++;
-		}
+        public void addHit() {
+            hits[DURATION - 1]++;
+        }
 
-		public int totalHits(){
-			int sum = 0;
-			for (int i = 0; i < DURATION; i++){
-				sum += hits[i];
-			}
-			return sum;
-		}
+        public int totalHits() {
+            int sum = 0;
+            for (int i = 0; i < DURATION; i++) {
+                sum += hits[i];
+            }
+            return sum;
+        }
 
-		@Override
-		public String iconTextDisplay() {
-			return Integer.toString(totalHits());
-		}
+        @Override
+        public String iconTextDisplay() {
+            return Integer.toString(totalHits());
+        }
 
-		@Override
-		public String desc() {
-			return Messages.get(this, "desc", totalHits());
-		}
+        @Override
+        public String desc() {
+            return Messages.get(this, "desc", totalHits());
+        }
 
-		public static String RECENT_HITS = "recent_hits";
+        @Override
+        public void storeInBundle(Bundle bundle) {
+            super.storeInBundle(bundle);
+            bundle.put(RECENT_HITS, hits);
+        }
 
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(RECENT_HITS, hits);
-		}
-
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			if (bundle.contains(RECENT_HITS)) {
-				hits = bundle.getIntArray(RECENT_HITS);
-			}
-		}
-	}
+        @Override
+        public void restoreFromBundle(Bundle bundle) {
+            super.restoreFromBundle(bundle);
+            if (bundle.contains(RECENT_HITS)) {
+                hits = bundle.getIntArray(RECENT_HITS);
+            }
+        }
+    }
 
 }

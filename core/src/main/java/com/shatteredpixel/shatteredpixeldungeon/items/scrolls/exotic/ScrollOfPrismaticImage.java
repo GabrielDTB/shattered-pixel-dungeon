@@ -32,32 +32,32 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.watabou.noosa.audio.Sample;
 
 public class ScrollOfPrismaticImage extends ExoticScroll {
-	
-	{
-		icon = ItemSpriteSheet.Icons.SCROLL_PRISIMG;
-	}
-	
-	@Override
-	public void doRead() {
 
-		detach(curUser.belongings.backpack);
-		boolean found = false;
-		for (Mob m : Dungeon.level.mobs.toArray(new Mob[0])){
-			if (m instanceof PrismaticImage){
-				found = true;
-				m.HP = m.HT;
-				m.sprite.emitter().burst(Speck.factory(Speck.HEALING), 4);
-			}
-		}
-		
-		if (!found) {
-			Buff.affect(curUser, PrismaticGuard.class).set( PrismaticGuard.maxHP( curUser ) );
-		}
+    {
+        icon = ItemSpriteSheet.Icons.SCROLL_PRISIMG;
+    }
 
-		identify();
-		
-		Sample.INSTANCE.play( Assets.Sounds.READ );
-	
-		readAnimation();
-	}
+    @Override
+    public void doRead() {
+
+        detach(curUser.belongings.backpack);
+        boolean found = false;
+        for (Mob m : Dungeon.level.mobs.toArray(new Mob[0])) {
+            if (m instanceof PrismaticImage) {
+                found = true;
+                m.HP = m.HT;
+                m.sprite.emitter().burst(Speck.factory(Speck.HEALING), 4);
+            }
+        }
+
+        if (!found) {
+            Buff.affect(curUser, PrismaticGuard.class).set(PrismaticGuard.maxHP(curUser));
+        }
+
+        identify();
+
+        Sample.INSTANCE.play(Assets.Sounds.READ);
+
+        readAnimation();
+    }
 }

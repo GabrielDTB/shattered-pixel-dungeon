@@ -29,48 +29,48 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.AlchemicalCatalyst
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfParalyticGas;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.watabou.utils.BArray;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.BArray;
 import com.watabou.utils.PathFinder;
 
 public class ShockingBrew extends Brew {
-	
-	{
-		image = ItemSpriteSheet.BREW_SHOCKING;
-	}
-	
-	@Override
-	public void shatter(int cell) {
-		if (Dungeon.level.heroFOV[cell]) {
-			splash( cell );
-			Sample.INSTANCE.play( Assets.Sounds.SHATTER );
-			Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
-		}
-		PathFinder.buildDistanceMap( cell, BArray.not( Dungeon.level.solid, null ), 3 );
-		for (int i = 0; i < PathFinder.distance.length; i++) {
-			if (PathFinder.distance[i] < Integer.MAX_VALUE) {
-				GameScene.add(Blob.seed(i, 20, Electricity.class));
-			}
-		}
-	}
-	
-	@Override
-	public int value() {
-		//prices of ingredients
-		return quantity * (40 + 40);
-	}
-	
-	public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {
-		
-		{
-			inputs =  new Class[]{PotionOfParalyticGas.class, AlchemicalCatalyst.class};
-			inQuantity = new int[]{1, 1};
-			
-			cost = 6;
-			
-			output = ShockingBrew.class;
-			outQuantity = 1;
-		}
-		
-	}
+
+    {
+        image = ItemSpriteSheet.BREW_SHOCKING;
+    }
+
+    @Override
+    public void shatter(int cell) {
+        if (Dungeon.level.heroFOV[cell]) {
+            splash(cell);
+            Sample.INSTANCE.play(Assets.Sounds.SHATTER);
+            Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
+        }
+        PathFinder.buildDistanceMap(cell, BArray.not(Dungeon.level.solid, null), 3);
+        for (int i = 0; i < PathFinder.distance.length; i++) {
+            if (PathFinder.distance[i] < Integer.MAX_VALUE) {
+                GameScene.add(Blob.seed(i, 20, Electricity.class));
+            }
+        }
+    }
+
+    @Override
+    public int value() {
+        //prices of ingredients
+        return quantity * (40 + 40);
+    }
+
+    public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {
+
+        {
+            inputs = new Class[]{PotionOfParalyticGas.class, AlchemicalCatalyst.class};
+            inQuantity = new int[]{1, 1};
+
+            cost = 6;
+
+            output = ShockingBrew.class;
+            outQuantity = 1;
+        }
+
+    }
 }

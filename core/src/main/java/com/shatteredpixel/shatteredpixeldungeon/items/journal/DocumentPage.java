@@ -32,60 +32,59 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 
 public abstract class DocumentPage extends Item {
-	
-	{
-		image = ItemSpriteSheet.MASTERY;
-	}
 
-	public abstract Document document();
-	
-	private String page;
-	
-	public void page( String page ){
-		this.page = page;
-	}
-	
-	public String page(){
-		return page;
-	}
-	
-	@Override
-	public final boolean doPickUp(Hero hero, int pos) {
-		GameScene.pickUpJournal(this, pos);
-		GameScene.flashForDocument(document(), page());
-		if (document() == Document.ALCHEMY_GUIDE){
-			WndJournal.last_index = 1;
-			WndJournal.AlchemyTab.currentPageIdx = document().pageIdx(page());
-		} else {
-			WndJournal.last_index = 0;
-		}
-		document().findPage(page);
-		Sample.INSTANCE.play( Assets.Sounds.ITEM );
-		hero.spendAndNext( TIME_TO_PICK_UP );
-		return true;
-	}
+    private static final String PAGE = "page";
+    private String page;
 
-	@Override
-	public boolean isUpgradable() {
-		return false;
-	}
+    {
+        image = ItemSpriteSheet.MASTERY;
+    }
 
-	@Override
-	public boolean isIdentified() {
-		return true;
-	}
-	
-	private static final String PAGE = "page";
-	
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put( PAGE, page() );
-	}
-	
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		page = bundle.getString( PAGE );
-	}
+    public abstract Document document();
+
+    public void page(String page) {
+        this.page = page;
+    }
+
+    public String page() {
+        return page;
+    }
+
+    @Override
+    public final boolean doPickUp(Hero hero, int pos) {
+        GameScene.pickUpJournal(this, pos);
+        GameScene.flashForDocument(document(), page());
+        if (document() == Document.ALCHEMY_GUIDE) {
+            WndJournal.last_index = 1;
+            WndJournal.AlchemyTab.currentPageIdx = document().pageIdx(page());
+        } else {
+            WndJournal.last_index = 0;
+        }
+        document().findPage(page);
+        Sample.INSTANCE.play(Assets.Sounds.ITEM);
+        hero.spendAndNext(TIME_TO_PICK_UP);
+        return true;
+    }
+
+    @Override
+    public boolean isUpgradable() {
+        return false;
+    }
+
+    @Override
+    public boolean isIdentified() {
+        return true;
+    }
+
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(PAGE, page());
+    }
+
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        page = bundle.getString(PAGE);
+    }
 }

@@ -43,80 +43,80 @@ import java.util.Collections;
 
 public class CursingTrap extends Trap {
 
-	{
-		color = VIOLET;
-		shape = WAVES;
-	}
+    {
+        color = VIOLET;
+        shape = WAVES;
+    }
 
-	@Override
-	public void activate() {
-		if (Dungeon.level.heroFOV[ pos ]) {
-			CellEmitter.get(pos).burst(ShadowParticle.UP, 5);
-			Sample.INSTANCE.play(Assets.Sounds.CURSED);
-		}
+    public static void curse(Hero hero) {
+        //items the trap wants to curse because it will create a more negative effect
+        ArrayList<Item> priorityCurse = new ArrayList<>();
+        //items the trap can curse if nothing else is available.
+        ArrayList<Item> canCurse = new ArrayList<>();
 
-		Heap heap = Dungeon.level.heaps.get( pos );
-		if (heap != null){
-			for (Item item : heap.items){
-				if (item.isUpgradable() && !(item instanceof MissileWeapon))
-					curse(item);
-			}
-		}
+        KindOfWeapon weapon = hero.belongings.weapon();
+        if (weapon instanceof Weapon && !(weapon instanceof MagesStaff)) {
+            if (((Weapon) weapon).enchantment == null)
+                priorityCurse.add(weapon);
+            else
+                canCurse.add(weapon);
+        }
 
-		if (Dungeon.hero.pos == pos && !Dungeon.hero.flying){
-			curse(Dungeon.hero);
-		}
-	}
+        Armor armor = hero.belongings.armor();
+        if (armor != null) {
+            if (armor.glyph == null)
+                priorityCurse.add(armor);
+            else
+                canCurse.add(armor);
+        }
 
-	public static void curse(Hero hero){
-		//items the trap wants to curse because it will create a more negative effect
-		ArrayList<Item> priorityCurse = new ArrayList<>();
-		//items the trap can curse if nothing else is available.
-		ArrayList<Item> canCurse = new ArrayList<>();
+        Collections.shuffle(priorityCurse);
+        Collections.shuffle(canCurse);
 
-		KindOfWeapon weapon = hero.belongings.weapon();
-		if (weapon instanceof Weapon && !(weapon instanceof MagesStaff)){
-			if (((Weapon) weapon).enchantment == null)
-				priorityCurse.add(weapon);
-			else
-				canCurse.add(weapon);
-		}
+        if (!priorityCurse.isEmpty()) {
+            curse(priorityCurse.remove(0));
+        } else if (!canCurse.isEmpty()) {
+            curse(canCurse.remove(0));
+        }
 
-		Armor armor = hero.belongings.armor();
-		if (armor != null){
-			if (armor.glyph == null)
-				priorityCurse.add(armor);
-			else
-				canCurse.add(armor);
-		}
+        EquipableItem.equipCursed(hero);
+        GLog.n(Messages.get(CursingTrap.class, "curse"));
+    }
 
-		Collections.shuffle(priorityCurse);
-		Collections.shuffle(canCurse);
+    private static void curse(Item item) {
+        item.cursed = item.cursedKnown = true;
 
-		if (!priorityCurse.isEmpty()){
-			curse(priorityCurse.remove(0));
-		} else if (!canCurse.isEmpty()){
-			curse(canCurse.remove(0));
-		}
+        if (item instanceof Weapon) {
+            Weapon w = (Weapon) item;
+            if (w.enchantment == null) {
+                w.enchant(Weapon.Enchantment.randomCurse());
+            }
+        }
+        if (item instanceof Armor) {
+            Armor a = (Armor) item;
+            if (a.glyph == null) {
+                a.inscribe(Armor.Glyph.randomCurse());
+            }
+        }
+    }
 
-		EquipableItem.equipCursed(hero);
-		GLog.n( Messages.get(CursingTrap.class, "curse") );
-	}
+    @Override
+    public void activate() {
+        if (Dungeon.level.heroFOV[pos]) {
+            CellEmitter.get(pos).burst(ShadowParticle.UP, 5);
+            Sample.INSTANCE.play(Assets.Sounds.CURSED);
+        }
 
-	private static void curse(Item item){
-		item.cursed = item.cursedKnown = true;
+        Heap heap = Dungeon.level.heaps.get(pos);
+        if (heap != null) {
+            for (Item item : heap.items) {
+                if (item.isUpgradable() && !(item instanceof MissileWeapon))
+                    curse(item);
+            }
+        }
 
-		if (item instanceof Weapon){
-			Weapon w = (Weapon) item;
-			if (w.enchantment == null){
-				w.enchant(Weapon.Enchantment.randomCurse());
-			}
-		}
-		if (item instanceof Armor){
-			Armor a = (Armor) item;
-			if (a.glyph == null){
-				a.inscribe(Armor.Glyph.randomCurse());
-			}
-		}
-	}
+        if (Dungeon.hero.pos == pos && !Dungeon.hero.flying) {
+            curse(Dungeon.hero);
+        }
+    }
 }

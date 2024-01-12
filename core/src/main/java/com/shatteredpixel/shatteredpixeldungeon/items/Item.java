@@ -73,769 +73,760 @@ import java.util.Objects;
 
 public class Item implements Bundlable {
 
-	protected static final String TXT_TO_STRING_LVL		= "%s %+d";
-	protected static final String TXT_TO_STRING_X		= "%s x%d";
-	
-	protected static final float TIME_TO_THROW		= 1.0f;
-	protected static final float TIME_TO_PICK_UP	= 1.0f;
-	protected static final float TIME_TO_DROP		= 1.0f;
-	
-	public static final String AC_DROP		= "DROP";
-	public static final String AC_THROW		= "THROW";
-	public static final String AC_GUESS    = "GUESS";
-	
-	protected String defaultAction;
-	public boolean usesTargeting;
-
-	//TODO should these be private and accessed through methods?
-	public int image = 0;
-	public int icon = -1; //used as an identifier for items with randomized images
-
-	public String guessed_name;
-	public int guessed_icon = -1;
-	
-	public boolean stackable = false;
-	protected int quantity = 1;
-	public boolean dropsDownHeap = false;
-	
-	private int level = 0;
-
-	public boolean levelKnown = false;
-	
-	public boolean cursed;
-	public boolean cursedKnown;
-	
-	// Unique items persist through revival
-	public boolean unique = false;
-
-	// These items are preserved even if the hero's inventory is lost via unblessed ankh
-	// this is largely set by the resurrection window, items can override this to always be kept
-	public boolean keptThoughLostInvent = false;
-
-	// whether an item can be included in heroes remains
-	public boolean bones = false;
-	
-	public static final Comparator<Item> itemComparator = new Comparator<Item>() {
-		@Override
-		public int compare( Item lhs, Item rhs ) {
-			return Generator.Category.order( lhs ) - Generator.Category.order( rhs );
-		}
-	};
-	
-	public ArrayList<String> actions( Hero hero ) {
-		ArrayList<String> actions = new ArrayList<>();
-		actions.add( AC_DROP );
-		actions.add( AC_THROW );
-		if ((this instanceof Potion || this instanceof Scroll || this instanceof Ring) && !this.isIdentified()) {
-			actions.add( AC_GUESS );
-		}
-		return actions;
-	}
-
-	public String actionName(String action, Hero hero){
-		return Messages.get(this, "ac_" + action);
-	}
-
-	public final boolean doPickUp( Hero hero ) {
-		return doPickUp( hero, hero.pos );
-	}
-
-	public boolean doPickUp(Hero hero, int pos) {
-		if (collect( hero.belongings.backpack )) {
-			
-			GameScene.pickUp( this, pos );
-			Sample.INSTANCE.play( Assets.Sounds.ITEM );
-			hero.spendAndNext( TIME_TO_PICK_UP );
-			return true;
-			
-		} else {
-			return false;
-		}
-	}
-
-	public void doDrop( Hero hero ) {
-		hero.spendAndNext(TIME_TO_DROP);
-		int pos = hero.pos;
-		Dungeon.level.drop(detachAll(hero.belongings.backpack), pos).sprite.drop(pos);
-	}
-
-	public class WndGuess extends Window {
-		private Class curGuess = null;
-		private int curGuessIcon = -1;
-
-		private static final int WIDTH = 120;
-		private static final int BTN_SIZE = 20;
-
-		public WndGuess(final Item item){
-
-			IconTitle titlebar = new IconTitle();
-			titlebar.icon(Icons.MAGNIFY.get());
-			titlebar.label( "Guess" );
-			titlebar.setRect( 0, 0, WIDTH, 0 );
-			add(titlebar);
-
-			RenderedTextBlock text = PixelScene.renderTextBlock(6);
-			text.text( "Guess the type of the unidentified item. This will change the name of the item but won't tell you if you're correct." );
-			text.setPos(0, titlebar.bottom());
-			text.maxWidth( WIDTH );
-			add(text);
-
-			final RedButton guess = new RedButton(""){
-				@Override
-				protected void onClick() {
-					super.onClick();
-					guessed_name = curGuess == null ? null : Messages.titleCase(Messages.get(curGuess, "name"));
-					guessed_icon = curGuessIcon;
-					hide();
-				}
-			};
-			guess.icon( new ItemSprite(item) );
-			guess.setRect(0, 80, WIDTH, 20);
-			guess.text(" "); // TODO: This is a hack
-			add(guess);
-
-			float left;
-			float top = text.bottom() + 5;
-			int rows;
-			int placed = 0;
-
-			final ArrayList<Class<?extends Item>> unIDed = new ArrayList<>();
-			if (item.isIdentified()){
-				hide();
-				return;
-			} else if (item instanceof Potion){
-				if (item instanceof ExoticPotion) {
-					for (Class<?extends Item> i : Potion.getUnknown()){
-						unIDed.add(ExoticPotion.regToExo.get(i));
-					}
-				} else {
-					unIDed.addAll(Potion.getUnknown());
-				}
-			} else if (item instanceof Scroll){
-				if (item instanceof ExoticScroll) {
-					for (Class<?extends Item> i : Scroll.getUnknown()){
-						unIDed.add(ExoticScroll.regToExo.get(i));
-					}
-				} else {
-					unIDed.addAll(Scroll.getUnknown());
-				}
-			} else if (item instanceof Ring) {
-				unIDed.addAll(Ring.getUnknown());
-			} else {
-				hide();
-				return;
-			}
-
-			if (unIDed.size() <= 5){
-				rows = 1;
-				top += BTN_SIZE/2f;
-				left = (WIDTH - BTN_SIZE*unIDed.size())/2f;
-			} else {
-				rows = 2;
-				left = (WIDTH - BTN_SIZE*((unIDed.size()+1)/2))/2f;
-			}
-
-			for (final Class<?extends Item> i : unIDed){
-
-				IconButton btn = new IconButton(){
-					@Override
-					protected void onClick() {
-						if (curGuess == null) {
-							curGuessIcon = Reflection.newInstance(i).icon;
-							curGuess = i;
-						} else if (curGuess == i) {
-							curGuessIcon = -1;
-							curGuess = null;
-						} else {
-							curGuessIcon = Reflection.newInstance(i).icon;
-							curGuess = i;
-						}
-						if (curGuess == null) {
-							guess.text(" "); // TODO: This is a hack
-						} else {
-							guess.text( Messages.titleCase(Messages.get(curGuess, "name")) );
-						}
-						super.onClick();
-					}
-				};
-				Image im = new Image(Assets.Sprites.ITEM_ICONS);
-				im.frame(ItemSpriteSheet.Icons.film.get(Reflection.newInstance(i).icon));
-				im.scale.set(2f);
-				btn.icon(im);
-				btn.setRect(left + placed*BTN_SIZE, top, BTN_SIZE, BTN_SIZE);
-				add(btn);
-
-				placed++;
-				if (rows == 2 && placed == ((unIDed.size()+1)/2)){
-					placed = 0;
-					if (unIDed.size() % 2 == 1){
-						left += BTN_SIZE/2f;
-					}
-					top += BTN_SIZE;
-				}
-			}
-
-			resize(WIDTH, 100);
-
-		}
-
-	}
-
-	public void doGuess( Hero hero ) {
-		GameScene.show( new WndGuess(this));
-	}
-
-	//resets an item's properties, to ensure consistency between runs
-	public void reset(){
-		keptThoughLostInvent = false;
-	}
-
-	public boolean keptThroughLostInventory(){
-		return keptThoughLostInvent;
-	}
-
-	public void doThrow( Hero hero ) {
-		GameScene.selectCell(thrower);
-	}
-	
-	public void execute( Hero hero, String action ) {
-
-		GameScene.cancel();
-		curUser = hero;
-		curItem = this;
-		
-		if (action.equals( AC_DROP )) {
-			
-			if (hero.belongings.backpack.contains(this) || isEquipped(hero)) {
-				doDrop(hero);
-			}
-			
-		} else if (action.equals( AC_THROW )) {
-
-			if (hero.belongings.backpack.contains(this) || isEquipped(hero)) {
-				doThrow(hero);
-			}
-
-		} else if (action.equals( AC_GUESS )) {
-
-			if (hero.belongings.backpack.contains(this) || isEquipped(hero)) {
-				doGuess(hero);
-			}
-
-		}
-	}
-
-	//can be overridden if default action is variable
-	public String defaultAction(){
-		return defaultAction;
-	}
-	
-	public void execute( Hero hero ) {
-		String action = defaultAction();
-		if (action != null) {
-			execute(hero, defaultAction());
-		}
-	}
-	
-	protected void onThrow( int cell ) {
-		Heap heap = Dungeon.level.drop( this, cell );
-		if (!heap.isEmpty()) {
-			heap.sprite.drop( cell );
-		}
-	}
-	
-	//takes two items and merges them (if possible)
-	public Item merge( Item other ){
-		if (isSimilar( other )){
-			quantity += other.quantity;
-			other.quantity = 0;
-		}
-		return this;
-	}
-	
-	public boolean collect( Bag container ) {
-
-		if (quantity <= 0){
-			return true;
-		}
-
-		ArrayList<Item> items = container.items;
-
-		if (items.contains( this )) {
-			return true;
-		}
-
-		for (Item item:items) {
-			if (item instanceof Bag && ((Bag)item).canHold( this )) {
-				if (collect( (Bag)item )){
-					return true;
-				}
-			}
-		}
-
-		if (!container.canHold(this)){
-			return false;
-		}
-		
-		if (stackable) {
-			for (Item item:items) {
-				if (isSimilar( item )) {
-					item.merge( this );
-					item.updateQuickslot();
-					if (Dungeon.hero != null && Dungeon.hero.isAlive()) {
-						Badges.validateItemLevelAquired( this );
-						Talent.onItemCollected(Dungeon.hero, item);
-						if (isIdentified()) Catalog.setSeen(getClass());
-					}
-					if (TippedDart.lostDarts > 0){
-						Dart d = new Dart();
-						d.quantity(TippedDart.lostDarts);
-						TippedDart.lostDarts = 0;
-						if (!d.collect()){
-							//have to handle this in an actor as we can't manipulate the heap during pickup
-							Actor.add(new Actor() {
-								{ actPriority = VFX_PRIO; }
-								@Override
-								protected boolean act() {
-									Dungeon.level.drop(d, Dungeon.hero.pos).sprite.drop();
-									Actor.remove(this);
-									return true;
-								}
-							});
-						}
-					}
-					return true;
-				}
-			}
-		}
-
-		if (Dungeon.hero != null && Dungeon.hero.isAlive()) {
-			Badges.validateItemLevelAquired( this );
-			Talent.onItemCollected( Dungeon.hero, this );
-			if (isIdentified()) Catalog.setSeen(getClass());
-		}
-
-		items.add( this );
-		Dungeon.quickslot.replacePlaceholder(this);
-		Collections.sort( items, itemComparator );
-		updateQuickslot();
-		return true;
-
-	}
-	
-	public boolean collect() {
-		return collect( Dungeon.hero.belongings.backpack );
-	}
-	
-	//returns a new item if the split was sucessful and there are now 2 items, otherwise null
-	public Item split( int amount ){
-		if (amount <= 0 || amount >= quantity()) {
-			return null;
-		} else {
-			//pssh, who needs copy constructors?
-			Item split = Reflection.newInstance(getClass());
-			
-			if (split == null){
-				return null;
-			}
-			
-			Bundle copy = new Bundle();
-			this.storeInBundle(copy);
-			split.restoreFromBundle(copy);
-			split.quantity(amount);
-			quantity -= amount;
-			
-			return split;
-		}
-	}
-	
-	public final Item detach( Bag container ) {
-		
-		if (quantity <= 0) {
-			
-			return null;
-			
-		} else
-		if (quantity == 1) {
-
-			if (stackable){
-				Dungeon.quickslot.convertToPlaceholder(this);
-			}
-
-			return detachAll( container );
-			
-		} else {
-			
-			
-			Item detached = split(1);
-			updateQuickslot();
-			if (detached != null) detached.onDetach( );
-			return detached;
-			
-		}
-	}
-	
-	public final Item detachAll( Bag container ) {
-		Dungeon.quickslot.clearItem( this );
-
-		for (Item item : container.items) {
-			if (item == this) {
-				container.items.remove(this);
-				item.onDetach();
-				container.grabItems(); //try to put more items into the bag as it now has free space
-				updateQuickslot();
-				return this;
-			} else if (item instanceof Bag) {
-				Bag bag = (Bag)item;
-				if (bag.contains( this )) {
-					return detachAll( bag );
-				}
-			}
-		}
-
-		updateQuickslot();
-		return this;
-	}
-	
-	public boolean isSimilar( Item item ) {
-		return level == item.level && getClass() == item.getClass();
-	}
-
-	protected void onDetach(){}
-
-	//returns the true level of the item, ignoring all modifiers aside from upgrades
-	public final int trueLevel(){
-		return level;
-	}
-
-	//returns the persistant level of the item, only affected by modifiers which are persistent (e.g. curse infusion)
-	public int level(){
-		return level;
-	}
-	
-	//returns the level of the item, after it may have been modified by temporary boosts/reductions
-	//note that not all item properties should care about buffs/debuffs! (e.g. str requirement)
-	public int buffedLvl(){
-		//only the hero can be affected by Degradation
-		if (Dungeon.hero.buff( Degrade.class ) != null
-			&& (isEquipped( Dungeon.hero ) || Dungeon.hero.belongings.contains( this ))) {
-			return Degrade.reduceLevel(level());
-		} else {
-			return level();
-		}
-	}
-
-	public void level( int value ){
-		level = value;
-
-		updateQuickslot();
-	}
-	
-	public Item upgrade() {
-		
-		this.level++;
-
-		updateQuickslot();
-		
-		return this;
-	}
-	
-	final public Item upgrade( int n ) {
-		for (int i=0; i < n; i++) {
-			upgrade();
-		}
-		
-		return this;
-	}
-	
-	public Item degrade() {
-		
-		this.level--;
-		
-		return this;
-	}
-	
-	final public Item degrade( int n ) {
-		for (int i=0; i < n; i++) {
-			degrade();
-		}
-		
-		return this;
-	}
-	
-	public int visiblyUpgraded() {
-		return levelKnown ? level() : 0;
-	}
-
-	public int buffedVisiblyUpgraded() {
-		return levelKnown ? buffedLvl() : 0;
-	}
-	
-	public boolean visiblyCursed() {
-		return cursed && cursedKnown;
-	}
-	
-	public boolean isUpgradable() {
-		return true;
-	}
-	
-	public boolean isIdentified() {
-		return levelKnown && cursedKnown;
-	}
-	
-	public boolean isEquipped( Hero hero ) {
-		return false;
-	}
-
-	public final Item identify(){
-		return identify(true);
-	}
-
-	public Item identify( boolean byHero ) {
-
-		if (byHero && Dungeon.hero != null && Dungeon.hero.isAlive()){
-			Catalog.setSeen(getClass());
-			if (!isIdentified()) Talent.onItemIdentified(Dungeon.hero, this);
-		}
-
-		guessed_name = null;
-		levelKnown = true;
-		cursedKnown = true;
-		Item.updateQuickslot();
-		
-		return this;
-	}
-	
-	public void onHeroGainExp( float levelPercent, Hero hero ){
-		//do nothing by default
-	}
-	
-	public static void evoke( Hero hero ) {
-		hero.sprite.emitter().burst( Speck.factory( Speck.EVOKE ), 5 );
-	}
-
-	public String title() {
-
-		String name = name();
-
-		if (visiblyUpgraded() != 0)
-			name = Messages.format( TXT_TO_STRING_LVL, name, visiblyUpgraded()  );
-
-		if (quantity > 1)
-			name = Messages.format( TXT_TO_STRING_X, name, quantity );
-
-		return name;
-
-	}
-	
-	public String name() {
-		return trueName();
-	}
-	
-	public final String trueName() {
-		return Messages.get(this, "name");
-	}
-	
-	public int image() {
-		return image;
-	}
-	
-	public ItemSprite.Glowing glowing() {
-		return null;
-	}
-
-	public Emitter emitter() { return null; }
-	
-	public String info() {
-		return desc();
-	}
-	
-	public String desc() {
-		return Messages.get(this, "desc");
-	}
-	
-	public int quantity() {
-		return quantity;
-	}
-	
-	public Item quantity( int value ) {
-		quantity = value;
-		return this;
-	}
-
-	//item's value in gold coins
-	public int value() {
-		return 0;
-	}
-
-	//item's value in energy crystals
-	public int energyVal() {
-		return 0;
-	}
-	
-	public Item virtual(){
-		Item item = Reflection.newInstance(getClass());
-		if (item == null) return null;
-		
-		item.quantity = 0;
-		item.level = level;
-		return item;
-	}
-	
-	public Item random() {
-		return this;
-	}
-	
-	public String status() {
-		return quantity != 1 ? Integer.toString( quantity ) : null;
-	}
-
-	public static void updateQuickslot() {
-		GameScene.updateItemDisplays = true;
-	}
-	
-	private static final String QUANTITY		= "quantity";
-	private static final String LEVEL			= "level";
-	private static final String LEVEL_KNOWN		= "levelKnown";
-	private static final String CURSED			= "cursed";
-	private static final String CURSED_KNOWN	= "cursedKnown";
-	private static final String GUESSED_NAME    = "guessedName";
-	private static final String GUESSED_ICON    = "guessedIcon";
-	private static final String QUICKSLOT		= "quickslotpos";
-	private static final String KEPT_LOST       = "kept_lost";
-	
-	@Override
-	public void storeInBundle( Bundle bundle ) {
-		bundle.put( QUANTITY, quantity );
-		bundle.put( LEVEL, level );
-		bundle.put( LEVEL_KNOWN, levelKnown );
-		bundle.put( CURSED, cursed );
-		bundle.put( CURSED_KNOWN, cursedKnown );
-		bundle.put( GUESSED_NAME, guessed_name);
-		bundle.put( GUESSED_ICON, guessed_icon);
-		if (Dungeon.quickslot.contains(this)) {
-			bundle.put( QUICKSLOT, Dungeon.quickslot.getSlot(this) );
-		}
-		bundle.put( KEPT_LOST, keptThoughLostInvent );
-	}
-	
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		quantity	 = bundle.getInt( QUANTITY );
-		levelKnown	 = bundle.getBoolean( LEVEL_KNOWN );
-		cursedKnown	 = bundle.getBoolean( CURSED_KNOWN );
-		guessed_name = bundle.getString( GUESSED_NAME );
-		guessed_icon = bundle.getInt( GUESSED_ICON );
-		if (Objects.equals(guessed_name, "")) {
-			guessed_name = null;
-			guessed_icon = -1;
-		};
-		
-		int level = bundle.getInt( LEVEL );
-		if (level > 0) {
-			upgrade( level );
-		} else if (level < 0) {
-			degrade( -level );
-		}
-		
-		cursed	= bundle.getBoolean( CURSED );
-
-		//only want to populate slot on first load.
-		if (Dungeon.hero == null) {
-			if (bundle.contains(QUICKSLOT)) {
-				Dungeon.quickslot.setSlot(bundle.getInt(QUICKSLOT), this);
-			}
-		}
-
-		keptThoughLostInvent = bundle.getBoolean( KEPT_LOST );
-	}
-
-	public int targetingPos( Hero user, int dst ){
-		return throwPos( user, dst );
-	}
-
-	public int throwPos( Hero user, int dst){
-		return new Ballistica( user.pos, dst, Ballistica.PROJECTILE ).collisionPos;
-	}
-
-	public void throwSound(){
-		Sample.INSTANCE.play(Assets.Sounds.MISS, 0.6f, 0.6f, 1.5f);
-	}
-	
-	public void cast( final Hero user, final int dst ) {
-		
-		final int cell = throwPos( user, dst );
-		user.sprite.zap( cell );
-		user.busy();
-
-		throwSound();
-
-		Char enemy = Actor.findChar( cell );
-		QuickSlotButton.target(enemy);
-		
-		final float delay = castDelay(user, dst);
-
-		if (enemy != null) {
-			((MissileSprite) user.sprite.parent.recycle(MissileSprite.class)).
-					reset(user.sprite,
-							enemy.sprite,
-							this,
-							new Callback() {
-						@Override
-						public void call() {
-							curUser = user;
-							Item i = Item.this.detach(user.belongings.backpack);
-							if (i != null) i.onThrow(cell);
-							if (curUser.hasTalent(Talent.IMPROVISED_PROJECTILES)
-									&& !(Item.this instanceof MissileWeapon)
-									&& curUser.buff(Talent.ImprovisedProjectileCooldown.class) == null){
-								if (enemy != null && enemy.alignment != curUser.alignment){
-									Sample.INSTANCE.play(Assets.Sounds.HIT);
-									Buff.affect(enemy, Blindness.class, 1f + curUser.pointsInTalent(Talent.IMPROVISED_PROJECTILES));
-									Buff.affect(curUser, Talent.ImprovisedProjectileCooldown.class, 50f);
-								}
-							}
-							if (user.buff(Talent.LethalMomentumTracker.class) != null){
-								user.buff(Talent.LethalMomentumTracker.class).detach();
-								user.next();
-							} else {
-								user.spendAndNext(delay);
-							}
-						}
-					});
-		} else {
-			((MissileSprite) user.sprite.parent.recycle(MissileSprite.class)).
-					reset(user.sprite,
-							cell,
-							this,
-							new Callback() {
-						@Override
-						public void call() {
-							curUser = user;
-							Item i = Item.this.detach(user.belongings.backpack);
-							if (i != null) i.onThrow(cell);
-							user.spendAndNext(delay);
-						}
-					});
-		}
-	}
-	
-	public float castDelay( Char user, int dst ){
-		return TIME_TO_THROW;
-	}
-	
-	protected static Hero curUser = null;
-	protected static Item curItem = null;
-	protected static CellSelector.Listener thrower = new CellSelector.Listener() {
-		@Override
-		public void onSelect( Integer target ) {
-			if (target != null) {
-				curItem.cast( curUser, target );
-			}
-		}
-		@Override
-		public String prompt() {
-			return Messages.get(Item.class, "prompt");
-		}
-	};
+    public static final String AC_DROP = "DROP";
+    public static final String AC_THROW = "THROW";
+    public static final String AC_GUESS = "GUESS";
+    public static final Comparator<Item> itemComparator = new Comparator<Item>() {
+        @Override
+        public int compare(Item lhs, Item rhs) {
+            return Generator.Category.order(lhs) - Generator.Category.order(rhs);
+        }
+    };
+    protected static final String TXT_TO_STRING_LVL = "%s %+d";
+    protected static final String TXT_TO_STRING_X = "%s x%d";
+    protected static final float TIME_TO_THROW = 1.0f;
+    protected static final float TIME_TO_PICK_UP = 1.0f;
+    protected static final float TIME_TO_DROP = 1.0f;
+    private static final String QUANTITY = "quantity";
+    private static final String LEVEL = "level";
+    private static final String LEVEL_KNOWN = "levelKnown";
+    private static final String CURSED = "cursed";
+    private static final String CURSED_KNOWN = "cursedKnown";
+    private static final String GUESSED_NAME = "guessedName";
+    private static final String GUESSED_ICON = "guessedIcon";
+    private static final String QUICKSLOT = "quickslotpos";
+    private static final String KEPT_LOST = "kept_lost";
+    protected static Hero curUser = null;
+    protected static Item curItem = null;
+    protected static CellSelector.Listener thrower = new CellSelector.Listener() {
+        @Override
+        public void onSelect(Integer target) {
+            if (target != null) {
+                curItem.cast(curUser, target);
+            }
+        }
+
+        @Override
+        public String prompt() {
+            return Messages.get(Item.class, "prompt");
+        }
+    };
+    public boolean usesTargeting;
+    //TODO should these be private and accessed through methods?
+    public int image = 0;
+    public int icon = -1; //used as an identifier for items with randomized images
+    public String guessed_name;
+    public int guessed_icon = -1;
+    public boolean stackable = false;
+    public boolean dropsDownHeap = false;
+    public boolean levelKnown = false;
+    public boolean cursed;
+    public boolean cursedKnown;
+    // Unique items persist through revival
+    public boolean unique = false;
+    // These items are preserved even if the hero's inventory is lost via unblessed ankh
+    // this is largely set by the resurrection window, items can override this to always be kept
+    public boolean keptThoughLostInvent = false;
+    // whether an item can be included in heroes remains
+    public boolean bones = false;
+    protected String defaultAction;
+    protected int quantity = 1;
+    private int level = 0;
+
+    public static void evoke(Hero hero) {
+        hero.sprite.emitter().burst(Speck.factory(Speck.EVOKE), 5);
+    }
+
+    public static void updateQuickslot() {
+        GameScene.updateItemDisplays = true;
+    }
+
+    public ArrayList<String> actions(Hero hero) {
+        ArrayList<String> actions = new ArrayList<>();
+        actions.add(AC_DROP);
+        actions.add(AC_THROW);
+        if ((this instanceof Potion || this instanceof Scroll || this instanceof Ring) && !this.isIdentified()) {
+            actions.add(AC_GUESS);
+        }
+        return actions;
+    }
+
+    public String actionName(String action, Hero hero) {
+        return Messages.get(this, "ac_" + action);
+    }
+
+    public final boolean doPickUp(Hero hero) {
+        return doPickUp(hero, hero.pos);
+    }
+
+    public boolean doPickUp(Hero hero, int pos) {
+        if (collect(hero.belongings.backpack)) {
+
+            GameScene.pickUp(this, pos);
+            Sample.INSTANCE.play(Assets.Sounds.ITEM);
+            hero.spendAndNext(TIME_TO_PICK_UP);
+            return true;
+
+        } else {
+            return false;
+        }
+    }
+
+    public void doDrop(Hero hero) {
+        hero.spendAndNext(TIME_TO_DROP);
+        int pos = hero.pos;
+        Dungeon.level.drop(detachAll(hero.belongings.backpack), pos).sprite.drop(pos);
+    }
+
+    public void doGuess(Hero hero) {
+        GameScene.show(new WndGuess(this));
+    }
+
+    //resets an item's properties, to ensure consistency between runs
+    public void reset() {
+        keptThoughLostInvent = false;
+    }
+
+    public boolean keptThroughLostInventory() {
+        return keptThoughLostInvent;
+    }
+
+    public void doThrow(Hero hero) {
+        GameScene.selectCell(thrower);
+    }
+
+    public void execute(Hero hero, String action) {
+
+        GameScene.cancel();
+        curUser = hero;
+        curItem = this;
+
+        if (action.equals(AC_DROP)) {
+
+            if (hero.belongings.backpack.contains(this) || isEquipped(hero)) {
+                doDrop(hero);
+            }
+
+        } else if (action.equals(AC_THROW)) {
+
+            if (hero.belongings.backpack.contains(this) || isEquipped(hero)) {
+                doThrow(hero);
+            }
+
+        } else if (action.equals(AC_GUESS)) {
+
+            if (hero.belongings.backpack.contains(this) || isEquipped(hero)) {
+                doGuess(hero);
+            }
+
+        }
+    }
+
+    //can be overridden if default action is variable
+    public String defaultAction() {
+        return defaultAction;
+    }
+
+    public void execute(Hero hero) {
+        String action = defaultAction();
+        if (action != null) {
+            execute(hero, defaultAction());
+        }
+    }
+
+    protected void onThrow(int cell) {
+        Heap heap = Dungeon.level.drop(this, cell);
+        if (!heap.isEmpty()) {
+            heap.sprite.drop(cell);
+        }
+    }
+
+    //takes two items and merges them (if possible)
+    public Item merge(Item other) {
+        if (isSimilar(other)) {
+            quantity += other.quantity;
+            other.quantity = 0;
+        }
+        return this;
+    }
+
+    public boolean collect(Bag container) {
+
+        if (quantity <= 0) {
+            return true;
+        }
+
+        ArrayList<Item> items = container.items;
+
+        if (items.contains(this)) {
+            return true;
+        }
+
+        for (Item item : items) {
+            if (item instanceof Bag && ((Bag) item).canHold(this)) {
+                if (collect((Bag) item)) {
+                    return true;
+                }
+            }
+        }
+
+        if (!container.canHold(this)) {
+            return false;
+        }
+
+        if (stackable) {
+            for (Item item : items) {
+                if (isSimilar(item)) {
+                    item.merge(this);
+                    item.updateQuickslot();
+                    if (Dungeon.hero != null && Dungeon.hero.isAlive()) {
+                        Badges.validateItemLevelAquired(this);
+                        Talent.onItemCollected(Dungeon.hero, item);
+                        if (isIdentified()) Catalog.setSeen(getClass());
+                    }
+                    if (TippedDart.lostDarts > 0) {
+                        Dart d = new Dart();
+                        d.quantity(TippedDart.lostDarts);
+                        TippedDart.lostDarts = 0;
+                        if (!d.collect()) {
+                            //have to handle this in an actor as we can't manipulate the heap during pickup
+                            Actor.add(new Actor() {
+                                {
+                                    actPriority = VFX_PRIO;
+                                }
+
+                                @Override
+                                protected boolean act() {
+                                    Dungeon.level.drop(d, Dungeon.hero.pos).sprite.drop();
+                                    Actor.remove(this);
+                                    return true;
+                                }
+                            });
+                        }
+                    }
+                    return true;
+                }
+            }
+        }
+
+        if (Dungeon.hero != null && Dungeon.hero.isAlive()) {
+            Badges.validateItemLevelAquired(this);
+            Talent.onItemCollected(Dungeon.hero, this);
+            if (isIdentified()) Catalog.setSeen(getClass());
+        }
+
+        items.add(this);
+        Dungeon.quickslot.replacePlaceholder(this);
+        Collections.sort(items, itemComparator);
+        updateQuickslot();
+        return true;
+
+    }
+
+    public boolean collect() {
+        return collect(Dungeon.hero.belongings.backpack);
+    }
+
+    //returns a new item if the split was sucessful and there are now 2 items, otherwise null
+    public Item split(int amount) {
+        if (amount <= 0 || amount >= quantity()) {
+            return null;
+        } else {
+            //pssh, who needs copy constructors?
+            Item split = Reflection.newInstance(getClass());
+
+            if (split == null) {
+                return null;
+            }
+
+            Bundle copy = new Bundle();
+            this.storeInBundle(copy);
+            split.restoreFromBundle(copy);
+            split.quantity(amount);
+            quantity -= amount;
+
+            return split;
+        }
+    }
+
+    public final Item detach(Bag container) {
+
+        if (quantity <= 0) {
+
+            return null;
+
+        } else if (quantity == 1) {
+
+            if (stackable) {
+                Dungeon.quickslot.convertToPlaceholder(this);
+            }
+
+            return detachAll(container);
+
+        } else {
+
+
+            Item detached = split(1);
+            updateQuickslot();
+            if (detached != null) detached.onDetach();
+            return detached;
+
+        }
+    }
+
+    public final Item detachAll(Bag container) {
+        Dungeon.quickslot.clearItem(this);
+
+        for (Item item : container.items) {
+            if (item == this) {
+                container.items.remove(this);
+                item.onDetach();
+                container.grabItems(); //try to put more items into the bag as it now has free space
+                updateQuickslot();
+                return this;
+            } else if (item instanceof Bag) {
+                Bag bag = (Bag) item;
+                if (bag.contains(this)) {
+                    return detachAll(bag);
+                }
+            }
+        }
+
+        updateQuickslot();
+        return this;
+    }
+
+    public boolean isSimilar(Item item) {
+        return level == item.level && getClass() == item.getClass();
+    }
+
+    protected void onDetach() {
+    }
+
+    //returns the true level of the item, ignoring all modifiers aside from upgrades
+    public final int trueLevel() {
+        return level;
+    }
+
+    //returns the persistant level of the item, only affected by modifiers which are persistent (e.g. curse infusion)
+    public int level() {
+        return level;
+    }
+
+    //returns the level of the item, after it may have been modified by temporary boosts/reductions
+    //note that not all item properties should care about buffs/debuffs! (e.g. str requirement)
+    public int buffedLvl() {
+        //only the hero can be affected by Degradation
+        if (Dungeon.hero.buff(Degrade.class) != null
+                && (isEquipped(Dungeon.hero) || Dungeon.hero.belongings.contains(this))) {
+            return Degrade.reduceLevel(level());
+        } else {
+            return level();
+        }
+    }
+
+    public void level(int value) {
+        level = value;
+
+        updateQuickslot();
+    }
+
+    public Item upgrade() {
+
+        this.level++;
+
+        updateQuickslot();
+
+        return this;
+    }
+
+    final public Item upgrade(int n) {
+        for (int i = 0; i < n; i++) {
+            upgrade();
+        }
+
+        return this;
+    }
+
+    public Item degrade() {
+
+        this.level--;
+
+        return this;
+    }
+
+    final public Item degrade(int n) {
+        for (int i = 0; i < n; i++) {
+            degrade();
+        }
+
+        return this;
+    }
+
+    public int visiblyUpgraded() {
+        return levelKnown ? level() : 0;
+    }
+
+    public int buffedVisiblyUpgraded() {
+        return levelKnown ? buffedLvl() : 0;
+    }
+
+    public boolean visiblyCursed() {
+        return cursed && cursedKnown;
+    }
+
+    public boolean isUpgradable() {
+        return true;
+    }
+
+    public boolean isIdentified() {
+        return levelKnown && cursedKnown;
+    }
+
+    public boolean isEquipped(Hero hero) {
+        return false;
+    }
+
+    public final Item identify() {
+        return identify(true);
+    }
+
+    public Item identify(boolean byHero) {
+
+        if (byHero && Dungeon.hero != null && Dungeon.hero.isAlive()) {
+            Catalog.setSeen(getClass());
+            if (!isIdentified()) Talent.onItemIdentified(Dungeon.hero, this);
+        }
+
+        guessed_name = null;
+        levelKnown = true;
+        cursedKnown = true;
+        Item.updateQuickslot();
+
+        return this;
+    }
+
+    public void onHeroGainExp(float levelPercent, Hero hero) {
+        //do nothing by default
+    }
+
+    public String title() {
+
+        String name = name();
+
+        if (visiblyUpgraded() != 0)
+            name = Messages.format(TXT_TO_STRING_LVL, name, visiblyUpgraded());
+
+        if (quantity > 1)
+            name = Messages.format(TXT_TO_STRING_X, name, quantity);
+
+        return name;
+
+    }
+
+    public String name() {
+        return trueName();
+    }
+
+    public final String trueName() {
+        return Messages.get(this, "name");
+    }
+
+    public int image() {
+        return image;
+    }
+
+    public ItemSprite.Glowing glowing() {
+        return null;
+    }
+
+    public Emitter emitter() {
+        return null;
+    }
+
+    public String info() {
+        return desc();
+    }
+
+    public String desc() {
+        return Messages.get(this, "desc");
+    }
+
+    public int quantity() {
+        return quantity;
+    }
+
+    public Item quantity(int value) {
+        quantity = value;
+        return this;
+    }
+
+    //item's value in gold coins
+    public int value() {
+        return 0;
+    }
+
+    //item's value in energy crystals
+    public int energyVal() {
+        return 0;
+    }
+
+    public Item virtual() {
+        Item item = Reflection.newInstance(getClass());
+        if (item == null) return null;
+
+        item.quantity = 0;
+        item.level = level;
+        return item;
+    }
+
+    public Item random() {
+        return this;
+    }
+
+    public String status() {
+        return quantity != 1 ? Integer.toString(quantity) : null;
+    }
+
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        bundle.put(QUANTITY, quantity);
+        bundle.put(LEVEL, level);
+        bundle.put(LEVEL_KNOWN, levelKnown);
+        bundle.put(CURSED, cursed);
+        bundle.put(CURSED_KNOWN, cursedKnown);
+        bundle.put(GUESSED_NAME, guessed_name);
+        bundle.put(GUESSED_ICON, guessed_icon);
+        if (Dungeon.quickslot.contains(this)) {
+            bundle.put(QUICKSLOT, Dungeon.quickslot.getSlot(this));
+        }
+        bundle.put(KEPT_LOST, keptThoughLostInvent);
+    }
+
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        quantity = bundle.getInt(QUANTITY);
+        levelKnown = bundle.getBoolean(LEVEL_KNOWN);
+        cursedKnown = bundle.getBoolean(CURSED_KNOWN);
+        guessed_name = bundle.getString(GUESSED_NAME);
+        guessed_icon = bundle.getInt(GUESSED_ICON);
+        if (Objects.equals(guessed_name, "")) {
+            guessed_name = null;
+            guessed_icon = -1;
+        }
+        ;
+
+        int level = bundle.getInt(LEVEL);
+        if (level > 0) {
+            upgrade(level);
+        } else if (level < 0) {
+            degrade(-level);
+        }
+
+        cursed = bundle.getBoolean(CURSED);
+
+        //only want to populate slot on first load.
+        if (Dungeon.hero == null) {
+            if (bundle.contains(QUICKSLOT)) {
+                Dungeon.quickslot.setSlot(bundle.getInt(QUICKSLOT), this);
+            }
+        }
+
+        keptThoughLostInvent = bundle.getBoolean(KEPT_LOST);
+    }
+
+    public int targetingPos(Hero user, int dst) {
+        return throwPos(user, dst);
+    }
+
+    public int throwPos(Hero user, int dst) {
+        return new Ballistica(user.pos, dst, Ballistica.PROJECTILE).collisionPos;
+    }
+
+    public void throwSound() {
+        Sample.INSTANCE.play(Assets.Sounds.MISS, 0.6f, 0.6f, 1.5f);
+    }
+
+    public void cast(final Hero user, final int dst) {
+
+        final int cell = throwPos(user, dst);
+        user.sprite.zap(cell);
+        user.busy();
+
+        throwSound();
+
+        Char enemy = Actor.findChar(cell);
+        QuickSlotButton.target(enemy);
+
+        final float delay = castDelay(user, dst);
+
+        if (enemy != null) {
+            ((MissileSprite) user.sprite.parent.recycle(MissileSprite.class)).
+                    reset(user.sprite,
+                            enemy.sprite,
+                            this,
+                            new Callback() {
+                                @Override
+                                public void call() {
+                                    curUser = user;
+                                    Item i = Item.this.detach(user.belongings.backpack);
+                                    if (i != null) i.onThrow(cell);
+                                    if (curUser.hasTalent(Talent.IMPROVISED_PROJECTILES)
+                                            && !(Item.this instanceof MissileWeapon)
+                                            && curUser.buff(Talent.ImprovisedProjectileCooldown.class) == null) {
+                                        if (enemy != null && enemy.alignment != curUser.alignment) {
+                                            Sample.INSTANCE.play(Assets.Sounds.HIT);
+                                            Buff.affect(enemy, Blindness.class, 1f + curUser.pointsInTalent(Talent.IMPROVISED_PROJECTILES));
+                                            Buff.affect(curUser, Talent.ImprovisedProjectileCooldown.class, 50f);
+                                        }
+                                    }
+                                    if (user.buff(Talent.LethalMomentumTracker.class) != null) {
+                                        user.buff(Talent.LethalMomentumTracker.class).detach();
+                                        user.next();
+                                    } else {
+                                        user.spendAndNext(delay);
+                                    }
+                                }
+                            });
+        } else {
+            ((MissileSprite) user.sprite.parent.recycle(MissileSprite.class)).
+                    reset(user.sprite,
+                            cell,
+                            this,
+                            new Callback() {
+                                @Override
+                                public void call() {
+                                    curUser = user;
+                                    Item i = Item.this.detach(user.belongings.backpack);
+                                    if (i != null) i.onThrow(cell);
+                                    user.spendAndNext(delay);
+                                }
+                            });
+        }
+    }
+
+    public float castDelay(Char user, int dst) {
+        return TIME_TO_THROW;
+    }
+
+    public class WndGuess extends Window {
+        private static final int WIDTH = 120;
+        private static final int BTN_SIZE = 20;
+        private Class curGuess = null;
+        private int curGuessIcon = -1;
+
+        public WndGuess(final Item item) {
+
+            IconTitle titlebar = new IconTitle();
+            titlebar.icon(Icons.MAGNIFY.get());
+            titlebar.label("Guess");
+            titlebar.setRect(0, 0, WIDTH, 0);
+            add(titlebar);
+
+            RenderedTextBlock text = PixelScene.renderTextBlock(6);
+            text.text("Guess the type of the unidentified item. This will change the name of the item but won't tell you if you're correct.");
+            text.setPos(0, titlebar.bottom());
+            text.maxWidth(WIDTH);
+            add(text);
+
+            final RedButton guess = new RedButton("") {
+                @Override
+                protected void onClick() {
+                    super.onClick();
+                    guessed_name = curGuess == null ? null : Messages.titleCase(Messages.get(curGuess, "name"));
+                    guessed_icon = curGuessIcon;
+                    hide();
+                }
+            };
+            guess.icon(new ItemSprite(item));
+            guess.setRect(0, 80, WIDTH, 20);
+            guess.text(" "); // TODO: This is a hack
+            add(guess);
+
+            float left;
+            float top = text.bottom() + 5;
+            int rows;
+            int placed = 0;
+
+            final ArrayList<Class<? extends Item>> unIDed = new ArrayList<>();
+            if (item.isIdentified()) {
+                hide();
+                return;
+            } else if (item instanceof Potion) {
+                if (item instanceof ExoticPotion) {
+                    for (Class<? extends Item> i : Potion.getUnknown()) {
+                        unIDed.add(ExoticPotion.regToExo.get(i));
+                    }
+                } else {
+                    unIDed.addAll(Potion.getUnknown());
+                }
+            } else if (item instanceof Scroll) {
+                if (item instanceof ExoticScroll) {
+                    for (Class<? extends Item> i : Scroll.getUnknown()) {
+                        unIDed.add(ExoticScroll.regToExo.get(i));
+                    }
+                } else {
+                    unIDed.addAll(Scroll.getUnknown());
+                }
+            } else if (item instanceof Ring) {
+                unIDed.addAll(Ring.getUnknown());
+            } else {
+                hide();
+                return;
+            }
+
+            if (unIDed.size() <= 5) {
+                rows = 1;
+                top += BTN_SIZE / 2f;
+                left = (WIDTH - BTN_SIZE * unIDed.size()) / 2f;
+            } else {
+                rows = 2;
+                left = (WIDTH - BTN_SIZE * ((unIDed.size() + 1) / 2)) / 2f;
+            }
+
+            for (final Class<? extends Item> i : unIDed) {
+
+                IconButton btn = new IconButton() {
+                    @Override
+                    protected void onClick() {
+                        if (curGuess == null) {
+                            curGuessIcon = Reflection.newInstance(i).icon;
+                            curGuess = i;
+                        } else if (curGuess == i) {
+                            curGuessIcon = -1;
+                            curGuess = null;
+                        } else {
+                            curGuessIcon = Reflection.newInstance(i).icon;
+                            curGuess = i;
+                        }
+                        if (curGuess == null) {
+                            guess.text(" "); // TODO: This is a hack
+                        } else {
+                            guess.text(Messages.titleCase(Messages.get(curGuess, "name")));
+                        }
+                        super.onClick();
+                    }
+                };
+                Image im = new Image(Assets.Sprites.ITEM_ICONS);
+                im.frame(ItemSpriteSheet.Icons.film.get(Reflection.newInstance(i).icon));
+                im.scale.set(2f);
+                btn.icon(im);
+                btn.setRect(left + placed * BTN_SIZE, top, BTN_SIZE, BTN_SIZE);
+                add(btn);
+
+                placed++;
+                if (rows == 2 && placed == ((unIDed.size() + 1) / 2)) {
+                    placed = 0;
+                    if (unIDed.size() % 2 == 1) {
+                        left += BTN_SIZE / 2f;
+                    }
+                    top += BTN_SIZE;
+                }
+            }
+
+            resize(WIDTH, 100);
+
+        }
+
+    }
 }

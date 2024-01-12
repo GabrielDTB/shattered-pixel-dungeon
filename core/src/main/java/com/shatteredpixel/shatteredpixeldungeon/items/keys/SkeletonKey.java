@@ -21,28 +21,20 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.keys;
 
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
-import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.watabou.noosa.Game;
-import com.watabou.utils.Callback;
-
-import java.io.IOException;
 
 public class SkeletonKey extends Key {
-	
-	{
-		image = ItemSpriteSheet.SKELETON_KEY;
-	}
-	
-	public SkeletonKey() {
-		this( 0 );
-	}
-	
-	public SkeletonKey( int depth ) {
-		super();
-		this.depth = depth;
-	}
+
+    {
+        image = ItemSpriteSheet.SKELETON_KEY;
+    }
+
+    public SkeletonKey() {
+        this(0);
+    }
+
+    public SkeletonKey(int depth) {
+        super();
+        this.depth = depth;
+    }
 }

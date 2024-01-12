@@ -38,103 +38,101 @@ import com.watabou.utils.PointF;
 
 public class Bleeding extends Buff {
 
-	{
-		type = buffType.NEGATIVE;
-		announced = true;
-	}
-	
-	protected float level;
+    private static final String LEVEL = "level";
+    private static final String SOURCE = "source";
+    protected float level;
+    //used in specific cases where the source of the bleed is important for death logic
+    private Class source;
 
-	//used in specific cases where the source of the bleed is important for death logic
-	private Class source;
+    {
+        type = buffType.NEGATIVE;
+        announced = true;
+    }
 
-	public float level(){
-		return level;
-	}
-	
-	private static final String LEVEL	= "level";
-	private static final String SOURCE	= "source";
-	
-	@Override
-	public void storeInBundle( Bundle bundle ) {
-		super.storeInBundle( bundle );
-		bundle.put( LEVEL, level );
-		bundle.put( SOURCE, source );
-	}
-	
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		super.restoreFromBundle( bundle );
-		level = bundle.getFloat( LEVEL );
-		source = bundle.getClass( SOURCE );
-	}
-	
-	public void set( float level ) {
-		set( level, null );
-	}
+    public float level() {
+        return level;
+    }
 
-	public void set( float level, Class source ){
-		if (this.level < level) {
-			this.level = Math.max(this.level, level);
-			this.source = source;
-		}
-	}
-	
-	@Override
-	public int icon() {
-		return BuffIndicator.BLEEDING;
-	}
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(LEVEL, level);
+        bundle.put(SOURCE, source);
+    }
 
-	@Override
-	public String iconTextDisplay() {
-		return Integer.toString(Math.round(level));
-	}
-	
-	@Override
-	public boolean act() {
-		if (target.isAlive()) {
-			
-			level = NormalFloat(level / 2f, level);
-			int dmg = Math.round(level);
-			
-			if (dmg > 0) {
-				
-				target.damage( dmg, this );
-				if (target.sprite.visible) {
-					Splash.at( target.sprite.center(), -PointF.PI / 2, PointF.PI / 6,
-							target.sprite.blood(), Math.min( 10 * dmg / target.HT, 10 ) );
-				}
-				
-				if (target == Dungeon.hero && !target.isAlive()) {
-					if (source == Chasm.class){
-						Badges.validateDeathFromFalling();
-					} else if (source == Sacrificial.class){
-						Badges.validateDeathFromFriendlyMagic();
-					}
-					Dungeon.fail( this );
-					GLog.n( Messages.get(this, "ondeath") );
-				}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        level = bundle.getFloat(LEVEL);
+        source = bundle.getClass(SOURCE);
+    }
 
-				if (source == Sickle.HarvestBleedTracker.class && !target.isAlive()){
-					MeleeWeapon.onAbilityKill(Dungeon.hero, target);
-				}
-				
-				spend( TICK );
-			} else {
-				detach();
-			}
-			
-		} else {
-			
-			detach();
-			
-		}
-		
-		return true;
-	}
+    public void set(float level) {
+        set(level, null);
+    }
 
-	@Override
-	public String desc() {
-		return Messages.get(this, "desc", Math.round(level));
-	}
+    public void set(float level, Class source) {
+        if (this.level < level) {
+            this.level = Math.max(this.level, level);
+            this.source = source;
+        }
+    }
+
+    @Override
+    public int icon() {
+        return BuffIndicator.BLEEDING;
+    }
+
+    @Override
+    public String iconTextDisplay() {
+        return Integer.toString(Math.round(level));
+    }
+
+    @Override
+    public boolean act() {
+        if (target.isAlive()) {
+
+            level = NormalFloat(level / 2f, level);
+            int dmg = Math.round(level);
+
+            if (dmg > 0) {
+
+                target.damage(dmg, this);
+                if (target.sprite.visible) {
+                    Splash.at(target.sprite.center(), -PointF.PI / 2, PointF.PI / 6,
+                            target.sprite.blood(), Math.min(10 * dmg / target.HT, 10));
+                }
+
+                if (target == Dungeon.hero && !target.isAlive()) {
+                    if (source == Chasm.class) {
+                        Badges.validateDeathFromFalling();
+                    } else if (source == Sacrificial.class) {
+                        Badges.validateDeathFromFriendlyMagic();
+                    }
+                    Dungeon.fail(this);
+                    GLog.n(Messages.get(this, "ondeath"));
+                }
+
+                if (source == Sickle.HarvestBleedTracker.class && !target.isAlive()) {
+                    MeleeWeapon.onAbilityKill(Dungeon.hero, target);
+                }
+
+                spend(TICK);
+            } else {
+                detach();
+            }
+
+        } else {
+
+            detach();
+
+        }
+
+        return true;
+    }
+
+    @Override
+    public String desc() {
+        return Messages.get(this, "desc", Math.round(level));
+    }
 }

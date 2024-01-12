@@ -37,97 +37,97 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 
 public class Dewdrop extends Item {
-	
-	{
-		image = ItemSpriteSheet.DEWDROP;
-		
-		stackable = true;
-		dropsDownHeap = true;
-	}
-	
-	@Override
-	public boolean doPickUp(Hero hero, int pos) {
-		
-		Waterskin flask = hero.belongings.getItem( Waterskin.class );
-		
-		if (flask != null && !flask.isFull()){
 
-			flask.collectDew( this );
-			GameScene.pickUp( this, pos );
+    {
+        image = ItemSpriteSheet.DEWDROP;
 
-		} else {
+        stackable = true;
+        dropsDownHeap = true;
+    }
 
-			int terr = Dungeon.level.map[pos];
-			if (!consumeDew(1, hero, terr == Terrain.ENTRANCE|| terr == Terrain.EXIT || terr == Terrain.UNLOCKED_EXIT)){
-				return false;
-			}
-			
-		}
-		
-		Sample.INSTANCE.play( Assets.Sounds.DEWDROP );
-		hero.spendAndNext( TIME_TO_PICK_UP );
-		
-		return true;
-	}
+    public static boolean consumeDew(int quantity, Hero hero, boolean force) {
+        //20 drops for a full heal
+        int heal = Math.round(hero.HT * 0.05f * quantity);
 
-	public static boolean consumeDew(int quantity, Hero hero, boolean force){
-		//20 drops for a full heal
-		int heal = Math.round( hero.HT * 0.05f * quantity );
+        int effect = Math.min(hero.HT - hero.HP, heal);
+        int shield = 0;
+        if (hero.hasTalent(Talent.SHIELDING_DEW)) {
+            shield = heal - effect;
+            int maxShield = Math.round(hero.HT * 0.2f * hero.pointsInTalent(Talent.SHIELDING_DEW));
+            int curShield = 0;
+            if (hero.buff(Barrier.class) != null) curShield = hero.buff(Barrier.class).shielding();
+            shield = Math.min(shield, maxShield - curShield);
+        }
+        if (effect > 0 || shield > 0) {
+            hero.HP += effect;
+            if (shield > 0) Buff.affect(hero, Barrier.class).incShield(shield);
+            hero.sprite.emitter().burst(Speck.factory(Speck.HEALING), 1);
+            if (effect > 0 && shield > 0) {
+                hero.sprite.showStatus(CharSprite.POSITIVE, Messages.get(Dewdrop.class, "both", effect, shield));
+            } else if (effect > 0) {
+                hero.sprite.showStatus(CharSprite.POSITIVE, Messages.get(Dewdrop.class, "heal", effect));
+            } else {
+                hero.sprite.showStatus(CharSprite.POSITIVE, Messages.get(Dewdrop.class, "shield", shield));
+            }
 
-		int effect = Math.min( hero.HT - hero.HP, heal );
-		int shield = 0;
-		if (hero.hasTalent(Talent.SHIELDING_DEW)){
-			shield = heal - effect;
-			int maxShield = Math.round(hero.HT *0.2f*hero.pointsInTalent(Talent.SHIELDING_DEW));
-			int curShield = 0;
-			if (hero.buff(Barrier.class) != null) curShield = hero.buff(Barrier.class).shielding();
-			shield = Math.min(shield, maxShield-curShield);
-		}
-		if (effect > 0 || shield > 0) {
-			hero.HP += effect;
-			if (shield > 0) Buff.affect(hero, Barrier.class).incShield(shield);
-			hero.sprite.emitter().burst( Speck.factory( Speck.HEALING ), 1 );
-			if (effect > 0 && shield > 0){
-				hero.sprite.showStatus( CharSprite.POSITIVE, Messages.get(Dewdrop.class, "both", effect, shield) );
-			} else if (effect > 0){
-				hero.sprite.showStatus( CharSprite.POSITIVE, Messages.get(Dewdrop.class, "heal", effect) );
-			} else {
-				hero.sprite.showStatus( CharSprite.POSITIVE, Messages.get(Dewdrop.class, "shield", shield) );
-			}
+        } else if (!force) {
+            GLog.i(Messages.get(Dewdrop.class, "already_full"));
+            return false;
+        }
 
-		} else if (!force) {
-			GLog.i( Messages.get(Dewdrop.class, "already_full") );
-			return false;
-		}
+        return true;
+    }
 
-		return true;
-	}
+    @Override
+    public boolean doPickUp(Hero hero, int pos) {
 
-	@Override
-	public boolean isUpgradable() {
-		return false;
-	}
+        Waterskin flask = hero.belongings.getItem(Waterskin.class);
 
-	@Override
-	public boolean isIdentified() {
-		return true;
-	}
+        if (flask != null && !flask.isFull()) {
 
-	//max of one dew in a stack
+            flask.collectDew(this);
+            GameScene.pickUp(this, pos);
 
-	@Override
-	public Item merge( Item other ){
-		if (isSimilar( other )){
-			quantity = 1;
-			other.quantity = 0;
-		}
-		return this;
-	}
+        } else {
 
-	@Override
-	public Item quantity(int value) {
-		quantity = Math.min( value, 1);
-		return this;
-	}
+            int terr = Dungeon.level.map[pos];
+            if (!consumeDew(1, hero, terr == Terrain.ENTRANCE || terr == Terrain.EXIT || terr == Terrain.UNLOCKED_EXIT)) {
+                return false;
+            }
+
+        }
+
+        Sample.INSTANCE.play(Assets.Sounds.DEWDROP);
+        hero.spendAndNext(TIME_TO_PICK_UP);
+
+        return true;
+    }
+
+    @Override
+    public boolean isUpgradable() {
+        return false;
+    }
+
+    @Override
+    public boolean isIdentified() {
+        return true;
+    }
+
+    //max of one dew in a stack
+
+    @Override
+    public Item merge(Item other) {
+        if (isSimilar(other)) {
+            quantity = 1;
+            other.quantity = 0;
+        }
+        return this;
+    }
+
+    @Override
+    public Item quantity(int value) {
+        quantity = Math.min(value, 1);
+        return this;
+    }
 
 }

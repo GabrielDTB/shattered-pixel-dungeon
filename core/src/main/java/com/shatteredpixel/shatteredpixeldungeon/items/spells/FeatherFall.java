@@ -36,67 +36,67 @@ import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 
 public class FeatherFall extends Spell {
-	
-	{
-		image = ItemSpriteSheet.FEATHER_FALL;
-	}
-	
-	@Override
-	protected void onCast(Hero hero) {
-		Buff.append(hero, FeatherBuff.class, FeatherBuff.DURATION);
-		hero.sprite.operate(hero.pos);
-		Sample.INSTANCE.play(Assets.Sounds.READ );
-		hero.sprite.emitter().burst( Speck.factory( Speck.JET ), 20);
-		
-		GLog.p(Messages.get(this, "light"));
-		
-		detach( curUser.belongings.backpack );
-		updateQuickslot();
-		Invisibility.dispel();
-		hero.spendAndNext( 1f );
-	}
-	
-	public static class FeatherBuff extends FlavourBuff {
-		//does nothing, just waits to be triggered by chasm falling
-		{
-			type = buffType.POSITIVE;
-		}
 
-		public static final float DURATION	= 30f;
+    {
+        image = ItemSpriteSheet.FEATHER_FALL;
+    }
 
-		@Override
-		public int icon() {
-			return BuffIndicator.LEVITATION;
-		}
+    @Override
+    protected void onCast(Hero hero) {
+        Buff.append(hero, FeatherBuff.class, FeatherBuff.DURATION);
+        hero.sprite.operate(hero.pos);
+        Sample.INSTANCE.play(Assets.Sounds.READ);
+        hero.sprite.emitter().burst(Speck.factory(Speck.JET), 20);
 
-		@Override
-		public void tintIcon(Image icon) {
-			icon.hardlight(1f, 2f, 1.25f);
-		}
+        GLog.p(Messages.get(this, "light"));
 
-		@Override
-		public float iconFadePercent() {
-			return Math.max(0, (DURATION - visualcooldown()) / DURATION);
-		}
-	}
-	
-	@Override
-	public int value() {
-		//prices of ingredients, divided by output quantity, rounds down
-		return (int)((30 + 40) * (quantity/2f));
-	}
-	
-	public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {
-		
-		{
-			inputs =  new Class[]{PotionOfLevitation.class, ArcaneCatalyst.class};
-			inQuantity = new int[]{1, 1};
-			
-			cost = 8;
-			
-			output = FeatherFall.class;
-			outQuantity = 2;
-		}
-		
-	}
+        detach(curUser.belongings.backpack);
+        updateQuickslot();
+        Invisibility.dispel();
+        hero.spendAndNext(1f);
+    }
+
+    @Override
+    public int value() {
+        //prices of ingredients, divided by output quantity, rounds down
+        return (int) ((30 + 40) * (quantity / 2f));
+    }
+
+    public static class FeatherBuff extends FlavourBuff {
+        public static final float DURATION = 30f;
+
+        //does nothing, just waits to be triggered by chasm falling
+        {
+            type = buffType.POSITIVE;
+        }
+
+        @Override
+        public int icon() {
+            return BuffIndicator.LEVITATION;
+        }
+
+        @Override
+        public void tintIcon(Image icon) {
+            icon.hardlight(1f, 2f, 1.25f);
+        }
+
+        @Override
+        public float iconFadePercent() {
+            return Math.max(0, (DURATION - visualcooldown()) / DURATION);
+        }
+    }
+
+    public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {
+
+        {
+            inputs = new Class[]{PotionOfLevitation.class, ArcaneCatalyst.class};
+            inQuantity = new int[]{1, 1};
+
+            cost = 8;
+
+            output = FeatherFall.class;
+            outQuantity = 2;
+        }
+
+    }
 }

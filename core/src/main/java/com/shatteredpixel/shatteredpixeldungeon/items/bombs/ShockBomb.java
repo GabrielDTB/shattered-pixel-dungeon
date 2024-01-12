@@ -33,59 +33,59 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
-import com.watabou.utils.BArray;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.BArray;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
 public class ShockBomb extends Bomb {
-	
-	{
-		image = ItemSpriteSheet.SHOCK_BOMB;
-	}
-	
-	@Override
-	public void explode(int cell) {
-		super.explode(cell);
 
-		ArrayList<Char> affected = new ArrayList<>();
-		PathFinder.buildDistanceMap( cell, BArray.not( Dungeon.level.solid, null ), 3 );
-		for (int i = 0; i < PathFinder.distance.length; i++) {
-			if (PathFinder.distance[i] < Integer.MAX_VALUE
-				&& Actor.findChar(i) != null) {
-				affected.add(Actor.findChar(i));
-			}
-		}
+    {
+        image = ItemSpriteSheet.SHOCK_BOMB;
+    }
 
-		for (Char ch : affected.toArray(new Char[0])){
-			Ballistica LOS = new Ballistica(cell, ch.pos, Ballistica.PROJECTILE);
-			if (LOS.collisionPos != ch.pos){
-				affected.remove(ch);
-			}
-		}
+    @Override
+    public void explode(int cell) {
+        super.explode(cell);
 
-		ArrayList<Lightning.Arc> arcs = new ArrayList<>();
-		for (Char ch : affected){
-			int power = 16 - 4*Dungeon.level.distance(ch.pos, cell);
-			if (power > 0){
-				//32% to 8% regular bomb damage
-				int damage = Math.round(Random.NormalIntRange(5 + Dungeon.scalingDepth(), 10 + 2*Dungeon.scalingDepth()) * (power/50f));
-				ch.damage(damage, this);
-				if (ch.isAlive()) Buff.prolong(ch, Paralysis.class, power);
-				arcs.add(new Lightning.Arc(DungeonTilemap.tileCenterToWorld(cell), ch.sprite.center()));
-			}
-		}
+        ArrayList<Char> affected = new ArrayList<>();
+        PathFinder.buildDistanceMap(cell, BArray.not(Dungeon.level.solid, null), 3);
+        for (int i = 0; i < PathFinder.distance.length; i++) {
+            if (PathFinder.distance[i] < Integer.MAX_VALUE
+                    && Actor.findChar(i) != null) {
+                affected.add(Actor.findChar(i));
+            }
+        }
 
-		CellEmitter.center(cell).burst(SparkParticle.FACTORY, 20);
-		Dungeon.hero.sprite.parent.addToFront(new Lightning(arcs, null));
-		Sample.INSTANCE.play( Assets.Sounds.LIGHTNING );
-	}
-	
-	@Override
-	public int value() {
-		//prices of ingredients
-		return quantity * (20 + 30);
-	}
+        for (Char ch : affected.toArray(new Char[0])) {
+            Ballistica LOS = new Ballistica(cell, ch.pos, Ballistica.PROJECTILE);
+            if (LOS.collisionPos != ch.pos) {
+                affected.remove(ch);
+            }
+        }
+
+        ArrayList<Lightning.Arc> arcs = new ArrayList<>();
+        for (Char ch : affected) {
+            int power = 16 - 4 * Dungeon.level.distance(ch.pos, cell);
+            if (power > 0) {
+                //32% to 8% regular bomb damage
+                int damage = Math.round(Random.NormalIntRange(5 + Dungeon.scalingDepth(), 10 + 2 * Dungeon.scalingDepth()) * (power / 50f));
+                ch.damage(damage, this);
+                if (ch.isAlive()) Buff.prolong(ch, Paralysis.class, power);
+                arcs.add(new Lightning.Arc(DungeonTilemap.tileCenterToWorld(cell), ch.sprite.center()));
+            }
+        }
+
+        CellEmitter.center(cell).burst(SparkParticle.FACTORY, 20);
+        Dungeon.hero.sprite.parent.addToFront(new Lightning(arcs, null));
+        Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
+    }
+
+    @Override
+    public int value() {
+        //prices of ingredients
+        return quantity * (20 + 30);
+    }
 }

@@ -35,52 +35,53 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 
 public class PhaseShift extends TargetedSpell {
-	
-	{
-		image = ItemSpriteSheet.PHASE_SHIFT;
 
-		usesTargeting = true;
-	}
-	
-	@Override
-	protected void affectTarget(Ballistica bolt, Hero hero) {
-		final Char ch = Actor.findChar(bolt.collisionPos);
-		
-		if (ch != null) {
-			if (ScrollOfTeleportation.teleportChar(ch)){
+    {
+        image = ItemSpriteSheet.PHASE_SHIFT;
 
-				if (ch instanceof Mob) {
-					if (((Mob) ch).state == ((Mob) ch).HUNTING) ((Mob) ch).state = ((Mob) ch).WANDERING;
-					((Mob) ch).beckon(Dungeon.level.randomDestination( ch ));
-				}
-				if (!Char.hasProp(ch, Char.Property.BOSS) && !Char.hasProp(ch, Char.Property.MINIBOSS)) {
-					Buff.affect(ch, Paralysis.class, Paralysis.DURATION);
-				}
-				
-			}
-		} else {
-			GLog.w( Messages.get(this, "no_target") );
-		}
-	}
-	
-	@Override
-	public int value() {
-		//prices of ingredients, divided by output quantity, rounds down
-		return (int)((30 + 40) * (quantity/8f));
-	}
-	
-	public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {
-		
-		{
-			inputs =  new Class[]{ScrollOfTeleportation.class, ArcaneCatalyst.class};
-			inQuantity = new int[]{1, 1};
-			
-			cost = 4;
-			
-			output = PhaseShift.class;
-			outQuantity = 8;
-		}
-		
-	}
-	
+        usesTargeting = true;
+    }
+
+    @Override
+    protected void affectTarget(Ballistica bolt, Hero hero) {
+        final Char ch = Actor.findChar(bolt.collisionPos);
+
+        if (ch != null) {
+            if (ScrollOfTeleportation.teleportChar(ch)) {
+
+                if (ch instanceof Mob) {
+                    if (((Mob) ch).state == ((Mob) ch).HUNTING)
+                        ((Mob) ch).state = ((Mob) ch).WANDERING;
+                    ((Mob) ch).beckon(Dungeon.level.randomDestination(ch));
+                }
+                if (!Char.hasProp(ch, Char.Property.BOSS) && !Char.hasProp(ch, Char.Property.MINIBOSS)) {
+                    Buff.affect(ch, Paralysis.class, Paralysis.DURATION);
+                }
+
+            }
+        } else {
+            GLog.w(Messages.get(this, "no_target"));
+        }
+    }
+
+    @Override
+    public int value() {
+        //prices of ingredients, divided by output quantity, rounds down
+        return (int) ((30 + 40) * (quantity / 8f));
+    }
+
+    public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {
+
+        {
+            inputs = new Class[]{ScrollOfTeleportation.class, ArcaneCatalyst.class};
+            inQuantity = new int[]{1, 1};
+
+            cost = 4;
+
+            output = PhaseShift.class;
+            outQuantity = 8;
+        }
+
+    }
+
 }

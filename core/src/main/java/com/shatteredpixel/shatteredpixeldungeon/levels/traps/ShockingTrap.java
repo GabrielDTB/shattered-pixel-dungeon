@@ -31,23 +31,23 @@ import com.watabou.utils.PathFinder;
 
 public class ShockingTrap extends Trap {
 
-	{
-		color = YELLOW;
-		shape = DOTS;
-	}
+    {
+        color = YELLOW;
+        shape = DOTS;
+    }
 
-	@Override
-	public void activate() {
-		
-		if (Dungeon.level.heroFOV[pos]){
-			Sample.INSTANCE.play( Assets.Sounds.LIGHTNING );
-		}
-		
-		for( int i : PathFinder.NEIGHBOURS9) {
-			if (!Dungeon.level.solid[pos + i]) {
-				GameScene.add(Blob.seed(pos + i, 10, Electricity.class));
-			}
-		}
-	}
-	
+    @Override
+    public void activate() {
+
+        if (Dungeon.level.heroFOV[pos]) {
+            Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
+        }
+
+        for (int i : PathFinder.NEIGHBOURS9) {
+            if (!Dungeon.level.solid[pos + i]) {
+                GameScene.add(Blob.seed(pos + i, 10, Electricity.class));
+            }
+        }
+    }
+
 }

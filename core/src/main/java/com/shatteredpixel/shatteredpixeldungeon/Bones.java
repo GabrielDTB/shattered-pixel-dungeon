@@ -38,212 +38,213 @@ import java.util.Iterator;
 
 public class Bones {
 
-	private static final String BONES_FILE	= "bones.dat";
-	
-	private static final String LEVEL	= "level";
-	private static final String BRANCH	= "branch";
-	private static final String ITEM	= "item";
+    private static final String BONES_FILE = "bones.dat";
 
-	private static int depth = -1;
-	private static int branch = -1;
-	private static Item item;
-	
-	public static void leave() {
+    private static final String LEVEL = "level";
+    private static final String BRANCH = "branch";
+    private static final String ITEM = "item";
 
-		//remains will usually drop on the floor the hero died on
-		// but are capped at 5 floors above the lowest depth reached (even when ascending)
-		depth = Math.max(Dungeon.depth, Statistics.deepestFloor-5);
+    private static int depth = -1;
+    private static int branch = -1;
+    private static Item item;
 
-		branch = Dungeon.branch;
+    public static void leave() {
 
-		//daily runs do not interact with remains
-		if (Dungeon.daily) {
-			depth = branch = -1;
-			return;
-		}
+        //remains will usually drop on the floor the hero died on
+        // but are capped at 5 floors above the lowest depth reached (even when ascending)
+        depth = Math.max(Dungeon.depth, Statistics.deepestFloor - 5);
 
-		item = pickItem(Dungeon.hero);
+        branch = Dungeon.branch;
 
-		Bundle bundle = new Bundle();
-		bundle.put( LEVEL, depth );
-		bundle.put( ITEM, item );
+        //daily runs do not interact with remains
+        if (Dungeon.daily) {
+            depth = branch = -1;
+            return;
+        }
 
-		try {
-			FileUtils.bundleToFile( BONES_FILE, bundle );
-		} catch (IOException e) {
-			ShatteredPixelDungeon.reportException(e);
-		}
-	}
+        item = pickItem(Dungeon.hero);
 
-	private static Item pickItem(Hero hero){
-		Item item = null;
+        Bundle bundle = new Bundle();
+        bundle.put(LEVEL, depth);
+        bundle.put(ITEM, item);
 
-		//seeded runs always leave gold
-		//This is to prevent using specific seeds to transport items to regular runs
-		if (!Dungeon.customSeedText.isEmpty()){
-			if (Dungeon.gold > 100) {
-				return new Gold( Random.NormalIntRange( 50, Dungeon.gold/2 ) );
-			} else {
-				return new Gold( 50 );
-			}
-		}
+        try {
+            FileUtils.bundleToFile(BONES_FILE, bundle);
+        } catch (IOException e) {
+            ShatteredPixelDungeon.reportException(e);
+        }
+    }
 
-		if (Random.Int(3) != 0) {
-			switch (Random.Int(7)) {
-				case 0:
-					item = hero.belongings.weapon;
-					//if the hero has two weapons (champion), pick the stronger one
-					if (hero.belongings.secondWep != null &&
-							(item == null || hero.belongings.secondWep.trueLevel() > item.trueLevel())){
-						item = hero.belongings.secondWep;
-						break;
-					}
-					break;
-				case 1:
-					item = hero.belongings.armor;
-					break;
-				case 2:
-					item = hero.belongings.artifact;
-					break;
-				case 3:
-					item = hero.belongings.misc;
-					break;
-				case 4:
-					item = hero.belongings.ring;
-					break;
-				case 5: case 6:
-					item = Dungeon.quickslot.randomNonePlaceholder();
-					break;
-			}
-			if (item == null || !item.bones) {
-				return pickItem(hero);
-			}
-		} else {
+    private static Item pickItem(Hero hero) {
+        Item item = null;
 
-			Iterator<Item> iterator = hero.belongings.backpack.iterator();
-			Item curItem;
-			ArrayList<Item> items = new ArrayList<>();
-			while (iterator.hasNext()){
-				curItem = iterator.next();
-				if (curItem.bones)
-					items.add(curItem);
-			}
+        //seeded runs always leave gold
+        //This is to prevent using specific seeds to transport items to regular runs
+        if (!Dungeon.customSeedText.isEmpty()) {
+            if (Dungeon.gold > 100) {
+                return new Gold(Random.NormalIntRange(50, Dungeon.gold / 2));
+            } else {
+                return new Gold(50);
+            }
+        }
 
-			if (Random.Int(3) < items.size()) {
-				item = Random.element(items);
-				if (item.stackable){
-					item.quantity(Random.NormalIntRange(1, (item.quantity() + 1) / 2));
-				}
-			} else {
-				if (Dungeon.gold > 100) {
-					item = new Gold( Random.NormalIntRange( 50, Dungeon.gold/2 ) );
-				} else {
-					item = new Gold( 50 );
-				}
-			}
-		}
-		
-		return item;
-	}
+        if (Random.Int(3) != 0) {
+            switch (Random.Int(7)) {
+                case 0:
+                    item = hero.belongings.weapon;
+                    //if the hero has two weapons (champion), pick the stronger one
+                    if (hero.belongings.secondWep != null &&
+                            (item == null || hero.belongings.secondWep.trueLevel() > item.trueLevel())) {
+                        item = hero.belongings.secondWep;
+                        break;
+                    }
+                    break;
+                case 1:
+                    item = hero.belongings.armor;
+                    break;
+                case 2:
+                    item = hero.belongings.artifact;
+                    break;
+                case 3:
+                    item = hero.belongings.misc;
+                    break;
+                case 4:
+                    item = hero.belongings.ring;
+                    break;
+                case 5:
+                case 6:
+                    item = Dungeon.quickslot.randomNonePlaceholder();
+                    break;
+            }
+            if (item == null || !item.bones) {
+                return pickItem(hero);
+            }
+        } else {
 
-	public static Item get() {
-		//daily runs do not interact with remains
-		if (Dungeon.daily){
-			return null;
-		}
+            Iterator<Item> iterator = hero.belongings.backpack.iterator();
+            Item curItem;
+            ArrayList<Item> items = new ArrayList<>();
+            while (iterator.hasNext()) {
+                curItem = iterator.next();
+                if (curItem.bones)
+                    items.add(curItem);
+            }
 
-		if (depth == -1) {
+            if (Random.Int(3) < items.size()) {
+                item = Random.element(items);
+                if (item.stackable) {
+                    item.quantity(Random.NormalIntRange(1, (item.quantity() + 1) / 2));
+                }
+            } else {
+                if (Dungeon.gold > 100) {
+                    item = new Gold(Random.NormalIntRange(50, Dungeon.gold / 2));
+                } else {
+                    item = new Gold(50);
+                }
+            }
+        }
 
-			try {
-				Bundle bundle = FileUtils.bundleFromFile(BONES_FILE);
+        return item;
+    }
 
-				depth = bundle.getInt( LEVEL );
-				branch = bundle.getInt( BRANCH );
-				if (depth > 0) {
-					item = (Item) bundle.get(ITEM);
-				}
+    public static Item get() {
+        //daily runs do not interact with remains
+        if (Dungeon.daily) {
+            return null;
+        }
 
-				return get();
+        if (depth == -1) {
 
-			} catch (IOException e) {
-				return null;
-			}
+            try {
+                Bundle bundle = FileUtils.bundleFromFile(BONES_FILE);
 
-		} else {
-			if (lootAtCurLevel()) {
+                depth = bundle.getInt(LEVEL);
+                branch = bundle.getInt(BRANCH);
+                if (depth > 0) {
+                    item = (Item) bundle.get(ITEM);
+                }
 
-				Bundle emptyBones = new Bundle();
-				emptyBones.put(LEVEL, 0);
-				try {
-					FileUtils.bundleToFile( BONES_FILE, emptyBones );
-				} catch (IOException e) {
-					ShatteredPixelDungeon.reportException(e);
-				}
-				depth = 0;
+                return get();
 
-				//challenged or seeded runs will always find 10 gold
-				if (Dungeon.challenges != 0 || !Dungeon.customSeedText.isEmpty()){
-					item = new Gold(10);
-				}
+            } catch (IOException e) {
+                return null;
+            }
 
-				if (item == null) {
-					item = new Gold(50);
-				}
+        } else {
+            if (lootAtCurLevel()) {
 
-				//Enforces artifact uniqueness
-				if (item instanceof Artifact){
-					if (Generator.removeArtifact(((Artifact)item).getClass())) {
-						
-						//generates a new artifact of the same type, always +0
-						Artifact artifact = Reflection.newInstance(((Artifact)item).getClass());
-						
-						if (artifact == null){
-							return new Gold(item.value());
-						}
+                Bundle emptyBones = new Bundle();
+                emptyBones.put(LEVEL, 0);
+                try {
+                    FileUtils.bundleToFile(BONES_FILE, emptyBones);
+                } catch (IOException e) {
+                    ShatteredPixelDungeon.reportException(e);
+                }
+                depth = 0;
 
-						artifact.cursed = true;
-						artifact.cursedKnown = true;
+                //challenged or seeded runs will always find 10 gold
+                if (Dungeon.challenges != 0 || !Dungeon.customSeedText.isEmpty()) {
+                    item = new Gold(10);
+                }
 
-						return artifact;
-						
-					} else {
-						return new Gold(item.value());
-					}
-				}
-				
-				if (item.isUpgradable() && !(item instanceof MissileWeapon)) {
-					item.cursed = true;
-					item.cursedKnown = true;
-				}
-				
-				if (item.isUpgradable()) {
-					//caps at +3
-					if (item.level() > 3) {
-						item.degrade( item.level() - 3 );
-					}
-					//thrown weapons are always IDed, otherwise set unknown
-					item.levelKnown = item instanceof MissileWeapon;
-				}
-				
-				item.reset();
-				
-				return item;
-			} else {
-				return null;
-			}
-		}
-	}
+                if (item == null) {
+                    item = new Gold(50);
+                }
 
-	private static boolean lootAtCurLevel(){
-		if (branch == Dungeon.branch) {
-			if (branch == 0) {
-				//always match depth exactly for main path
-				return depth == Dungeon.depth;
-			} else if (branch == 1) {
-				//just match the region for quest sub-floors
-				return depth/5 == Dungeon.depth/5;
-			}
-		}
-		return false;
-	}
+                //Enforces artifact uniqueness
+                if (item instanceof Artifact) {
+                    if (Generator.removeArtifact(((Artifact) item).getClass())) {
+
+                        //generates a new artifact of the same type, always +0
+                        Artifact artifact = Reflection.newInstance(((Artifact) item).getClass());
+
+                        if (artifact == null) {
+                            return new Gold(item.value());
+                        }
+
+                        artifact.cursed = true;
+                        artifact.cursedKnown = true;
+
+                        return artifact;
+
+                    } else {
+                        return new Gold(item.value());
+                    }
+                }
+
+                if (item.isUpgradable() && !(item instanceof MissileWeapon)) {
+                    item.cursed = true;
+                    item.cursedKnown = true;
+                }
+
+                if (item.isUpgradable()) {
+                    //caps at +3
+                    if (item.level() > 3) {
+                        item.degrade(item.level() - 3);
+                    }
+                    //thrown weapons are always IDed, otherwise set unknown
+                    item.levelKnown = item instanceof MissileWeapon;
+                }
+
+                item.reset();
+
+                return item;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    private static boolean lootAtCurLevel() {
+        if (branch == Dungeon.branch) {
+            if (branch == 0) {
+                //always match depth exactly for main path
+                return depth == Dungeon.depth;
+            } else if (branch == 1) {
+                //just match the region for quest sub-floors
+                return depth / 5 == Dungeon.depth / 5;
+            }
+        }
+        return false;
+    }
 }

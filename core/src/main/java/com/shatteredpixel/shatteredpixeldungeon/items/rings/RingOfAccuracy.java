@@ -28,33 +28,33 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class RingOfAccuracy extends Ring {
 
-	{
-		icon = ItemSpriteSheet.Icons.RING_ACCURACY;
-	}
-	
-	public String statsInfo() {
-		if (isIdentified()){
-			String info = Messages.get(this, "stats",
-					Messages.decimalFormat("#.##", 100f * (Math.pow(1.3f, soloBuffedBonus()) - 1f)));
-			if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Accuracy.class)){
-				info += "\n\n" + Messages.get(this, "combined_stats",
-						Messages.decimalFormat("#.##", 100f * (Math.pow(1.3f, combinedBuffedBonus(Dungeon.hero, Accuracy.class)) - 1f)));
-			}
-			return info;
-		} else {
-			return Messages.get(this, "typical_stats", Messages.decimalFormat("#.##", 30f));
-		}
-	}
-	
-	@Override
-	protected RingBuff buff( ) {
-		return new Accuracy();
-	}
-	
-	public static float accuracyMultiplier( Char target ){
-		return (float)Math.pow(1.3f, getBuffedBonus(target, Accuracy.class));
-	}
-	
-	public class Accuracy extends RingBuff {
-	}
+    {
+        icon = ItemSpriteSheet.Icons.RING_ACCURACY;
+    }
+
+    public static float accuracyMultiplier(Char target) {
+        return (float) Math.pow(1.3f, getBuffedBonus(target, Accuracy.class));
+    }
+
+    public String statsInfo() {
+        if (isIdentified()) {
+            String info = Messages.get(this, "stats",
+                    Messages.decimalFormat("#.##", 100f * (Math.pow(1.3f, soloBuffedBonus()) - 1f)));
+            if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Accuracy.class)) {
+                info += "\n\n" + Messages.get(this, "combined_stats",
+                        Messages.decimalFormat("#.##", 100f * (Math.pow(1.3f, combinedBuffedBonus(Dungeon.hero, Accuracy.class)) - 1f)));
+            }
+            return info;
+        } else {
+            return Messages.get(this, "typical_stats", Messages.decimalFormat("#.##", 30f));
+        }
+    }
+
+    @Override
+    protected RingBuff buff() {
+        return new Accuracy();
+    }
+
+    public class Accuracy extends RingBuff {
+    }
 }

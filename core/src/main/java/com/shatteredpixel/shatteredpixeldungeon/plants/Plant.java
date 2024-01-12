@@ -49,197 +49,194 @@ import com.watabou.utils.Reflection;
 import java.util.ArrayList;
 
 public abstract class Plant implements Bundlable {
-	
-	public int image;
-	public int pos;
 
-	protected Class<? extends Plant.Seed> seedClass;
+    private static final String POS = "pos";
+    public int image;
+    public int pos;
+    protected Class<? extends Plant.Seed> seedClass;
 
-	public void trigger(){
+    public void trigger() {
 
-		Char ch = Actor.findChar(pos);
+        Char ch = Actor.findChar(pos);
 
-		if (ch instanceof Hero){
-			((Hero) ch).interrupt();
-		}
+        if (ch instanceof Hero) {
+            ((Hero) ch).interrupt();
+        }
 
-		if (Dungeon.level.heroFOV[pos] && Dungeon.hero.hasTalent(Talent.NATURES_AID)){
-			// 3/5 turns based on talent points spent
-			Barkskin.conditionallyAppend(Dungeon.hero, 2, 1 + 2*(Dungeon.hero.pointsInTalent(Talent.NATURES_AID)));
-		}
+        if (Dungeon.level.heroFOV[pos] && Dungeon.hero.hasTalent(Talent.NATURES_AID)) {
+            // 3/5 turns based on talent points spent
+            Barkskin.conditionallyAppend(Dungeon.hero, 2, 1 + 2 * (Dungeon.hero.pointsInTalent(Talent.NATURES_AID)));
+        }
 
-		wither();
-		activate( ch );
-	}
-	
-	public abstract void activate( Char ch );
-	
-	public void wither() {
-		Dungeon.level.uproot( pos );
+        wither();
+        activate(ch);
+    }
 
-		if (Dungeon.level.heroFOV[pos]) {
-			CellEmitter.get( pos ).burst( LeafParticle.GENERAL, 6 );
-		}
+    public abstract void activate(Char ch);
 
-		float seedChance = 0f;
-		for (Char c : Actor.chars()){
-			if (c instanceof WandOfRegrowth.Lotus){
-				WandOfRegrowth.Lotus l = (WandOfRegrowth.Lotus) c;
-				if (l.inRange(pos)){
-					seedChance = Math.max(seedChance, l.seedPreservation());
-				}
-			}
-		}
+    public void wither() {
+        Dungeon.level.uproot(pos);
 
-		if (Random.Float() < seedChance){
-			if (seedClass != null && seedClass != Rotberry.Seed.class) {
-				Dungeon.level.drop(Reflection.newInstance(seedClass), pos).sprite.drop();
-			}
-		}
-		
-	}
-	
-	private static final String POS	= "pos";
+        if (Dungeon.level.heroFOV[pos]) {
+            CellEmitter.get(pos).burst(LeafParticle.GENERAL, 6);
+        }
 
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		pos = bundle.getInt( POS );
-	}
+        float seedChance = 0f;
+        for (Char c : Actor.chars()) {
+            if (c instanceof WandOfRegrowth.Lotus) {
+                WandOfRegrowth.Lotus l = (WandOfRegrowth.Lotus) c;
+                if (l.inRange(pos)) {
+                    seedChance = Math.max(seedChance, l.seedPreservation());
+                }
+            }
+        }
 
-	@Override
-	public void storeInBundle( Bundle bundle ) {
-		bundle.put( POS, pos );
-	}
+        if (Random.Float() < seedChance) {
+            if (seedClass != null && seedClass != Rotberry.Seed.class) {
+                Dungeon.level.drop(Reflection.newInstance(seedClass), pos).sprite.drop();
+            }
+        }
 
-	public String name(){
-		return Messages.get(this, "name");
-	}
+    }
 
-	public String desc() {
-		String desc = Messages.get(this, "desc");
-		if (Dungeon.hero.subClass == HeroSubClass.WARDEN){
-			desc += "\n\n" + Messages.get(this, "warden_desc");
-		}
-		return desc;
-	}
-	
-	public static class Seed extends Item {
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        pos = bundle.getInt(POS);
+    }
 
-		public static final String AC_PLANT	= "PLANT";
-		
-		private static final float TIME_TO_PLANT = 1f;
-		
-		{
-			stackable = true;
-			defaultAction = AC_THROW;
-		}
-		
-		protected Class<? extends Plant> plantClass;
-		
-		@Override
-		public ArrayList<String> actions( Hero hero ) {
-			ArrayList<String> actions = super.actions( hero );
-			actions.add( AC_PLANT );
-			return actions;
-		}
-		
-		@Override
-		protected void onThrow( int cell ) {
-			if (Dungeon.level.map[cell] == Terrain.ALCHEMY
-					|| Dungeon.level.pit[cell]
-					|| Dungeon.level.traps.get(cell) != null
-					|| Dungeon.isChallenged(Challenges.NO_HERBALISM)) {
-				super.onThrow( cell );
-			} else {
-				Dungeon.level.plant( this, cell );
-				if (Dungeon.hero.subClass == HeroSubClass.WARDEN) {
-					for (int i : PathFinder.NEIGHBOURS8) {
-						int c = Dungeon.level.map[cell + i];
-						if ( c == Terrain.EMPTY || c == Terrain.EMPTY_DECO
-								|| c == Terrain.EMBERS || c == Terrain.GRASS){
-							Level.set(cell + i, Terrain.FURROWED_GRASS);
-							GameScene.updateMap(cell + i);
-							CellEmitter.get( cell + i ).burst( LeafParticle.LEVEL_SPECIFIC, 4 );
-						}
-					}
-				}
-			}
-		}
-		
-		@Override
-		public void execute( Hero hero, String action ) {
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        bundle.put(POS, pos);
+    }
 
-			super.execute (hero, action );
+    public String name() {
+        return Messages.get(this, "name");
+    }
 
-			if (action.equals( AC_PLANT )) {
+    public String desc() {
+        String desc = Messages.get(this, "desc");
+        if (Dungeon.hero.subClass == HeroSubClass.WARDEN) {
+            desc += "\n\n" + Messages.get(this, "warden_desc");
+        }
+        return desc;
+    }
 
-				hero.busy();
-				((Seed)detach( hero.belongings.backpack )).onThrow( hero.pos );
-				hero.spend( TIME_TO_PLANT );
+    public static class Seed extends Item {
 
-				hero.sprite.operate( hero.pos );
-				
-			}
-		}
-		
-		public Plant couch( int pos, Level level ) {
-			if (level != null && level.heroFOV != null && level.heroFOV[pos]) {
-				Sample.INSTANCE.play(Assets.Sounds.PLANT);
-			}
-			Plant plant = Reflection.newInstance(plantClass);
-			plant.pos = pos;
-			return plant;
-		}
-		
-		@Override
-		public boolean isUpgradable() {
-			return false;
-		}
-		
-		@Override
-		public boolean isIdentified() {
-			return true;
-		}
-		
-		@Override
-		public int value() {
-			return 10 * quantity;
-		}
+        public static final String AC_PLANT = "PLANT";
 
-		@Override
-		public int energyVal() {
-			return 2 * quantity;
-		}
+        private static final float TIME_TO_PLANT = 1f;
+        protected Class<? extends Plant> plantClass;
 
-		@Override
-		public String desc() {
-			String desc = Messages.get(plantClass, "desc");
-			if (Dungeon.hero.subClass == HeroSubClass.WARDEN){
-				desc += "\n\n" + Messages.get(plantClass, "warden_desc");
-			}
-			return desc;
-		}
+        {
+            stackable = true;
+            defaultAction = AC_THROW;
+        }
 
-		@Override
-		public String info() {
-			return Messages.get( Seed.class, "info", desc() );
-		}
-		
-		public static class PlaceHolder extends Seed {
-			
-			{
-				image = ItemSpriteSheet.SEED_HOLDER;
-			}
-			
-			@Override
-			public boolean isSimilar(Item item) {
-				return item instanceof Plant.Seed;
-			}
-			
-			@Override
-			public String info() {
-				return "";
-			}
-		}
-	}
+        @Override
+        public ArrayList<String> actions(Hero hero) {
+            ArrayList<String> actions = super.actions(hero);
+            actions.add(AC_PLANT);
+            return actions;
+        }
+
+        @Override
+        protected void onThrow(int cell) {
+            if (Dungeon.level.map[cell] == Terrain.ALCHEMY
+                    || Dungeon.level.pit[cell]
+                    || Dungeon.level.traps.get(cell) != null
+                    || Dungeon.isChallenged(Challenges.NO_HERBALISM)) {
+                super.onThrow(cell);
+            } else {
+                Dungeon.level.plant(this, cell);
+                if (Dungeon.hero.subClass == HeroSubClass.WARDEN) {
+                    for (int i : PathFinder.NEIGHBOURS8) {
+                        int c = Dungeon.level.map[cell + i];
+                        if (c == Terrain.EMPTY || c == Terrain.EMPTY_DECO
+                                || c == Terrain.EMBERS || c == Terrain.GRASS) {
+                            Level.set(cell + i, Terrain.FURROWED_GRASS);
+                            GameScene.updateMap(cell + i);
+                            CellEmitter.get(cell + i).burst(LeafParticle.LEVEL_SPECIFIC, 4);
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void execute(Hero hero, String action) {
+
+            super.execute(hero, action);
+
+            if (action.equals(AC_PLANT)) {
+
+                hero.busy();
+                ((Seed) detach(hero.belongings.backpack)).onThrow(hero.pos);
+                hero.spend(TIME_TO_PLANT);
+
+                hero.sprite.operate(hero.pos);
+
+            }
+        }
+
+        public Plant couch(int pos, Level level) {
+            if (level != null && level.heroFOV != null && level.heroFOV[pos]) {
+                Sample.INSTANCE.play(Assets.Sounds.PLANT);
+            }
+            Plant plant = Reflection.newInstance(plantClass);
+            plant.pos = pos;
+            return plant;
+        }
+
+        @Override
+        public boolean isUpgradable() {
+            return false;
+        }
+
+        @Override
+        public boolean isIdentified() {
+            return true;
+        }
+
+        @Override
+        public int value() {
+            return 10 * quantity;
+        }
+
+        @Override
+        public int energyVal() {
+            return 2 * quantity;
+        }
+
+        @Override
+        public String desc() {
+            String desc = Messages.get(plantClass, "desc");
+            if (Dungeon.hero.subClass == HeroSubClass.WARDEN) {
+                desc += "\n\n" + Messages.get(plantClass, "warden_desc");
+            }
+            return desc;
+        }
+
+        @Override
+        public String info() {
+            return Messages.get(Seed.class, "info", desc());
+        }
+
+        public static class PlaceHolder extends Seed {
+
+            {
+                image = ItemSpriteSheet.SEED_HOLDER;
+            }
+
+            @Override
+            public boolean isSimilar(Item item) {
+                return item instanceof Plant.Seed;
+            }
+
+            @Override
+            public String info() {
+                return "";
+            }
+        }
+    }
 }

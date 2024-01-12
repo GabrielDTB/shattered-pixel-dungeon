@@ -31,51 +31,51 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class Scimitar extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.SCIMITAR;
-		hitSound = Assets.Sounds.HIT_SLASH;
-		hitSoundPitch = 1.2f;
+    {
+        image = ItemSpriteSheet.SCIMITAR;
+        hitSound = Assets.Sounds.HIT_SLASH;
+        hitSoundPitch = 1.2f;
 
-		tier = 3;
-		DLY = 0.8f; //1.25x speed
-	}
+        tier = 3;
+        DLY = 0.8f; //1.25x speed
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  4*(tier+1) +    //16 base, down from 20
-				lvl*(tier+1);   //scaling unchanged
-	}
+    @Override
+    public int max(int lvl) {
+        return 4 * (tier + 1) +    //16 base, down from 20
+                lvl * (tier + 1);   //scaling unchanged
+    }
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		return 2;
-	}
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        return 2;
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		beforeAbilityUsed(hero, null);
-		Buff.prolong(hero, SwordDance.class, 4f); //4 turns as using the ability is instant
-		hero.sprite.operate(hero.pos);
-		hero.next();
-		afterAbilityUsed(hero);
-	}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        beforeAbilityUsed(hero, null);
+        Buff.prolong(hero, SwordDance.class, 4f); //4 turns as using the ability is instant
+        hero.sprite.operate(hero.pos);
+        hero.next();
+        afterAbilityUsed(hero);
+    }
 
-	public static class SwordDance extends FlavourBuff {
+    public static class SwordDance extends FlavourBuff {
 
-		{
-			announced = true;
-			type = buffType.POSITIVE;
-		}
+        {
+            announced = true;
+            type = buffType.POSITIVE;
+        }
 
-		@Override
-		public int icon() {
-			return BuffIndicator.DUEL_DANCE;
-		}
+        @Override
+        public int icon() {
+            return BuffIndicator.DUEL_DANCE;
+        }
 
-		@Override
-		public float iconFadePercent() {
-			return Math.max(0, (5 - visualcooldown()) / 5);
-		}
-	}
+        @Override
+        public float iconFadePercent() {
+            return Math.max(0, (5 - visualcooldown()) / 5);
+        }
+    }
 
 }

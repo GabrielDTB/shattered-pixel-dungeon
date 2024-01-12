@@ -27,28 +27,28 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class PotionOfExperience extends Potion {
 
-	{
-		icon = ItemSpriteSheet.Icons.POTION_EXP;
+    {
+        icon = ItemSpriteSheet.Icons.POTION_EXP;
 
-		bones = true;
+        bones = true;
 
-		talentFactor = 2f;
-	}
-	
-	@Override
-	public void apply( Hero hero ) {
-		identify();
-		hero.earnExp( hero.maxExp(), getClass() );
-		new Flare( 6, 32 ).color(0xFFFF00, true).show( curUser.sprite, 2f );
-	}
-	
-	@Override
-	public int value() {
-		return isKnown() ? 50 * quantity : super.value();
-	}
+        talentFactor = 2f;
+    }
 
-	@Override
-	public int energyVal() {
-		return isKnown() ? 8 * quantity : super.energyVal();
-	}
+    @Override
+    public void apply(Hero hero) {
+        identify();
+        hero.earnExp(hero.maxExp(), getClass());
+        new Flare(6, 32).color(0xFFFF00, true).show(curUser.sprite, 2f);
+    }
+
+    @Override
+    public int value() {
+        return isKnown() ? 50 * quantity : super.value();
+    }
+
+    @Override
+    public int energyVal() {
+        return isKnown() ? 8 * quantity : super.energyVal();
+    }
 }

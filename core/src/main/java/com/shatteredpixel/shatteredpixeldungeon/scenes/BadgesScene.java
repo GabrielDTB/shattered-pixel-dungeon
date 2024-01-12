@@ -35,60 +35,60 @@ import com.watabou.noosa.audio.Music;
 
 public class BadgesScene extends PixelScene {
 
-	@Override
-	public void create() {
+    @Override
+    public void create() {
 
-		super.create();
+        super.create();
 
-		Music.INSTANCE.playTracks(
-				new String[]{Assets.Music.THEME_1, Assets.Music.THEME_2},
-				new float[]{1, 1},
-				false);
+        Music.INSTANCE.playTracks(
+                new String[]{Assets.Music.THEME_1, Assets.Music.THEME_2},
+                new float[]{1, 1},
+                false);
 
-		uiCamera.visible = false;
+        uiCamera.visible = false;
 
-		int w = Camera.main.width;
-		int h = Camera.main.height;
+        int w = Camera.main.width;
+        int h = Camera.main.height;
 
-		Archs archs = new Archs();
-		archs.setSize( w, h );
-		add( archs );
+        Archs archs = new Archs();
+        archs.setSize(w, h);
+        add(archs);
 
-		float margin = 5;
-		float top = 20;
+        float margin = 5;
+        float top = 20;
 
-		RenderedTextBlock title = PixelScene.renderTextBlock( Messages.get(this, "title"), 9 );
-		title.hardlight(Window.TITLE_COLOR);
-		title.setPos(
-				(w - title.width()) / 2f,
-				(top - title.height()) / 2f
-		);
-		align(title);
-		add(title);
+        RenderedTextBlock title = PixelScene.renderTextBlock(Messages.get(this, "title"), 9);
+        title.hardlight(Window.TITLE_COLOR);
+        title.setPos(
+                (w - title.width()) / 2f,
+                (top - title.height()) / 2f
+        );
+        align(title);
+        add(title);
 
-		Badges.loadGlobal();
-		BadgesGrid grid = new BadgesGrid(true);
-		grid.setRect(margin, top, w-(2*margin), h-top-margin);
-		add(grid);
+        Badges.loadGlobal();
+        BadgesGrid grid = new BadgesGrid(true);
+        grid.setRect(margin, top, w - (2 * margin), h - top - margin);
+        add(grid);
 
-		ExitButton btnExit = new ExitButton();
-		btnExit.setPos( Camera.main.width - btnExit.width(), 0 );
-		add( btnExit );
+        ExitButton btnExit = new ExitButton();
+        btnExit.setPos(Camera.main.width - btnExit.width(), 0);
+        add(btnExit);
 
-		fadeIn();
-	}
+        fadeIn();
+    }
 
-	@Override
-	public void destroy() {
+    @Override
+    public void destroy() {
 
-		Badges.saveGlobal();
+        Badges.saveGlobal();
 
-		super.destroy();
-	}
+        super.destroy();
+    }
 
-	@Override
-	protected void onBackPressed() {
-		ShatteredPixelDungeon.switchNoFade( TitleScene.class );
-	}
+    @Override
+    protected void onBackPressed() {
+        ShatteredPixelDungeon.switchNoFade(TitleScene.class);
+    }
 
 }

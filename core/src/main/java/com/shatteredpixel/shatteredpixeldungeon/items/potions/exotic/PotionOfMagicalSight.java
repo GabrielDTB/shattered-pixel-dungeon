@@ -29,18 +29,18 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class PotionOfMagicalSight extends ExoticPotion {
-	
-	{
-		icon = ItemSpriteSheet.Icons.POTION_MAGISIGHT;
-	}
-	
-	@Override
-	public void apply(Hero hero) {
-		identify();
-		Buff.affect(hero, MagicalSight.class, MagicalSight.DURATION);
-		SpellSprite.show(hero, SpellSprite.VISION);
-		Dungeon.observe();
-		
-	}
-	
+
+    {
+        icon = ItemSpriteSheet.Icons.POTION_MAGISIGHT;
+    }
+
+    @Override
+    public void apply(Hero hero) {
+        identify();
+        Buff.affect(hero, MagicalSight.class, MagicalSight.DURATION);
+        SpellSprite.show(hero, SpellSprite.VISION);
+        Dungeon.observe();
+
+    }
+
 }

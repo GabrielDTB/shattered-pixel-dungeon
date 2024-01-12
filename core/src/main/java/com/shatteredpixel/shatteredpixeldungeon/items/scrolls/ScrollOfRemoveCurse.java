@@ -43,116 +43,117 @@ import com.watabou.utils.PathFinder;
 
 public class ScrollOfRemoveCurse extends InventoryScroll {
 
-	{
-		icon = ItemSpriteSheet.Icons.SCROLL_REMCURSE;
-		preferredBag = Belongings.Backpack.class;
-	}
+    {
+        icon = ItemSpriteSheet.Icons.SCROLL_REMCURSE;
+        preferredBag = Belongings.Backpack.class;
+    }
 
-	@Override
-	public void doRead() {
+    public static boolean uncursable(Item item) {
+        if (item.isEquipped(Dungeon.hero) && Dungeon.hero.buff(Degrade.class) != null) {
+            return true;
+        }
+        if ((item instanceof EquipableItem || item instanceof Wand) && ((!item.isIdentified() && !item.cursedKnown) || item.cursed)) {
+            return true;
+        } else if (item instanceof Weapon) {
+            return ((Weapon) item).hasCurseEnchant();
+        } else if (item instanceof Armor) {
+            return ((Armor) item).hasCurseGlyph();
+        } else {
+            return false;
+        }
+    }
 
-		TormentedSpirit spirit = null;
-		for (int i : PathFinder.NEIGHBOURS8){
-			if (Actor.findChar(curUser.pos+i) instanceof TormentedSpirit){
-				spirit = (TormentedSpirit) Actor.findChar(curUser.pos+i);
-			}
-		}
-		if (spirit != null){
-			identify();
-			Sample.INSTANCE.play( Assets.Sounds.READ );
-			readAnimation();
+    public static boolean uncurse(Hero hero, Item... items) {
 
-			new Flare( 6, 32 ).show( curUser.sprite, 2f );
+        boolean procced = false;
+        for (Item item : items) {
+            if (item != null) {
+                item.cursedKnown = true;
+                if (item.cursed) {
+                    procced = true;
+                    item.cursed = false;
+                }
+            }
+            if (item instanceof Weapon) {
+                Weapon w = (Weapon) item;
+                if (w.hasCurseEnchant()) {
+                    w.enchant(null);
+                    procced = true;
+                }
+            }
+            if (item instanceof Armor) {
+                Armor a = (Armor) item;
+                if (a.hasCurseGlyph()) {
+                    a.inscribe(null);
+                    procced = true;
+                }
+            }
+            if (item instanceof Wand) {
+                ((Wand) item).updateLevel();
+            }
+        }
 
-			if (curUser.buff(Degrade.class) != null) {
-				Degrade.detach(curUser, Degrade.class);
-			}
+        if (procced && hero != null) {
+            hero.sprite.emitter().start(ShadowParticle.UP, 0.05f, 10);
+            hero.updateHT(false); //for ring of might
+            updateQuickslot();
+        }
 
-			GLog.p(Messages.get(this, "spirit"));
-			spirit.cleanse();
-		} else {
-			super.doRead();
-		}
-	}
+        return procced;
+    }
 
-	@Override
-	protected boolean usableOnItem(Item item) {
-		return uncursable(item);
-	}
+    @Override
+    public void doRead() {
 
-	public static boolean uncursable( Item item ){
-		if (item.isEquipped(Dungeon.hero) && Dungeon.hero.buff(Degrade.class) != null) {
-			return true;
-		} if ((item instanceof EquipableItem || item instanceof Wand) && ((!item.isIdentified() && !item.cursedKnown) || item.cursed)){
-			return true;
-		} else if (item instanceof Weapon){
-			return ((Weapon)item).hasCurseEnchant();
-		} else if (item instanceof Armor){
-			return ((Armor)item).hasCurseGlyph();
-		} else {
-			return false;
-		}
-	}
+        TormentedSpirit spirit = null;
+        for (int i : PathFinder.NEIGHBOURS8) {
+            if (Actor.findChar(curUser.pos + i) instanceof TormentedSpirit) {
+                spirit = (TormentedSpirit) Actor.findChar(curUser.pos + i);
+            }
+        }
+        if (spirit != null) {
+            identify();
+            Sample.INSTANCE.play(Assets.Sounds.READ);
+            readAnimation();
 
-	@Override
-	protected void onItemSelected(Item item) {
-		new Flare( 6, 32 ).show( curUser.sprite, 2f );
+            new Flare(6, 32).show(curUser.sprite, 2f);
 
-		boolean procced = uncurse( curUser, item );
+            if (curUser.buff(Degrade.class) != null) {
+                Degrade.detach(curUser, Degrade.class);
+            }
 
-		if (curUser.buff(Degrade.class) != null) {
-			Degrade.detach(curUser, Degrade.class);
-			procced = true;
-		}
+            GLog.p(Messages.get(this, "spirit"));
+            spirit.cleanse();
+        } else {
+            super.doRead();
+        }
+    }
 
-		if (procced) {
-			GLog.p( Messages.get(this, "cleansed") );
-		} else {
-			GLog.i( Messages.get(this, "not_cleansed") );
-		}
-	}
+    @Override
+    protected boolean usableOnItem(Item item) {
+        return uncursable(item);
+    }
 
-	public static boolean uncurse( Hero hero, Item... items ) {
-		
-		boolean procced = false;
-		for (Item item : items) {
-			if (item != null) {
-				item.cursedKnown = true;
-				if (item.cursed) {
-					procced = true;
-					item.cursed = false;
-				}
-			}
-			if (item instanceof Weapon){
-				Weapon w = (Weapon) item;
-				if (w.hasCurseEnchant()){
-					w.enchant(null);
-					procced = true;
-				}
-			}
-			if (item instanceof Armor){
-				Armor a = (Armor) item;
-				if (a.hasCurseGlyph()){
-					a.inscribe(null);
-					procced = true;
-				}
-			}
-			if (item instanceof Wand){
-				((Wand) item).updateLevel();
-			}
-		}
-		
-		if (procced && hero != null) {
-			hero.sprite.emitter().start( ShadowParticle.UP, 0.05f, 10 );
-			hero.updateHT( false ); //for ring of might
-			updateQuickslot();
-		}
-		
-		return procced;
-	}
-	
-	@Override
-	public int value() {
-		return isKnown() ? 30 * quantity : super.value();
-	}
+    @Override
+    protected void onItemSelected(Item item) {
+        new Flare(6, 32).show(curUser.sprite, 2f);
+
+        boolean procced = uncurse(curUser, item);
+
+        if (curUser.buff(Degrade.class) != null) {
+            Degrade.detach(curUser, Degrade.class);
+            procced = true;
+        }
+
+        if (procced) {
+            GLog.p(Messages.get(this, "cleansed"));
+        } else {
+            GLog.i(Messages.get(this, "not_cleansed"));
+        }
+    }
+
+    @Override
+    public int value() {
+        return isKnown() ? 30 * quantity : super.value();
+    }
 }

@@ -52,365 +52,360 @@ import java.util.ArrayList;
 
 public class TalismanOfForesight extends Artifact {
 
-	{
-		image = ItemSpriteSheet.ARTIFACT_TALISMAN;
+    public static final String AC_SCRY = "SCRY";
+    private static final String WARN = "warn";
+    private CellSelector.Listener scry = new CellSelector.Listener() {
 
-		exp = 0;
-		levelCap = 10;
+        @Override
+        public void onSelect(Integer target) {
+            if (target != null && target != curUser.pos) {
 
-		charge = 0;
-		partialCharge = 0;
-		chargeCap = 100;
+                //enforces at least 2 tiles of distance
+                if (Dungeon.level.adjacent(target, curUser.pos)) {
+                    target += (target - curUser.pos);
+                }
 
-		defaultAction = AC_SCRY;
-	}
+                float dist = Dungeon.level.trueDistance(curUser.pos, target);
 
-	public static final String AC_SCRY = "SCRY";
+                if (dist >= 3 && dist > maxDist()) {
+                    Ballistica trajectory = new Ballistica(curUser.pos, target, Ballistica.STOP_TARGET);
+                    int i = 0;
+                    while (i < trajectory.path.size()
+                            && Dungeon.level.trueDistance(curUser.pos, trajectory.path.get(i)) <= maxDist()) {
+                        target = trajectory.path.get(i);
+                        i++;
+                    }
+                    dist = Dungeon.level.trueDistance(curUser.pos, target);
+                }
 
-	@Override
-	public ArrayList<String> actions( Hero hero ) {
-		ArrayList<String> actions = super.actions( hero );
-		if (isEquipped( hero )
-				&& !cursed
-				&& hero.buff(MagicImmune.class) == null) {
-			actions.add(AC_SCRY);
-		}
-		return actions;
-	}
+                //starts at 200 degrees, loses 8% per tile of distance
+                float angle = Math.round(200 * (float) Math.pow(0.92, dist));
+                ConeAOE cone = new ConeAOE(new Ballistica(curUser.pos, target, Ballistica.STOP_TARGET), angle);
 
-	@Override
-	public void execute( Hero hero, String action ) {
-		super.execute(hero, action);
+                int earnedExp = 0;
+                boolean noticed = false;
+                for (int cell : cone.cells) {
+                    GameScene.effectOverFog(new CheckedCell(cell, curUser.pos));
+                    if (Dungeon.level.discoverable[cell] && !(Dungeon.level.mapped[cell] || Dungeon.level.visited[cell])) {
+                        Dungeon.level.mapped[cell] = true;
+                        earnedExp++;
+                    }
 
-		if (hero.buff(MagicImmune.class) != null) return;
+                    if (Dungeon.level.secret[cell]) {
+                        int oldValue = Dungeon.level.map[cell];
+                        GameScene.discoverTile(cell, oldValue);
+                        Dungeon.level.discover(cell);
+                        ScrollOfMagicMapping.discover(cell);
+                        noticed = true;
 
-		if (action.equals(AC_SCRY)){
-			if (!isEquipped(hero))  GLog.i( Messages.get(Artifact.class, "need_to_equip") );
-			else if (charge < 5)    GLog.i( Messages.get(this, "low_charge") );
-			else                    GameScene.selectCell(scry);
-		}
-	}
+                        if (oldValue == Terrain.SECRET_TRAP) {
+                            earnedExp += 10;
+                        } else if (oldValue == Terrain.SECRET_DOOR) {
+                            earnedExp += 100;
+                        }
+                    }
 
-	@Override
-	protected ArtifactBuff passiveBuff() {
-		return new Foresight();
-	}
-	
-	@Override
-	public void charge(Hero target, float amount) {
-		if (cursed || target.buff(MagicImmune.class) != null) return;
-		if (charge < chargeCap){
-			charge += Math.round(2*amount);
-			if (charge >= chargeCap) {
-				charge = chargeCap;
-				partialCharge = 0;
-				GLog.p( Messages.get(TalismanOfForesight.class, "full_charge") );
-			}
-			updateQuickslot();
-		}
-	}
+                    Char ch = Actor.findChar(cell);
+                    if (ch != null && ch.alignment != Char.Alignment.NEUTRAL && ch.alignment != curUser.alignment) {
+                        Buff.append(curUser, CharAwareness.class, 5 + 2 * level()).charID = ch.id();
 
-	@Override
-	public String desc() {
-		String desc = super.desc();
+                        if (!curUser.fieldOfView[ch.pos]) {
+                            earnedExp += 10;
+                        }
+                    }
 
-		if ( isEquipped( Dungeon.hero ) ){
-			if (!cursed) {
-				desc += "\n\n" + Messages.get(this, "desc_worn");
+                    Heap h = Dungeon.level.heaps.get(cell);
+                    if (h != null) {
+                        Buff.append(curUser, HeapAwareness.class, 5 + 2 * level()).pos = h.pos;
 
-			} else {
-				desc += "\n\n" + Messages.get(this, "desc_cursed");
-			}
-		}
+                        if (!h.seen) {
+                            earnedExp += 10;
+                        }
+                    }
 
-		return desc;
-	}
+                }
 
-	private float maxDist(){
-		return Math.min(5 + 2*level(), (charge-3)/1.08f);
-	}
+                exp += earnedExp;
+                if (exp >= 100 + 50 * level() && level() < levelCap) {
+                    exp -= 100 + 50 * level();
+                    upgrade();
+                    GLog.p(Messages.get(TalismanOfForesight.class, "levelup"));
+                }
+                updateQuickslot();
 
-	private CellSelector.Listener scry = new CellSelector.Listener(){
+                //5 charge at 2 tiles, up to 30 charge at 25 tiles
+                charge -= 3 + dist * 1.08f;
+                partialCharge -= (dist * 1.08f) % 1f;
+                if (partialCharge < 0 && charge > 0) {
+                    partialCharge++;
+                    charge--;
+                }
+                while (charge < 0) {
+                    charge++;
+                    partialCharge--;
+                }
+                Invisibility.dispel(curUser);
+                Talent.onArtifactUsed(Dungeon.hero);
+                updateQuickslot();
+                Dungeon.observe();
+                Dungeon.hero.checkVisibleMobs();
+                GameScene.updateFog();
 
-		@Override
-		public void onSelect(Integer target) {
-			if (target != null && target != curUser.pos){
+                curUser.sprite.zap(target);
+                curUser.spendAndNext(Actor.TICK);
+                Sample.INSTANCE.play(Assets.Sounds.SCAN);
+                if (noticed) Sample.INSTANCE.play(Assets.Sounds.SECRET);
 
-				//enforces at least 2 tiles of distance
-				if (Dungeon.level.adjacent(target, curUser.pos)){
-					target += (target - curUser.pos);
-				}
+            }
 
-				float dist = Dungeon.level.trueDistance(curUser.pos, target);
+        }
 
-				if (dist >= 3 && dist > maxDist()){
-					Ballistica trajectory = new Ballistica(curUser.pos, target, Ballistica.STOP_TARGET);
-					int i = 0;
-					while (i < trajectory.path.size()
-							&& Dungeon.level.trueDistance(curUser.pos, trajectory.path.get(i)) <= maxDist()){
-						target = trajectory.path.get(i);
-						i++;
-					}
-					dist = Dungeon.level.trueDistance(curUser.pos, target);
-				}
+        @Override
+        public String prompt() {
+            return Messages.get(TalismanOfForesight.class, "prompt");
+        }
+    };
+    private boolean warn = false;
 
-				//starts at 200 degrees, loses 8% per tile of distance
-				float angle = Math.round(200*(float)Math.pow(0.92, dist));
-				ConeAOE cone = new ConeAOE(new Ballistica(curUser.pos, target, Ballistica.STOP_TARGET), angle);
+    {
+        image = ItemSpriteSheet.ARTIFACT_TALISMAN;
 
-				int earnedExp = 0;
-				boolean noticed = false;
-				for (int cell : cone.cells){
-					GameScene.effectOverFog(new CheckedCell( cell, curUser.pos ));
-					if (Dungeon.level.discoverable[cell] && !(Dungeon.level.mapped[cell] || Dungeon.level.visited[cell])){
-						Dungeon.level.mapped[cell] = true;
-						earnedExp++;
-					}
+        exp = 0;
+        levelCap = 10;
 
-					if (Dungeon.level.secret[cell]) {
-						int oldValue = Dungeon.level.map[cell];
-						GameScene.discoverTile(cell, oldValue);
-						Dungeon.level.discover( cell );
-						ScrollOfMagicMapping.discover(cell);
-						noticed = true;
+        charge = 0;
+        partialCharge = 0;
+        chargeCap = 100;
 
-						if (oldValue == Terrain.SECRET_TRAP){
-							earnedExp += 10;
-						} else if (oldValue == Terrain.SECRET_DOOR){
-							earnedExp += 100;
-						}
-					}
+        defaultAction = AC_SCRY;
+    }
 
-					Char ch = Actor.findChar(cell);
-					if (ch != null && ch.alignment != Char.Alignment.NEUTRAL && ch.alignment != curUser.alignment){
-						Buff.append(curUser, CharAwareness.class, 5 + 2*level()).charID = ch.id();
+    @Override
+    public ArrayList<String> actions(Hero hero) {
+        ArrayList<String> actions = super.actions(hero);
+        if (isEquipped(hero)
+                && !cursed
+                && hero.buff(MagicImmune.class) == null) {
+            actions.add(AC_SCRY);
+        }
+        return actions;
+    }
 
-						if (!curUser.fieldOfView[ch.pos]){
-							earnedExp += 10;
-						}
-					}
+    @Override
+    public void execute(Hero hero, String action) {
+        super.execute(hero, action);
 
-					Heap h = Dungeon.level.heaps.get(cell);
-					if (h != null){
-						Buff.append(curUser, HeapAwareness.class, 5 + 2*level()).pos = h.pos;
+        if (hero.buff(MagicImmune.class) != null) return;
 
-						if (!h.seen){
-							earnedExp += 10;
-						}
-					}
+        if (action.equals(AC_SCRY)) {
+            if (!isEquipped(hero)) GLog.i(Messages.get(Artifact.class, "need_to_equip"));
+            else if (charge < 5) GLog.i(Messages.get(this, "low_charge"));
+            else GameScene.selectCell(scry);
+        }
+    }
 
-				}
+    @Override
+    protected ArtifactBuff passiveBuff() {
+        return new Foresight();
+    }
 
-				exp += earnedExp;
-				if (exp >= 100 + 50*level() && level() < levelCap) {
-					exp -= 100 + 50*level();
-					upgrade();
-					GLog.p( Messages.get(TalismanOfForesight.class, "levelup") );
-				}
-				updateQuickslot();
+    @Override
+    public void charge(Hero target, float amount) {
+        if (cursed || target.buff(MagicImmune.class) != null) return;
+        if (charge < chargeCap) {
+            charge += Math.round(2 * amount);
+            if (charge >= chargeCap) {
+                charge = chargeCap;
+                partialCharge = 0;
+                GLog.p(Messages.get(TalismanOfForesight.class, "full_charge"));
+            }
+            updateQuickslot();
+        }
+    }
 
-				//5 charge at 2 tiles, up to 30 charge at 25 tiles
-				charge -= 3 + dist*1.08f;
-				partialCharge -= (dist*1.08f)%1f;
-				if (partialCharge < 0 && charge > 0){
-					partialCharge ++;
-					charge --;
-				}
-				while (charge < 0){
-					charge++;
-					partialCharge--;
-				}
-				Invisibility.dispel(curUser);
-				Talent.onArtifactUsed(Dungeon.hero);
-				updateQuickslot();
-				Dungeon.observe();
-				Dungeon.hero.checkVisibleMobs();
-				GameScene.updateFog();
+    @Override
+    public String desc() {
+        String desc = super.desc();
 
-				curUser.sprite.zap(target);
-				curUser.spendAndNext(Actor.TICK);
-				Sample.INSTANCE.play(Assets.Sounds.SCAN);
-				if (noticed) Sample.INSTANCE.play(Assets.Sounds.SECRET);
+        if (isEquipped(Dungeon.hero)) {
+            if (!cursed) {
+                desc += "\n\n" + Messages.get(this, "desc_worn");
 
-			}
+            } else {
+                desc += "\n\n" + Messages.get(this, "desc_cursed");
+            }
+        }
 
-		}
+        return desc;
+    }
 
-		@Override
-		public String prompt() {
-			return Messages.get(TalismanOfForesight.class, "prompt");
-		}
-	};
+    private float maxDist() {
+        return Math.min(5 + 2 * level(), (charge - 3) / 1.08f);
+    }
 
-	private static final String WARN = "warn";
-	
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put(WARN, warn);
-	}
-	
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		warn = bundle.getBoolean(WARN);
-	}
-	
-	private boolean warn = false;
-	
-	public class Foresight extends ArtifactBuff{
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(WARN, warn);
+    }
 
-		@Override
-		public boolean act() {
-			spend( TICK );
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        warn = bundle.getBoolean(WARN);
+    }
 
-			boolean smthFound = false;
+    public static class CharAwareness extends FlavourBuff {
 
-			int distance = 3;
+        private static final String CHAR_ID = "char_id";
+        public int charID;
 
-			int cx = target.pos % Dungeon.level.width();
-			int cy = target.pos / Dungeon.level.width();
-			int ax = cx - distance;
-			if (ax < 0) {
-				ax = 0;
-			}
-			int bx = cx + distance;
-			if (bx >= Dungeon.level.width()) {
-				bx = Dungeon.level.width() - 1;
-			}
-			int ay = cy - distance;
-			if (ay < 0) {
-				ay = 0;
-			}
-			int by = cy + distance;
-			if (by >= Dungeon.level.height()) {
-				by = Dungeon.level.height() - 1;
-			}
+        @Override
+        public void detach() {
+            super.detach();
+            Dungeon.observe();
+            GameScene.updateFog();
+        }
 
-			for (int y = ay; y <= by; y++) {
-				for (int x = ax, p = ax + y * Dungeon.level.width(); x <= bx; x++, p++) {
+        @Override
+        public void restoreFromBundle(Bundle bundle) {
+            super.restoreFromBundle(bundle);
+            charID = bundle.getInt(CHAR_ID);
+        }
 
-					if (Dungeon.level.heroFOV[p]
-							&& Dungeon.level.secret[p]
-							&& Dungeon.level.map[p] != Terrain.SECRET_DOOR) {
-						if (Dungeon.level.traps.get(p) != null && Dungeon.level.traps.get(p).canBeSearched) {
-							smthFound = true;
-						}
-					}
-				}
-			}
+        @Override
+        public void storeInBundle(Bundle bundle) {
+            super.storeInBundle(bundle);
+            bundle.put(CHAR_ID, charID);
+        }
 
-			if (smthFound
-					&& !cursed
-					&& target.buff(MagicImmune.class) == null){
-				if (!warn){
-					GLog.w( Messages.get(this, "uneasy") );
-					if (target instanceof Hero){
-						((Hero)target).interrupt();
-					}
-					warn = true;
-				}
-			} else {
-				warn = false;
-			}
+    }
 
-			if (charge < chargeCap
-					&& !cursed
-					&& target.buff(MagicImmune.class) == null
-					&& Regeneration.regenOn()) {
-				//fully charges in 2000 turns at +0, scaling to 1000 turns at +10.
-				float chargeGain = (0.05f+(level()*0.005f));
-				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-				partialCharge += chargeGain;
+    public static class HeapAwareness extends FlavourBuff {
 
-				if (partialCharge > 1 && charge < chargeCap) {
-					partialCharge--;
-					charge++;
-					updateQuickslot();
-				} else if (charge >= chargeCap) {
-					partialCharge = 0;
-					GLog.p( Messages.get(TalismanOfForesight.class, "full_charge") );
-				}
-			}
+        private static final String POS = "pos";
+        private static final String DEPTH = "depth";
+        private static final String BRANCH = "branch";
+        public int pos;
+        public int depth = Dungeon.depth;
+        public int branch = Dungeon.branch;
 
-			return true;
-		}
+        @Override
+        public void detach() {
+            super.detach();
+            Dungeon.observe();
+            GameScene.updateFog();
+        }
 
-		public void charge(int boost){
-			if (!cursed && target.buff(MagicImmune.class) == null) {
-				charge = Math.min((charge + boost), chargeCap);
-				updateQuickslot();
-			}
-		}
+        @Override
+        public void restoreFromBundle(Bundle bundle) {
+            super.restoreFromBundle(bundle);
+            pos = bundle.getInt(POS);
+            depth = bundle.getInt(DEPTH);
+            branch = bundle.getInt(BRANCH);
+        }
 
-		@Override
-		public int icon() {
-			if (warn)
-				return BuffIndicator.FORESIGHT;
-			else
-				return BuffIndicator.NONE;
-		}
-	}
+        @Override
+        public void storeInBundle(Bundle bundle) {
+            super.storeInBundle(bundle);
+            bundle.put(POS, pos);
+            bundle.put(DEPTH, depth);
+            bundle.put(BRANCH, branch);
+        }
+    }
 
-	public static class CharAwareness extends FlavourBuff {
+    public class Foresight extends ArtifactBuff {
 
-		public int charID;
+        @Override
+        public boolean act() {
+            spend(TICK);
 
-		private static final String CHAR_ID = "char_id";
+            boolean smthFound = false;
 
-		@Override
-		public void detach() {
-			super.detach();
-			Dungeon.observe();
-			GameScene.updateFog();
-		}
+            int distance = 3;
 
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			charID = bundle.getInt(CHAR_ID);
-		}
+            int cx = target.pos % Dungeon.level.width();
+            int cy = target.pos / Dungeon.level.width();
+            int ax = cx - distance;
+            if (ax < 0) {
+                ax = 0;
+            }
+            int bx = cx + distance;
+            if (bx >= Dungeon.level.width()) {
+                bx = Dungeon.level.width() - 1;
+            }
+            int ay = cy - distance;
+            if (ay < 0) {
+                ay = 0;
+            }
+            int by = cy + distance;
+            if (by >= Dungeon.level.height()) {
+                by = Dungeon.level.height() - 1;
+            }
 
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(CHAR_ID, charID);
-		}
+            for (int y = ay; y <= by; y++) {
+                for (int x = ax, p = ax + y * Dungeon.level.width(); x <= bx; x++, p++) {
 
-	}
+                    if (Dungeon.level.heroFOV[p]
+                            && Dungeon.level.secret[p]
+                            && Dungeon.level.map[p] != Terrain.SECRET_DOOR) {
+                        if (Dungeon.level.traps.get(p) != null && Dungeon.level.traps.get(p).canBeSearched) {
+                            smthFound = true;
+                        }
+                    }
+                }
+            }
 
-	public static class HeapAwareness extends FlavourBuff {
+            if (smthFound
+                    && !cursed
+                    && target.buff(MagicImmune.class) == null) {
+                if (!warn) {
+                    GLog.w(Messages.get(this, "uneasy"));
+                    if (target instanceof Hero) {
+                        ((Hero) target).interrupt();
+                    }
+                    warn = true;
+                }
+            } else {
+                warn = false;
+            }
 
-		public int pos;
-		public int depth = Dungeon.depth;
-		public int branch = Dungeon.branch;
+            if (charge < chargeCap
+                    && !cursed
+                    && target.buff(MagicImmune.class) == null
+                    && Regeneration.regenOn()) {
+                //fully charges in 2000 turns at +0, scaling to 1000 turns at +10.
+                float chargeGain = (0.05f + (level() * 0.005f));
+                chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
+                partialCharge += chargeGain;
 
-		private static final String POS = "pos";
-		private static final String DEPTH = "depth";
-		private static final String BRANCH = "branch";
+                if (partialCharge > 1 && charge < chargeCap) {
+                    partialCharge--;
+                    charge++;
+                    updateQuickslot();
+                } else if (charge >= chargeCap) {
+                    partialCharge = 0;
+                    GLog.p(Messages.get(TalismanOfForesight.class, "full_charge"));
+                }
+            }
 
-		@Override
-		public void detach() {
-			super.detach();
-			Dungeon.observe();
-			GameScene.updateFog();
-		}
+            return true;
+        }
 
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			pos = bundle.getInt(POS);
-			depth = bundle.getInt(DEPTH);
-			branch = bundle.getInt(BRANCH);
-		}
+        public void charge(int boost) {
+            if (!cursed && target.buff(MagicImmune.class) == null) {
+                charge = Math.min((charge + boost), chargeCap);
+                updateQuickslot();
+            }
+        }
 
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(POS, pos);
-			bundle.put(DEPTH, depth);
-			bundle.put(BRANCH, branch);
-		}
-	}
+        @Override
+        public int icon() {
+            if (warn)
+                return BuffIndicator.FORESIGHT;
+            else
+                return BuffIndicator.NONE;
+        }
+    }
 
 }

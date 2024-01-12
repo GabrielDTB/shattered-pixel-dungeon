@@ -47,187 +47,190 @@ import java.util.ArrayList;
 
 public class WildMagic extends ArmorAbility {
 
-	{
-		baseChargeUse = 25f;
-	}
+    Actor wildMagicActor = null;
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+    {
+        baseChargeUse = 25f;
+    }
 
-	@Override
-	protected void activate(ClassArmor armor, Hero hero, Integer target) {
-		if (target == null){
-			return;
-		}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-		if (target == hero.pos){
-			GLog.w(Messages.get(this, "self_target"));
-			return;
-		}
+    @Override
+    protected void activate(ClassArmor armor, Hero hero, Integer target) {
+        if (target == null) {
+            return;
+        }
 
-		ArrayList<Wand> wands = hero.belongings.getAllItems(Wand.class);
-		Random.shuffle(wands);
+        if (target == hero.pos) {
+            GLog.w(Messages.get(this, "self_target"));
+            return;
+        }
 
-		float chargeUsePerShot = 0.5f * (float)Math.pow(0.67f, hero.pointsInTalent(Talent.CONSERVED_MAGIC));
+        ArrayList<Wand> wands = hero.belongings.getAllItems(Wand.class);
+        Random.shuffle(wands);
 
-		for (Wand w : wands.toArray(new Wand[0])){
-			if (w.curCharges < 1 && w.partialCharge < chargeUsePerShot){
-				wands.remove(w);
-			}
-		}
+        float chargeUsePerShot = 0.5f * (float) Math.pow(0.67f, hero.pointsInTalent(Talent.CONSERVED_MAGIC));
 
-		int maxWands = 4 + Dungeon.hero.pointsInTalent(Talent.FIRE_EVERYTHING);
+        for (Wand w : wands.toArray(new Wand[0])) {
+            if (w.curCharges < 1 && w.partialCharge < chargeUsePerShot) {
+                wands.remove(w);
+            }
+        }
 
-		//second and third shots
-		if (wands.size() < maxWands){
-			ArrayList<Wand> seconds = new ArrayList<>(wands);
-			ArrayList<Wand> thirds = new ArrayList<>(wands);
+        int maxWands = 4 + Dungeon.hero.pointsInTalent(Talent.FIRE_EVERYTHING);
 
-			for (Wand w : wands){
-				float totalCharge = w.curCharges + w.partialCharge;
-				if (totalCharge < 2*chargeUsePerShot){
-					seconds.remove(w);
-				}
-				if (totalCharge < 3*chargeUsePerShot
-					|| Random.Int(4) >= Dungeon.hero.pointsInTalent(Talent.FIRE_EVERYTHING)){
-					thirds.remove(w);
-				}
-			}
+        //second and third shots
+        if (wands.size() < maxWands) {
+            ArrayList<Wand> seconds = new ArrayList<>(wands);
+            ArrayList<Wand> thirds = new ArrayList<>(wands);
 
-			Random.shuffle(seconds);
-			while (!seconds.isEmpty() && wands.size() < maxWands){
-				wands.add(seconds.remove(0));
-			}
+            for (Wand w : wands) {
+                float totalCharge = w.curCharges + w.partialCharge;
+                if (totalCharge < 2 * chargeUsePerShot) {
+                    seconds.remove(w);
+                }
+                if (totalCharge < 3 * chargeUsePerShot
+                        || Random.Int(4) >= Dungeon.hero.pointsInTalent(Talent.FIRE_EVERYTHING)) {
+                    thirds.remove(w);
+                }
+            }
 
-			Random.shuffle(thirds);
-			while (!thirds.isEmpty() && wands.size() < maxWands){
-				wands.add(thirds.remove(0));
-			}
-		}
+            Random.shuffle(seconds);
+            while (!seconds.isEmpty() && wands.size() < maxWands) {
+                wands.add(seconds.remove(0));
+            }
 
-		if (wands.size() == 0){
-			GLog.w(Messages.get(this, "no_wands"));
-			return;
-		}
+            Random.shuffle(thirds);
+            while (!thirds.isEmpty() && wands.size() < maxWands) {
+                wands.add(thirds.remove(0));
+            }
+        }
 
-		hero.busy();
+        if (wands.size() == 0) {
+            GLog.w(Messages.get(this, "no_wands"));
+            return;
+        }
 
-		Random.shuffle(wands);
+        hero.busy();
 
-		Buff.affect(hero, WildMagicTracker.class, 0f);
+        Random.shuffle(wands);
 
-		armor.charge -= chargeUse(hero);
-		armor.updateQuickslot();
+        Buff.affect(hero, WildMagicTracker.class, 0f);
 
-		zapWand(wands, hero, target);
+        armor.charge -= chargeUse(hero);
+        armor.updateQuickslot();
 
-	}
+        zapWand(wands, hero, target);
 
-	public static class WildMagicTracker extends FlavourBuff{};
+    }
 
-	Actor wildMagicActor = null;
+    ;
 
-	private void zapWand( ArrayList<Wand> wands, Hero hero, int cell){
-		Wand cur = wands.remove(0);
+    private void zapWand(ArrayList<Wand> wands, Hero hero, int cell) {
+        Wand cur = wands.remove(0);
 
-		Ballistica aim = new Ballistica(hero.pos, cell, cur.collisionProperties(cell));
+        Ballistica aim = new Ballistica(hero.pos, cell, cur.collisionProperties(cell));
 
-		hero.sprite.zap(cell);
+        hero.sprite.zap(cell);
 
-		float startTime = Game.timeTotal;
-		if (cur.tryToZap(hero, cell)) {
-			if (!cur.cursed) {
-				cur.fx(aim, new Callback() {
-					@Override
-					public void call() {
-						cur.onZap(aim);
-						if (Game.timeTotal - startTime < 0.33f) {
-							hero.sprite.parent.add(new Delayer(0.33f - (Game.timeTotal - startTime)) {
-								@Override
-								protected void onComplete() {
-									afterZap(cur, wands, hero, cell);
-								}
-							});
-						} else {
-							afterZap(cur, wands, hero, cell);
-						}
-					}
-				});
-			} else {
-				CursedWand.cursedZap(cur,
-						hero,
-						new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT),
-						new Callback() {
-							@Override
-							public void call() {
-								if (Game.timeTotal - startTime < 0.33f) {
-									hero.sprite.parent.add(new Delayer(0.33f - (Game.timeTotal - startTime)) {
-										@Override
-										protected void onComplete() {
-											afterZap(cur, wands, hero, cell);
-										}
-									});
-								} else {
-									afterZap(cur, wands, hero, cell);
-								}
-							}
-						});
-			}
-		} else {
-			afterZap(cur, wands, hero, cell);
-		}
-	}
+        float startTime = Game.timeTotal;
+        if (cur.tryToZap(hero, cell)) {
+            if (!cur.cursed) {
+                cur.fx(aim, new Callback() {
+                    @Override
+                    public void call() {
+                        cur.onZap(aim);
+                        if (Game.timeTotal - startTime < 0.33f) {
+                            hero.sprite.parent.add(new Delayer(0.33f - (Game.timeTotal - startTime)) {
+                                @Override
+                                protected void onComplete() {
+                                    afterZap(cur, wands, hero, cell);
+                                }
+                            });
+                        } else {
+                            afterZap(cur, wands, hero, cell);
+                        }
+                    }
+                });
+            } else {
+                CursedWand.cursedZap(cur,
+                        hero,
+                        new Ballistica(hero.pos, cell, Ballistica.MAGIC_BOLT),
+                        new Callback() {
+                            @Override
+                            public void call() {
+                                if (Game.timeTotal - startTime < 0.33f) {
+                                    hero.sprite.parent.add(new Delayer(0.33f - (Game.timeTotal - startTime)) {
+                                        @Override
+                                        protected void onComplete() {
+                                            afterZap(cur, wands, hero, cell);
+                                        }
+                                    });
+                                } else {
+                                    afterZap(cur, wands, hero, cell);
+                                }
+                            }
+                        });
+            }
+        } else {
+            afterZap(cur, wands, hero, cell);
+        }
+    }
 
-	private void afterZap( Wand cur, ArrayList<Wand> wands, Hero hero, int target){
-		cur.partialCharge -= 0.5f * (float)Math.pow(0.67f, hero.pointsInTalent(Talent.CONSERVED_MAGIC));
-		if (cur.partialCharge < 0) {
-			cur.partialCharge++;
-			cur.curCharges--;
-		}
-		if (wildMagicActor != null){
-			wildMagicActor.next();
-			wildMagicActor = null;
-		}
+    private void afterZap(Wand cur, ArrayList<Wand> wands, Hero hero, int target) {
+        cur.partialCharge -= 0.5f * (float) Math.pow(0.67f, hero.pointsInTalent(Talent.CONSERVED_MAGIC));
+        if (cur.partialCharge < 0) {
+            cur.partialCharge++;
+            cur.curCharges--;
+        }
+        if (wildMagicActor != null) {
+            wildMagicActor.next();
+            wildMagicActor = null;
+        }
 
-		Char ch = Actor.findChar(target);
-		if (!wands.isEmpty() && hero.isAlive()) {
-			Actor.add(new Actor() {
-				{
-					actPriority = VFX_PRIO-1;
-				}
+        Char ch = Actor.findChar(target);
+        if (!wands.isEmpty() && hero.isAlive()) {
+            Actor.add(new Actor() {
+                {
+                    actPriority = VFX_PRIO - 1;
+                }
 
-				@Override
-				protected boolean act() {
-					wildMagicActor = this;
-					zapWand(wands, hero, ch == null ? target : ch.pos);
-					Actor.remove(this);
-					return false;
-				}
-			});
-			hero.next();
-		} else {
-			if (hero.buff(WildMagicTracker.class) != null) {
-				hero.buff(WildMagicTracker.class).detach();
-			}
-			Item.updateQuickslot();
-			Invisibility.dispel();
-			if (Random.Int(4) >= hero.pointsInTalent(Talent.CONSERVED_MAGIC)) {
-				hero.spendAndNext(Actor.TICK);
-			} else {
-				hero.next();
-			}
-		}
-	}
+                @Override
+                protected boolean act() {
+                    wildMagicActor = this;
+                    zapWand(wands, hero, ch == null ? target : ch.pos);
+                    Actor.remove(this);
+                    return false;
+                }
+            });
+            hero.next();
+        } else {
+            if (hero.buff(WildMagicTracker.class) != null) {
+                hero.buff(WildMagicTracker.class).detach();
+            }
+            Item.updateQuickslot();
+            Invisibility.dispel();
+            if (Random.Int(4) >= hero.pointsInTalent(Talent.CONSERVED_MAGIC)) {
+                hero.spendAndNext(Actor.TICK);
+            } else {
+                hero.next();
+            }
+        }
+    }
 
-	@Override
-	public int icon() {
-		return HeroIcon.WILD_MAGIC;
-	}
+    @Override
+    public int icon() {
+        return HeroIcon.WILD_MAGIC;
+    }
 
-	@Override
-	public Talent[] talents() {
-		return new Talent[]{Talent.WILD_POWER, Talent.FIRE_EVERYTHING, Talent.CONSERVED_MAGIC, Talent.HEROIC_ENERGY};
-	}
+    @Override
+    public Talent[] talents() {
+        return new Talent[]{Talent.WILD_POWER, Talent.FIRE_EVERYTHING, Talent.CONSERVED_MAGIC, Talent.HEROIC_ENERGY};
+    }
+
+    public static class WildMagicTracker extends FlavourBuff {
+    }
 }

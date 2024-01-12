@@ -28,33 +28,33 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class RingOfEvasion extends Ring {
 
-	{
-		icon = ItemSpriteSheet.Icons.RING_EVASION;
-	}
+    {
+        icon = ItemSpriteSheet.Icons.RING_EVASION;
+    }
 
-	public String statsInfo() {
-		if (isIdentified()){
-			String info = Messages.get(this, "stats",
-					Messages.decimalFormat("#.##", 100f * (Math.pow(1.125f, soloBuffedBonus()) - 1f)));
-			if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Evasion.class)){
-				info += "\n\n" + Messages.get(this, "combined_stats",
-						Messages.decimalFormat("#.##", 100f * (Math.pow(1.125f, combinedBuffedBonus(Dungeon.hero, Evasion.class)) - 1f)));
-			}
-			return info;
-		} else {
-			return Messages.get(this, "typical_stats", Messages.decimalFormat("#.##", 12.5f));
-		}
-	}
-	
-	@Override
-	protected RingBuff buff( ) {
-		return new Evasion();
-	}
-	
-	public static float evasionMultiplier( Char target ){
-		return (float) Math.pow( 1.125, getBuffedBonus(target, Evasion.class));
-	}
+    public static float evasionMultiplier(Char target) {
+        return (float) Math.pow(1.125, getBuffedBonus(target, Evasion.class));
+    }
 
-	public class Evasion extends RingBuff {
-	}
+    public String statsInfo() {
+        if (isIdentified()) {
+            String info = Messages.get(this, "stats",
+                    Messages.decimalFormat("#.##", 100f * (Math.pow(1.125f, soloBuffedBonus()) - 1f)));
+            if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Evasion.class)) {
+                info += "\n\n" + Messages.get(this, "combined_stats",
+                        Messages.decimalFormat("#.##", 100f * (Math.pow(1.125f, combinedBuffedBonus(Dungeon.hero, Evasion.class)) - 1f)));
+            }
+            return info;
+        } else {
+            return Messages.get(this, "typical_stats", Messages.decimalFormat("#.##", 12.5f));
+        }
+    }
+
+    @Override
+    protected RingBuff buff() {
+        return new Evasion();
+    }
+
+    public class Evasion extends RingBuff {
+    }
 }

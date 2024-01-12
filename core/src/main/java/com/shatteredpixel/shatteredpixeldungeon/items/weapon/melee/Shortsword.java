@@ -29,31 +29,31 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class Shortsword extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.SHORTSWORD;
-		hitSound = Assets.Sounds.HIT_SLASH;
-		hitSoundPitch = 1.1f;
+    {
+        image = ItemSpriteSheet.SHORTSWORD;
+        hitSound = Assets.Sounds.HIT_SLASH;
+        hitSoundPitch = 1.1f;
 
-		tier = 2;
-	}
+        tier = 2;
+    }
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		if (hero.buff(Sword.CleaveTracker.class) != null){
-			return 0;
-		} else {
-			return 1;
-		}
-	}
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        if (hero.buff(Sword.CleaveTracker.class) != null) {
+            return 0;
+        } else {
+            return 1;
+        }
+    }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		Sword.cleaveAbility(hero, target, 1.30f, this);
-	}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        Sword.cleaveAbility(hero, target, 1.30f, this);
+    }
 
 }

@@ -30,38 +30,38 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class BattleAxe extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.BATTLE_AXE;
-		hitSound = Assets.Sounds.HIT_SLASH;
-		hitSoundPitch = 0.9f;
+    {
+        image = ItemSpriteSheet.BATTLE_AXE;
+        hitSound = Assets.Sounds.HIT_SLASH;
+        hitSoundPitch = 0.9f;
 
-		tier = 4;
-		ACC = 1.24f; //24% boost to accuracy
-	}
+        tier = 4;
+        ACC = 1.24f; //24% boost to accuracy
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  4*(tier+1) +    //20 base, down from 25
-				lvl*(tier+1);   //scaling unchanged
-	}
+    @Override
+    public int max(int lvl) {
+        return 4 * (tier + 1) +    //20 base, down from 25
+                lvl * (tier + 1);   //scaling unchanged
+    }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		if (target == null || (target instanceof Mob && ((Mob) target).surprisedBy(hero))) {
-			return 1;
-		} else {
-			return 2;
-		}
-	}
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        if (target == null || (target instanceof Mob && ((Mob) target).surprisedBy(hero))) {
+            return 1;
+        } else {
+            return 2;
+        }
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		Mace.heavyBlowAbility(hero, target, 1.35f, this);
-	}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        Mace.heavyBlowAbility(hero, target, 1.35f, this);
+    }
 
 }

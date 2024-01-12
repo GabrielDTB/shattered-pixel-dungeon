@@ -27,51 +27,51 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.watabou.utils.Point;
 
 public class RuinsRoom extends PatchRoom {
-	
-	@Override
-	public float[] sizeCatProbs() {
-		return new float[]{4, 2, 1};
-	}
 
-	@Override
-	public boolean canMerge(Level l, Point p, int mergeTerrain) {
-		return true;
-	}
+    @Override
+    public float[] sizeCatProbs() {
+        return new float[]{4, 2, 1};
+    }
 
-	@Override
-	protected float fill() {
-		//fill scales from ~20% at 4x4, to ~50% at 18x18
-		// normal   ~20% to ~30%
-		// large    ~30% to ~40%
-		// giant    ~40% to ~50%
-		int scale = Math.min(width()*height(), 18*18);
-		return 0.20f + scale/1024f;
-	}
+    @Override
+    public boolean canMerge(Level l, Point p, int mergeTerrain) {
+        return true;
+    }
 
-	@Override
-	protected int clustering() {
-		return 9;
-	}
+    @Override
+    protected float fill() {
+        //fill scales from ~20% at 4x4, to ~50% at 18x18
+        // normal   ~20% to ~30%
+        // large    ~30% to ~40%
+        // giant    ~40% to ~50%
+        int scale = Math.min(width() * height(), 18 * 18);
+        return 0.20f + scale / 1024f;
+    }
 
-	@Override
-	protected boolean ensurePath() {
-		return connected.size() > 0;
-	}
+    @Override
+    protected int clustering() {
+        return 9;
+    }
 
-	@Override
-	protected boolean cleanEdges() {
-		return true;
-	}
+    @Override
+    protected boolean ensurePath() {
+        return connected.size() > 0;
+    }
 
-	@Override
-	public void paint(Level level) {
-		Painter.fill( level, this, Terrain.WALL );
-		Painter.fill( level, this, 1 , Terrain.EMPTY );
-		for (Door door : connected.values()) {
-			door.set( Door.Type.REGULAR );
-		}
-		
-		setupPatch(level);
-		fillPatch(level, Terrain.WALL);
-	}
+    @Override
+    protected boolean cleanEdges() {
+        return true;
+    }
+
+    @Override
+    public void paint(Level level) {
+        Painter.fill(level, this, Terrain.WALL);
+        Painter.fill(level, this, 1, Terrain.EMPTY);
+        for (Door door : connected.values()) {
+            door.set(Door.Type.REGULAR);
+        }
+
+        setupPatch(level);
+        fillPatch(level, Terrain.WALL);
+    }
 }

@@ -27,48 +27,48 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class Drowsy extends Buff {
 
-	public static final float DURATION = 5f;
+    public static final float DURATION = 5f;
 
-	{
-		type = buffType.NEUTRAL;
-		announced = true;
-	}
+    {
+        type = buffType.NEUTRAL;
+        announced = true;
+    }
 
-	@Override
-	public int icon() {
-		return BuffIndicator.DROWSY;
-	}
+    @Override
+    public int icon() {
+        return BuffIndicator.DROWSY;
+    }
 
-	@Override
-	public float iconFadePercent() {
-		return Math.max(0, (DURATION - visualcooldown()) / DURATION);
-	}
+    @Override
+    public float iconFadePercent() {
+        return Math.max(0, (DURATION - visualcooldown()) / DURATION);
+    }
 
-	@Override
-	public String iconTextDisplay() {
-		return Integer.toString((int)visualcooldown());
-	}
+    @Override
+    public String iconTextDisplay() {
+        return Integer.toString((int) visualcooldown());
+    }
 
-	public boolean attachTo(Char target ) {
-		if (!target.isImmune(Sleep.class) && super.attachTo(target)) {
-			if (cooldown() == 0) {
-				spend(DURATION);
-			}
-			return true;
-		}
-		return false;
-	}
+    public boolean attachTo(Char target) {
+        if (!target.isImmune(Sleep.class) && super.attachTo(target)) {
+            if (cooldown() == 0) {
+                spend(DURATION);
+            }
+            return true;
+        }
+        return false;
+    }
 
-	@Override
-	public boolean act(){
-		Buff.affect(target, MagicalSleep.class);
+    @Override
+    public boolean act() {
+        Buff.affect(target, MagicalSleep.class);
 
-		detach();
-		return true;
-	}
+        detach();
+        return true;
+    }
 
-	@Override
-	public String desc() {
-		return Messages.get(this, "desc", dispTurns(visualcooldown()));
-	}
+    @Override
+    public String desc() {
+        return Messages.get(this, "desc", dispTurns(visualcooldown()));
+    }
 }

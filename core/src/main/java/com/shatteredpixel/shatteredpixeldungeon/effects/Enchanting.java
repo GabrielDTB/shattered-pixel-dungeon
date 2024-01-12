@@ -28,85 +28,80 @@ import com.watabou.noosa.Game;
 
 public class Enchanting extends ItemSprite {
 
-	private enum Phase {
-		FADE_IN, STATIC, FADE_OUT
-	}
+    private static final float FADE_IN_TIME = 0.2f;
+    private static final float STATIC_TIME = 1.0f;
+    private static final float FADE_OUT_TIME = 0.4f;
+    private static final float ALPHA = 0.6f;
+    private int color;
+    private Char target;
+    private Phase phase;
+    private float duration;
+    private float passed;
+    public Enchanting(Item item) {
+        super(item.image(), null);
+        originToCenter();
 
-	private static final float FADE_IN_TIME		= 0.2f;
-	private static final float STATIC_TIME		= 1.0f;
-	private static final float FADE_OUT_TIME	= 0.4f;
+        color = item.glowing().color;
 
-	private static final float ALPHA	= 0.6f;
+        phase = Phase.FADE_IN;
+        duration = FADE_IN_TIME;
+        passed = 0;
+    }
 
-	private int color;
+    public static void show(Char ch, Item item) {
 
-	private Char target;
+        if (!ch.sprite.visible) {
+            return;
+        }
 
-	private Phase phase;
-	private float duration;
-	private float passed;
+        Enchanting sprite = new Enchanting(item);
+        sprite.target = ch;
+        ch.sprite.parent.add(sprite);
+    }
 
-	public Enchanting( Item item ) {
-		super( item.image(), null );
-		originToCenter();
+    @Override
+    public void update() {
+        super.update();
 
-		color = item.glowing().color;
+        if (passed == 0) {
+            x = target.sprite.center().x - width() / 2;
+            y = target.sprite.y - height();
+        }
 
-		phase = Phase.FADE_IN;
-		duration = FADE_IN_TIME;
-		passed = 0;
-	}
+        switch (phase) {
+            case FADE_IN:
+                alpha(passed / duration * ALPHA);
+                scale.set(passed / duration);
+                break;
+            case STATIC:
+                tint(color, passed / duration * 0.8f);
+                break;
+            case FADE_OUT:
+                alpha((1 - passed / duration) * ALPHA);
+                scale.set(1 + passed / duration);
+                break;
+        }
 
-	@Override
-	public void update() {
-		super.update();
+        if ((passed += Game.elapsed) > duration) {
+            switch (phase) {
+                case FADE_IN:
+                    phase = Phase.STATIC;
+                    duration = STATIC_TIME;
+                    break;
+                case STATIC:
+                    phase = Phase.FADE_OUT;
+                    duration = FADE_OUT_TIME;
+                    break;
+                case FADE_OUT:
+                    kill();
+                    break;
+            }
 
-		if (passed == 0) {
-			x = target.sprite.center().x - width() / 2;
-			y = target.sprite.y - height();
-		}
+            passed = 0;
+        }
+    }
 
-		switch (phase) {
-			case FADE_IN:
-				alpha( passed / duration * ALPHA );
-				scale.set( passed / duration );
-				break;
-			case STATIC:
-				tint( color, passed / duration * 0.8f );
-				break;
-			case FADE_OUT:
-				alpha( (1 - passed / duration) * ALPHA );
-				scale.set( 1 + passed / duration );
-				break;
-		}
-
-		if ((passed += Game.elapsed) > duration) {
-			switch (phase) {
-				case FADE_IN:
-					phase = Phase.STATIC;
-					duration = STATIC_TIME;
-					break;
-				case STATIC:
-					phase = Phase.FADE_OUT;
-					duration = FADE_OUT_TIME;
-					break;
-				case FADE_OUT:
-					kill();
-					break;
-			}
-
-			passed = 0;
-		}
-	}
-
-	public static void show( Char ch, Item item ) {
-
-		if (!ch.sprite.visible) {
-			return;
-		}
-
-		Enchanting sprite = new Enchanting( item );
-		sprite.target = ch;
-		ch.sprite.parent.add( sprite );
-	}
+    private enum Phase {
+        FADE_IN, STATIC, FADE_OUT
+    }
 }

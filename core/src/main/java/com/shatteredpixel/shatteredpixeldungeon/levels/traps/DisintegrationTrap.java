@@ -39,51 +39,51 @@ import com.watabou.utils.Random;
 
 public class DisintegrationTrap extends Trap {
 
-	{
-		color = VIOLET;
-		shape = CROSSHAIR;
-		
-		canBeHidden = false;
-		avoidsHallways = true;
-	}
+    {
+        color = VIOLET;
+        shape = CROSSHAIR;
 
-	@Override
-	public void activate() {
-		Char target = Actor.findChar(pos);
-		
-		//find the closest char that can be aimed at
-		if (target == null){
-			float closestDist = Float.MAX_VALUE;
-			for (Char ch : Actor.chars()){
-				if (!ch.isAlive()) continue;
-				float curDist = Dungeon.level.trueDistance(pos, ch.pos);
-				if (ch.invisible > 0) curDist += 1000;
-				Ballistica bolt = new Ballistica(pos, ch.pos, Ballistica.PROJECTILE);
-				if (bolt.collisionPos == ch.pos && curDist < closestDist){
-					target = ch;
-					closestDist = curDist;
-				}
-			}
-		}
-		
-		Heap heap = Dungeon.level.heaps.get(pos);
-		if (heap != null) heap.explode();
-		
-		if (target != null) {
-			if (Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[target.pos]) {
-				Sample.INSTANCE.play(Assets.Sounds.RAY);
-				ShatteredPixelDungeon.scene().add(new Beam.DeathRay(DungeonTilemap.tileCenterToWorld(pos), target.sprite.center()));
-			}
-			target.damage( Random.NormalIntRange(30, 50) + scalingDepth(), this );
-			if (target == Dungeon.hero){
-				Hero hero = (Hero)target;
-				if (!hero.isAlive()){
-					Badges.validateDeathFromGrimOrDisintTrap();
-					Dungeon.fail( this );
-					GLog.n( Messages.get(this, "ondeath") );
-				}
-			}
-		}
+        canBeHidden = false;
+        avoidsHallways = true;
+    }
 
-	}
+    @Override
+    public void activate() {
+        Char target = Actor.findChar(pos);
+
+        //find the closest char that can be aimed at
+        if (target == null) {
+            float closestDist = Float.MAX_VALUE;
+            for (Char ch : Actor.chars()) {
+                if (!ch.isAlive()) continue;
+                float curDist = Dungeon.level.trueDistance(pos, ch.pos);
+                if (ch.invisible > 0) curDist += 1000;
+                Ballistica bolt = new Ballistica(pos, ch.pos, Ballistica.PROJECTILE);
+                if (bolt.collisionPos == ch.pos && curDist < closestDist) {
+                    target = ch;
+                    closestDist = curDist;
+                }
+            }
+        }
+
+        Heap heap = Dungeon.level.heaps.get(pos);
+        if (heap != null) heap.explode();
+
+        if (target != null) {
+            if (Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[target.pos]) {
+                Sample.INSTANCE.play(Assets.Sounds.RAY);
+                ShatteredPixelDungeon.scene().add(new Beam.DeathRay(DungeonTilemap.tileCenterToWorld(pos), target.sprite.center()));
+            }
+            target.damage(Random.NormalIntRange(30, 50) + scalingDepth(), this);
+            if (target == Dungeon.hero) {
+                Hero hero = (Hero) target;
+                if (!hero.isAlive()) {
+                    Badges.validateDeathFromGrimOrDisintTrap();
+                    Dungeon.fail(this);
+                    GLog.n(Messages.get(this, "ondeath"));
+                }
+            }
+        }
+
+    }
 }

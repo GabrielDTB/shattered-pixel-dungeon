@@ -37,114 +37,113 @@ import com.watabou.utils.Random;
 
 public class ArmoredStatue extends Statue {
 
-	{
-		spriteClass = StatueSprite.class;
-	}
+    private static final String ARMOR = "armor";
+    protected Armor armor;
 
-	protected Armor armor;
+    {
+        spriteClass = StatueSprite.class;
+    }
 
-	public ArmoredStatue(){
-		super();
+    public ArmoredStatue() {
+        super();
 
-		//double HP
-		HP = HT = 30 + Dungeon.depth * 10;
-	}
+        //double HP
+        HP = HT = 30 + Dungeon.depth * 10;
+    }
 
-	@Override
-	public void createWeapon(boolean useDecks) {
-		super.createWeapon(useDecks);
+    @Override
+    public void createWeapon(boolean useDecks) {
+        super.createWeapon(useDecks);
 
-		armor = Generator.randomArmor();
-		armor.cursed = false;
-		armor.inscribe(Armor.Glyph.random());
-	}
+        armor = Generator.randomArmor();
+        armor.cursed = false;
+        armor.inscribe(Armor.Glyph.random());
+    }
 
-	private static final String ARMOR	= "armor";
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(ARMOR, armor);
+    }
 
-	@Override
-	public void storeInBundle( Bundle bundle ) {
-		super.storeInBundle( bundle );
-		bundle.put( ARMOR, armor );
-	}
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        armor = (Armor) bundle.get(ARMOR);
+    }
 
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		super.restoreFromBundle( bundle );
-		armor = (Armor)bundle.get( ARMOR );
-	}
+    @Override
+    public int drRoll() {
+        return super.drRoll() + Random.NormalIntRange(armor.DRMin(), armor.DRMax());
+    }
 
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange( armor.DRMin(), armor.DRMax());
-	}
+    //used in some glyph calculations
+    public Armor armor() {
+        return armor;
+    }
 
-	//used in some glyph calculations
-	public Armor armor(){
-		return armor;
-	}
+    @Override
+    public boolean isImmune(Class effect) {
+        if (effect == Burning.class
+                && armor != null
+                && armor.hasGlyph(Brimstone.class, this)) {
+            return true;
+        }
+        return super.isImmune(effect);
+    }
 
-	@Override
-	public boolean isImmune(Class effect) {
-		if (effect == Burning.class
-				&& armor != null
-				&& armor.hasGlyph(Brimstone.class, this)){
-			return true;
-		}
-		return super.isImmune(effect);
-	}
+    @Override
+    public int defenseProc(Char enemy, int damage) {
+        damage = armor.proc(enemy, this, damage);
+        return super.defenseProc(enemy, damage);
+    }
 
-	@Override
-	public int defenseProc(Char enemy, int damage) {
-		damage = armor.proc(enemy, this, damage);
-		return super.defenseProc(enemy, damage);
-	}
+    @Override
+    public void damage(int dmg, Object src) {
+        //TODO improve this when I have proper damage source logic
+        if (armor != null && armor.hasGlyph(AntiMagic.class, this)
+                && AntiMagic.RESISTS.contains(src.getClass())) {
+            dmg -= AntiMagic.drRoll(this, armor.buffedLvl());
+        }
 
-	@Override
-	public void damage(int dmg, Object src) {
-		//TODO improve this when I have proper damage source logic
-		if (armor != null && armor.hasGlyph(AntiMagic.class, this)
-				&& AntiMagic.RESISTS.contains(src.getClass())){
-			dmg -= AntiMagic.drRoll(this, armor.buffedLvl());
-		}
+        super.damage(dmg, src);
 
-		super.damage( dmg, src );
+        //for the rose status indicator
+        Item.updateQuickslot();
+    }
 
-		//for the rose status indicator
-		Item.updateQuickslot();
-	}
+    @Override
+    public CharSprite sprite() {
+        CharSprite sprite = super.sprite();
+        ((StatueSprite) sprite).setArmor(armor.tier);
+        return sprite;
+    }
 
-	@Override
-	public CharSprite sprite() {
-		CharSprite sprite = super.sprite();
-		((StatueSprite)sprite).setArmor(armor.tier);
-		return sprite;
-	}
+    @Override
+    public float speed() {
+        return armor.speedFactor(this, super.speed());
+    }
 
-	@Override
-	public float speed() {
-		return armor.speedFactor(this, super.speed());
-	}
+    @Override
+    public float stealth() {
+        return armor.stealthFactor(this, super.stealth());
+    }
 
-	@Override
-	public float stealth() {
-		return armor.stealthFactor(this, super.stealth());
-	}
+    @Override
+    public int defenseSkill(Char enemy) {
+        return Math.round(armor.evasionFactor(this, super.defenseSkill(enemy)));
+    }
 
-	@Override
-	public int defenseSkill(Char enemy) {
-		return Math.round(armor.evasionFactor(this, super.defenseSkill(enemy)));
-	}
+    @Override
+    public void die(Object cause) {
+        armor.identify(false);
+        Dungeon.level.drop(armor, pos).sprite.drop();
+        super.die(cause);
+    }
 
-	@Override
-	public void die( Object cause ) {
-		armor.identify(false);
-		Dungeon.level.drop( armor, pos ).sprite.drop();
-		super.die( cause );
-	}
-
-	@Override
-	public String description() {
-		return Messages.get(this, "desc", weapon.name(), armor.name());
-	}
+    @Override
+    public String description() {
+        return Messages.get(this, "desc", weapon.name(), armor.name());
+    }
 
 }

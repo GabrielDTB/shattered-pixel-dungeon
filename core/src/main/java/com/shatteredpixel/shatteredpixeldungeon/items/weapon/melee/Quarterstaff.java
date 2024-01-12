@@ -31,55 +31,55 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
 public class Quarterstaff extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.QUARTERSTAFF;
-		hitSound = Assets.Sounds.HIT_CRUSH;
-		hitSoundPitch = 1f;
+    {
+        image = ItemSpriteSheet.QUARTERSTAFF;
+        hitSound = Assets.Sounds.HIT_CRUSH;
+        hitSoundPitch = 1f;
 
-		tier = 2;
-	}
+        tier = 2;
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  4*(tier+1) +    //12 base, down from 15
-				lvl*(tier+1);   //scaling unchanged
-	}
+    @Override
+    public int max(int lvl) {
+        return 4 * (tier + 1) +    //12 base, down from 15
+                lvl * (tier + 1);   //scaling unchanged
+    }
 
-	@Override
-	public int defenseFactor( Char owner ) {
-		return 2;	//2 extra defence
-	}
+    @Override
+    public int defenseFactor(Char owner) {
+        return 2;    //2 extra defence
+    }
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		return 2;
-	}
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        return 2;
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		beforeAbilityUsed(hero, null);
-		Buff.prolong(hero, DefensiveStance.class, 4f); //4 turns as using the ability is instant
-		hero.sprite.operate(hero.pos);
-		hero.next();
-		afterAbilityUsed(hero);
-	}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        beforeAbilityUsed(hero, null);
+        Buff.prolong(hero, DefensiveStance.class, 4f); //4 turns as using the ability is instant
+        hero.sprite.operate(hero.pos);
+        hero.next();
+        afterAbilityUsed(hero);
+    }
 
-	public static class DefensiveStance extends FlavourBuff {
+    public static class DefensiveStance extends FlavourBuff {
 
-		{
-			announced = true;
-			type = buffType.POSITIVE;
-		}
+        {
+            announced = true;
+            type = buffType.POSITIVE;
+        }
 
-		@Override
-		public int icon() {
-			return BuffIndicator.DUEL_EVASIVE;
-		}
+        @Override
+        public int icon() {
+            return BuffIndicator.DUEL_EVASIVE;
+        }
 
-		@Override
-		public float iconFadePercent() {
-			return Math.max(0, (5 - visualcooldown()) / 5);
-		}
-	}
+        @Override
+        public float iconFadePercent() {
+            return Math.max(0, (5 - visualcooldown()) / 5);
+        }
+    }
 
 }

@@ -28,30 +28,30 @@ import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 
 public class Alchemy extends Blob {
 
-	protected int pos;
-	
-	@Override
-	protected void evolve() {
-		int cell;
-		for (int i=area.top-1; i <= area.bottom; i++) {
-			for (int j = area.left-1; j <= area.right; j++) {
-				cell = j + i* Dungeon.level.width();
-				if (Dungeon.level.insideMap(cell)) {
-					off[cell] = cur[cell];
+    protected int pos;
 
-					volume += off[cell];
-					if (off[cell] > 0 && Dungeon.level.visited[cell]){
-						Notes.add( Notes.Landmark.ALCHEMY );
-					}
-				}
-			}
-		}
-	}
-	
-	@Override
-	public void use( BlobEmitter emitter ) {
-		super.use( emitter );
-		emitter.start( Speck.factory( Speck.BUBBLE ), 0.33f, 0 );
-	}
+    @Override
+    protected void evolve() {
+        int cell;
+        for (int i = area.top - 1; i <= area.bottom; i++) {
+            for (int j = area.left - 1; j <= area.right; j++) {
+                cell = j + i * Dungeon.level.width();
+                if (Dungeon.level.insideMap(cell)) {
+                    off[cell] = cur[cell];
+
+                    volume += off[cell];
+                    if (off[cell] > 0 && Dungeon.level.visited[cell]) {
+                        Notes.add(Notes.Landmark.ALCHEMY);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void use(BlobEmitter emitter) {
+        super.use(emitter);
+        emitter.start(Speck.factory(Speck.BUBBLE), 0.33f, 0);
+    }
 
 }

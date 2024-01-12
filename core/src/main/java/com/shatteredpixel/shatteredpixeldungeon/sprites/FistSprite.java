@@ -41,266 +41,267 @@ import com.watabou.utils.Callback;
 
 public abstract class FistSprite extends MobSprite {
 
-	private static final float SLAM_TIME	= 0.33f;
+    private static final float SLAM_TIME = 0.33f;
 
-	protected int boltType;
+    protected int boltType;
+    private Emitter particles;
 
-	protected abstract int texOffset();
+    public FistSprite() {
+        super();
 
-	private Emitter particles;
-	protected abstract Emitter createEmitter();
+        int c = texOffset();
 
-	public FistSprite() {
-		super();
+        texture(Assets.Sprites.FISTS);
 
-		int c = texOffset();
+        TextureFilm frames = new TextureFilm(texture, 24, 17);
 
-		texture( Assets.Sprites.FISTS );
+        idle = new Animation(2, true);
+        idle.frames(frames, c + 0, c + 0, c + 1);
 
-		TextureFilm frames = new TextureFilm( texture, 24, 17 );
+        run = new Animation(3, true);
+        run.frames(frames, c + 0, c + 1);
 
-		idle = new Animation( 2, true );
-		idle.frames( frames, c+0, c+0, c+1 );
+        attack = new Animation(Math.round(1 / SLAM_TIME), false);
+        attack.frames(frames, c + 0);
 
-		run = new Animation( 3, true );
-		run.frames( frames, c+0, c+1 );
+        zap = new Animation(8, false);
+        zap.frames(frames, c + 0, c + 5, c + 6);
 
-		attack = new Animation( Math.round(1 / SLAM_TIME), false );
-		attack.frames( frames, c+0 );
+        die = new Animation(10, false);
+        die.frames(frames, c + 0, c + 2, c + 3, c + 4);
 
-		zap = new Animation( 8, false );
-		zap.frames( frames, c+0, c+5, c+6 );
+        play(idle);
+    }
 
-		die = new Animation( 10, false );
-		die.frames( frames, c+0, c+2, c+3, c+4 );
+    protected abstract int texOffset();
 
-		play( idle );
-	}
+    protected abstract Emitter createEmitter();
 
-	@Override
-	public void link( Char ch ) {
-		super.link( ch );
+    @Override
+    public void link(Char ch) {
+        super.link(ch);
 
-		if (particles == null) {
-			particles = createEmitter();
-		}
-	}
+        if (particles == null) {
+            particles = createEmitter();
+        }
+    }
 
-	@Override
-	public void update() {
-		super.update();
+    @Override
+    public void update() {
+        super.update();
 
-		if (particles != null){
-			particles.visible = visible;
-		}
-	}
+        if (particles != null) {
+            particles.visible = visible;
+        }
+    }
 
-	@Override
-	public void die() {
-		super.die();
-		if (particles != null){
-			particles.on = false;
-		}
-	}
+    @Override
+    public void die() {
+        super.die();
+        if (particles != null) {
+            particles.on = false;
+        }
+    }
 
-	@Override
-	public void kill() {
-		super.kill();
-		if (particles != null){
-			particles.killAndErase();
-		}
-	}
+    @Override
+    public void kill() {
+        super.kill();
+        if (particles != null) {
+            particles.killAndErase();
+        }
+    }
 
-	@Override
-	public void attack( int cell ) {
-		super.attack( cell );
+    @Override
+    public void attack(int cell) {
+        super.attack(cell);
 
-		jump(ch.pos, ch.pos, 9, SLAM_TIME, null );
-	}
+        jump(ch.pos, ch.pos, 9, SLAM_TIME, null);
+    }
 
-	//different bolt, so overrides zap
-	public void zap( int cell ) {
+    //different bolt, so overrides zap
+    public void zap(int cell) {
 
-		super.zap( cell );
+        super.zap(cell);
 
-		MagicMissile.boltFromChar( parent,
-				boltType,
-				this,
-				cell,
-				new Callback() {
-					@Override
-					public void call() {
-						((YogFist)ch).onZapComplete();
-					}
-				} );
-		Sample.INSTANCE.play( Assets.Sounds.ZAP );
-	}
+        MagicMissile.boltFromChar(parent,
+                boltType,
+                this,
+                cell,
+                new Callback() {
+                    @Override
+                    public void call() {
+                        ((YogFist) ch).onZapComplete();
+                    }
+                });
+        Sample.INSTANCE.play(Assets.Sounds.ZAP);
+    }
 
-	@Override
-	public void onComplete( Animation anim ) {
-		super.onComplete( anim );
-		if (anim == attack) {
-			PixelScene.shake( 4, 0.2f );
-		} else if (anim == zap) {
-			idle();
-		}
-	}
+    @Override
+    public void onComplete(Animation anim) {
+        super.onComplete(anim);
+        if (anim == attack) {
+            PixelScene.shake(4, 0.2f);
+        } else if (anim == zap) {
+            idle();
+        }
+    }
 
-	public static class Burning extends FistSprite {
+    public static class Burning extends FistSprite {
 
-		{
-			boltType = MagicMissile.FIRE;
-		}
+        {
+            boltType = MagicMissile.FIRE;
+        }
 
-		@Override
-		protected int texOffset() {
-			return 0;
-		}
+        @Override
+        protected int texOffset() {
+            return 0;
+        }
 
-		@Override
-		protected Emitter createEmitter() {
-			Emitter emitter = emitter();
-			emitter.pour( FlameParticle.FACTORY, 0.06f );
-			return emitter;
-		}
+        @Override
+        protected Emitter createEmitter() {
+            Emitter emitter = emitter();
+            emitter.pour(FlameParticle.FACTORY, 0.06f);
+            return emitter;
+        }
 
-		@Override
-		public int blood() {
-			return 0xFFFFDD34;
-		}
+        @Override
+        public int blood() {
+            return 0xFFFFDD34;
+        }
 
-	}
+    }
 
-	public static class Soiled extends FistSprite {
+    public static class Soiled extends FistSprite {
 
-		{
-			boltType = MagicMissile.FOLIAGE;
-		}
+        {
+            boltType = MagicMissile.FOLIAGE;
+        }
 
-		@Override
-		protected int texOffset() {
-			return 10;
-		}
+        @Override
+        protected int texOffset() {
+            return 10;
+        }
 
-		@Override
-		protected Emitter createEmitter() {
-			Emitter emitter = emitter();
-			emitter.pour( LeafParticle.GENERAL, 0.06f );
-			return emitter;
-		}
+        @Override
+        protected Emitter createEmitter() {
+            Emitter emitter = emitter();
+            emitter.pour(LeafParticle.GENERAL, 0.06f);
+            return emitter;
+        }
 
-		@Override
-		public int blood() {
-			return 0xFF7F5424;
-		}
+        @Override
+        public int blood() {
+            return 0xFF7F5424;
+        }
 
-	}
+    }
 
-	public static class Rotting extends FistSprite {
+    public static class Rotting extends FistSprite {
 
-		{
-			boltType = MagicMissile.TOXIC_VENT;
-		}
+        {
+            boltType = MagicMissile.TOXIC_VENT;
+        }
 
-		@Override
-		protected int texOffset() {
-			return 20;
-		}
+        @Override
+        protected int texOffset() {
+            return 20;
+        }
 
-		@Override
-		protected Emitter createEmitter() {
-			Emitter emitter = emitter();
-			emitter.pour(Speck.factory(Speck.TOXIC), 0.25f );
-			return emitter;
-		}
+        @Override
+        protected Emitter createEmitter() {
+            Emitter emitter = emitter();
+            emitter.pour(Speck.factory(Speck.TOXIC), 0.25f);
+            return emitter;
+        }
 
-		@Override
-		public int blood() {
-			return 0xFFB8BBA1;
-		}
+        @Override
+        public int blood() {
+            return 0xFFB8BBA1;
+        }
 
-	}
+    }
 
-	public static class Rusted extends FistSprite {
+    public static class Rusted extends FistSprite {
 
-		{
-			boltType = MagicMissile.CORROSION;
-		}
+        {
+            boltType = MagicMissile.CORROSION;
+        }
 
-		@Override
-		protected int texOffset() {
-			return 30;
-		}
+        @Override
+        protected int texOffset() {
+            return 30;
+        }
 
-		@Override
-		protected Emitter createEmitter() {
-			Emitter emitter = emitter();
-			emitter.pour(CorrosionParticle.MISSILE, 0.06f );
-			return emitter;
-		}
+        @Override
+        protected Emitter createEmitter() {
+            Emitter emitter = emitter();
+            emitter.pour(CorrosionParticle.MISSILE, 0.06f);
+            return emitter;
+        }
 
-		@Override
-		public int blood() {
-			return 0xFF7F7F7F;
-		}
+        @Override
+        public int blood() {
+            return 0xFF7F7F7F;
+        }
 
-	}
+    }
 
-	public static class Bright extends FistSprite {
+    public static class Bright extends FistSprite {
 
-		{
-			boltType = MagicMissile.RAINBOW;
-		}
+        {
+            boltType = MagicMissile.RAINBOW;
+        }
 
-		@Override
-		protected int texOffset() {
-			return 40;
-		}
+        @Override
+        protected int texOffset() {
+            return 40;
+        }
 
-		@Override
-		protected Emitter createEmitter() {
-			Emitter emitter = emitter();
-			emitter.pour(SparkParticle.STATIC, 0.06f );
-			return emitter;
-		}
+        @Override
+        protected Emitter createEmitter() {
+            Emitter emitter = emitter();
+            emitter.pour(SparkParticle.STATIC, 0.06f);
+            return emitter;
+        }
 
-		@Override
-		public void zap( int cell ) {
-			super.zap( cell, null );
+        @Override
+        public void zap(int cell) {
+            super.zap(cell, null);
 
-			((YogFist)ch).onZapComplete();
-			parent.add( new Beam.LightRay(center(), DungeonTilemap.raisedTileCenterToWorld(cell)));
-		}
-		@Override
-		public int blood() {
-			return 0xFFFFFFFF;
-		}
+            ((YogFist) ch).onZapComplete();
+            parent.add(new Beam.LightRay(center(), DungeonTilemap.raisedTileCenterToWorld(cell)));
+        }
 
-	}
+        @Override
+        public int blood() {
+            return 0xFFFFFFFF;
+        }
 
-	public static class Dark extends FistSprite {
+    }
 
-		{
-			boltType = MagicMissile.SHADOW;
-		}
+    public static class Dark extends FistSprite {
 
-		@Override
-		protected int texOffset() {
-			return 50;
-		}
+        {
+            boltType = MagicMissile.SHADOW;
+        }
 
-		@Override
-		protected Emitter createEmitter() {
-			Emitter emitter = emitter();
-			emitter.pour(ShadowParticle.MISSILE, 0.06f );
-			return emitter;
-		}
+        @Override
+        protected int texOffset() {
+            return 50;
+        }
 
-		@Override
-		public int blood() {
-			return 0xFF4A2F53;
-		}
+        @Override
+        protected Emitter createEmitter() {
+            Emitter emitter = emitter();
+            emitter.pour(ShadowParticle.MISSILE, 0.06f);
+            return emitter;
+        }
 
-	}
+        @Override
+        public int blood() {
+            return 0xFF4A2F53;
+        }
+
+    }
 
 }

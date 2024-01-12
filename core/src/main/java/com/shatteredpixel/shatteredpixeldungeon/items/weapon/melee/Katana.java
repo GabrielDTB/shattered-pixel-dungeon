@@ -29,32 +29,32 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class Katana extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.KATANA;
-		hitSound = Assets.Sounds.HIT_SLASH;
-		hitSoundPitch = 1.1f;
+    {
+        image = ItemSpriteSheet.KATANA;
+        hitSound = Assets.Sounds.HIT_SLASH;
+        hitSoundPitch = 1.1f;
 
-		tier = 4;
-	}
+        tier = 4;
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  4*(tier+1) +    //20 base, down from 25
-				lvl*(tier+1);   //scaling unchanged
-	}
+    @Override
+    public int max(int lvl) {
+        return 4 * (tier + 1) +    //20 base, down from 25
+                lvl * (tier + 1);   //scaling unchanged
+    }
 
-	@Override
-	public int defenseFactor( Char owner ) {
-		return 3;	//3 extra defence
-	}
+    @Override
+    public int defenseFactor(Char owner) {
+        return 3;    //3 extra defence
+    }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		Rapier.lungeAbility(hero, target, 1.35f, 0, this);
-	}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        Rapier.lungeAbility(hero, target, 1.35f, 0, this);
+    }
 }

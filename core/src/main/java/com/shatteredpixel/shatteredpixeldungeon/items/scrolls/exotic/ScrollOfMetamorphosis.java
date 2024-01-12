@@ -47,230 +47,232 @@ import java.util.LinkedHashMap;
 import java.util.Set;
 
 public class ScrollOfMetamorphosis extends ExoticScroll {
-	
-	{
-		icon = ItemSpriteSheet.Icons.SCROLL_METAMORPH;
 
-		talentFactor = 2f;
-	}
+    protected static boolean identifiedByUse = false;
 
-	protected static boolean identifiedByUse = false;
-	
-	@Override
-	public void doRead() {
-		if (!isKnown()) {
-			identify();
-			curItem = detach(curUser.belongings.backpack);
-			identifiedByUse = true;
-		} else {
-			identifiedByUse = false;
-		}
-		GameScene.show(new WndMetamorphChoose());
-	}
+    {
+        icon = ItemSpriteSheet.Icons.SCROLL_METAMORPH;
 
-	public static void onMetamorph( Talent oldTalent, Talent newTalent ){
-		((ScrollOfMetamorphosis) curItem).readAnimation();
-		Sample.INSTANCE.play( Assets.Sounds.READ );
-		curUser.sprite.emitter().start(Speck.factory(Speck.CHANGE), 0.2f, 10);
-		Transmuting.show(curUser, oldTalent, newTalent);
+        talentFactor = 2f;
+    }
 
-		if (Dungeon.hero.hasTalent(newTalent)) {
-			Talent.onTalentUpgraded(Dungeon.hero, newTalent);
-		}
-	}
+    public static void onMetamorph(Talent oldTalent, Talent newTalent) {
+        ((ScrollOfMetamorphosis) curItem).readAnimation();
+        Sample.INSTANCE.play(Assets.Sounds.READ);
+        curUser.sprite.emitter().start(Speck.factory(Speck.CHANGE), 0.2f, 10);
+        Transmuting.show(curUser, oldTalent, newTalent);
 
-	private void confirmCancelation( Window chooseWindow ) {
-		GameScene.show( new WndOptions(new ItemSprite(this),
-				Messages.titleCase(name()),
-				Messages.get(InventoryScroll.class, "warning"),
-				Messages.get(InventoryScroll.class, "yes"),
-				Messages.get(InventoryScroll.class, "no") ) {
-			@Override
-			protected void onSelect( int index ) {
-				switch (index) {
-					case 0:
-						curUser.spendAndNext( TIME_TO_READ );
-						identifiedByUse = false;
-						chooseWindow.hide();
-						break;
-					case 1:
-						//do nothing
-						break;
-				}
-			}
-			public void onBackPressed() {}
-		} );
-	}
+        if (Dungeon.hero.hasTalent(newTalent)) {
+            Talent.onTalentUpgraded(Dungeon.hero, newTalent);
+        }
+    }
 
-	public static class WndMetamorphChoose extends Window {
+    @Override
+    public void doRead() {
+        if (!isKnown()) {
+            identify();
+            curItem = detach(curUser.belongings.backpack);
+            identifiedByUse = true;
+        } else {
+            identifiedByUse = false;
+        }
+        GameScene.show(new WndMetamorphChoose());
+    }
 
-		public static WndMetamorphChoose INSTANCE;
+    private void confirmCancelation(Window chooseWindow) {
+        GameScene.show(new WndOptions(new ItemSprite(this),
+                Messages.titleCase(name()),
+                Messages.get(InventoryScroll.class, "warning"),
+                Messages.get(InventoryScroll.class, "yes"),
+                Messages.get(InventoryScroll.class, "no")) {
+            @Override
+            protected void onSelect(int index) {
+                switch (index) {
+                    case 0:
+                        curUser.spendAndNext(TIME_TO_READ);
+                        identifiedByUse = false;
+                        chooseWindow.hide();
+                        break;
+                    case 1:
+                        //do nothing
+                        break;
+                }
+            }
 
-		TalentsPane pane;
+            public void onBackPressed() {
+            }
+        });
+    }
 
-		public WndMetamorphChoose(){
-			super();
+    public static class WndMetamorphChoose extends Window {
 
-			INSTANCE = this;
+        public static WndMetamorphChoose INSTANCE;
 
-			float top = 0;
+        TalentsPane pane;
 
-			IconTitle title = new IconTitle( curItem );
-			title.color( TITLE_COLOR );
-			title.setRect(0, 0, 120, 0);
-			add(title);
+        public WndMetamorphChoose() {
+            super();
 
-			top = title.bottom() + 2;
+            INSTANCE = this;
 
-			RenderedTextBlock text = PixelScene.renderTextBlock(Messages.get(ScrollOfMetamorphosis.class, "choose_desc"), 6);
-			text.maxWidth(120);
-			text.setPos(0, top);
-			add(text);
+            float top = 0;
 
-			top = text.bottom() + 2;
+            IconTitle title = new IconTitle(curItem);
+            title.color(TITLE_COLOR);
+            title.setRect(0, 0, 120, 0);
+            add(title);
 
-			ArrayList<LinkedHashMap<Talent, Integer>> talents = new ArrayList<>();
-			Talent.initClassTalents(Dungeon.hero.heroClass, talents, Dungeon.hero.metamorphedTalents);
+            top = title.bottom() + 2;
 
-			for (LinkedHashMap<Talent, Integer> tier : talents){
-				for (Talent talent : tier.keySet()){
-					tier.put(talent, Dungeon.hero.pointsInTalent(talent));
-				}
-			}
+            RenderedTextBlock text = PixelScene.renderTextBlock(Messages.get(ScrollOfMetamorphosis.class, "choose_desc"), 6);
+            text.maxWidth(120);
+            text.setPos(0, top);
+            add(text);
 
-			pane = new TalentsPane(TalentButton.Mode.METAMORPH_CHOOSE, talents);
-			add(pane);
-			pane.setPos(0, top);
-			pane.setSize(120, pane.content().height());
-			resize((int)pane.width(), (int)pane.bottom());
-			pane.setPos(0, top);
-		}
+            top = text.bottom() + 2;
 
-		@Override
-		public void hide() {
-			super.hide();
-			INSTANCE = null;
-		}
+            ArrayList<LinkedHashMap<Talent, Integer>> talents = new ArrayList<>();
+            Talent.initClassTalents(Dungeon.hero.heroClass, talents, Dungeon.hero.metamorphedTalents);
 
-		@Override
-		public void onBackPressed() {
+            for (LinkedHashMap<Talent, Integer> tier : talents) {
+                for (Talent talent : tier.keySet()) {
+                    tier.put(talent, Dungeon.hero.pointsInTalent(talent));
+                }
+            }
 
-			if (identifiedByUse){
-				((ScrollOfMetamorphosis)curItem).confirmCancelation(this);
-			} else {
-				super.onBackPressed();
-			}
-		}
+            pane = new TalentsPane(TalentButton.Mode.METAMORPH_CHOOSE, talents);
+            add(pane);
+            pane.setPos(0, top);
+            pane.setSize(120, pane.content().height());
+            resize((int) pane.width(), (int) pane.bottom());
+            pane.setPos(0, top);
+        }
 
-		@Override
-		public void offset(int xOffset, int yOffset) {
-			super.offset(xOffset, yOffset);
-			pane.setPos(pane.left(), pane.top()); //triggers layout
-		}
-	}
+        @Override
+        public void hide() {
+            super.hide();
+            INSTANCE = null;
+        }
 
-	public static class WndMetamorphReplace extends Window {
+        @Override
+        public void onBackPressed() {
 
-		public static WndMetamorphReplace INSTANCE;
+            if (identifiedByUse) {
+                ((ScrollOfMetamorphosis) curItem).confirmCancelation(this);
+            } else {
+                super.onBackPressed();
+            }
+        }
 
-		public Talent replacing;
-		public int tier;
-		LinkedHashMap<Talent, Integer> replaceOptions;
+        @Override
+        public void offset(int xOffset, int yOffset) {
+            super.offset(xOffset, yOffset);
+            pane.setPos(pane.left(), pane.top()); //triggers layout
+        }
+    }
 
-		//for window restoring
-		public WndMetamorphReplace(){
-			super();
+    public static class WndMetamorphReplace extends Window {
 
-			if (INSTANCE != null){
-				replacing = INSTANCE.replacing;
-				tier = INSTANCE.tier;
-				replaceOptions = INSTANCE.replaceOptions;
-				INSTANCE = this;
-				setup(replacing, tier, replaceOptions);
-			} else {
-				hide();
-			}
-		}
+        public static WndMetamorphReplace INSTANCE;
 
-		public WndMetamorphReplace(Talent replacing, int tier){
-			super();
+        public Talent replacing;
+        public int tier;
+        LinkedHashMap<Talent, Integer> replaceOptions;
 
-			if (!identifiedByUse) {
-				curItem.detach(curUser.belongings.backpack);
-			}
-			identifiedByUse = false;
+        //for window restoring
+        public WndMetamorphReplace() {
+            super();
 
-			INSTANCE = this;
+            if (INSTANCE != null) {
+                replacing = INSTANCE.replacing;
+                tier = INSTANCE.tier;
+                replaceOptions = INSTANCE.replaceOptions;
+                INSTANCE = this;
+                setup(replacing, tier, replaceOptions);
+            } else {
+                hide();
+            }
+        }
 
-			this.replacing = replacing;
-			this.tier = tier;
+        public WndMetamorphReplace(Talent replacing, int tier) {
+            super();
 
-			LinkedHashMap<Talent, Integer> options = new LinkedHashMap<>();
-			Set<Talent> curTalentsAtTier = Dungeon.hero.talents.get(tier-1).keySet();
+            if (!identifiedByUse) {
+                curItem.detach(curUser.belongings.backpack);
+            }
+            identifiedByUse = false;
 
-			for (HeroClass cls : HeroClass.values()){
-				ArrayList<LinkedHashMap<Talent, Integer>> clsTalents = new ArrayList<>();
-				Talent.initClassTalents(cls, clsTalents);
+            INSTANCE = this;
 
-				Set<Talent> clsTalentsAtTier = clsTalents.get(tier-1).keySet();
-				boolean replacingIsInSet = false;
-				for (Talent talent : clsTalentsAtTier.toArray(new Talent[0])){
-					if (talent == replacing){
-						replacingIsInSet = true;
-						break;
-					} else {
-						if (curTalentsAtTier.contains(talent)){
-							clsTalentsAtTier.remove(talent);
-						}
-					}
-				}
-				if (!replacingIsInSet && !clsTalentsAtTier.isEmpty()) {
-					options.put(Random.element(clsTalentsAtTier), Dungeon.hero.pointsInTalent(replacing));
-				}
-			}
+            this.replacing = replacing;
+            this.tier = tier;
 
-			replaceOptions = options;
-			setup(replacing, tier, options);
-		}
+            LinkedHashMap<Talent, Integer> options = new LinkedHashMap<>();
+            Set<Talent> curTalentsAtTier = Dungeon.hero.talents.get(tier - 1).keySet();
 
-		private void setup(Talent replacing, int tier, LinkedHashMap<Talent, Integer> replaceOptions){
-			float top = 0;
+            for (HeroClass cls : HeroClass.values()) {
+                ArrayList<LinkedHashMap<Talent, Integer>> clsTalents = new ArrayList<>();
+                Talent.initClassTalents(cls, clsTalents);
 
-			IconTitle title = new IconTitle( curItem );
-			title.color( TITLE_COLOR );
-			title.setRect(0, 0, 120, 0);
-			add(title);
+                Set<Talent> clsTalentsAtTier = clsTalents.get(tier - 1).keySet();
+                boolean replacingIsInSet = false;
+                for (Talent talent : clsTalentsAtTier.toArray(new Talent[0])) {
+                    if (talent == replacing) {
+                        replacingIsInSet = true;
+                        break;
+                    } else {
+                        if (curTalentsAtTier.contains(talent)) {
+                            clsTalentsAtTier.remove(talent);
+                        }
+                    }
+                }
+                if (!replacingIsInSet && !clsTalentsAtTier.isEmpty()) {
+                    options.put(Random.element(clsTalentsAtTier), Dungeon.hero.pointsInTalent(replacing));
+                }
+            }
 
-			top = title.bottom() + 2;
+            replaceOptions = options;
+            setup(replacing, tier, options);
+        }
 
-			RenderedTextBlock text = PixelScene.renderTextBlock(Messages.get(ScrollOfMetamorphosis.class, "replace_desc"), 6);
-			text.maxWidth(120);
-			text.setPos(0, top);
-			add(text);
+        private void setup(Talent replacing, int tier, LinkedHashMap<Talent, Integer> replaceOptions) {
+            float top = 0;
 
-			top = text.bottom() + 2;
+            IconTitle title = new IconTitle(curItem);
+            title.color(TITLE_COLOR);
+            title.setRect(0, 0, 120, 0);
+            add(title);
 
-			TalentsPane.TalentTierPane optionsPane = new TalentsPane.TalentTierPane(replaceOptions, tier, TalentButton.Mode.METAMORPH_REPLACE);
-			add(optionsPane);
-			optionsPane.title.text(" ");
-			optionsPane.setPos(0, top);
-			optionsPane.setSize(120, optionsPane.height());
-			resize((int)optionsPane.width(), (int)optionsPane.bottom());
+            top = title.bottom() + 2;
 
-			resize(120, (int)optionsPane.bottom());
-		}
+            RenderedTextBlock text = PixelScene.renderTextBlock(Messages.get(ScrollOfMetamorphosis.class, "replace_desc"), 6);
+            text.maxWidth(120);
+            text.setPos(0, top);
+            add(text);
 
-		@Override
-		public void hide() {
-			super.hide();
-			if (INSTANCE == this) {
-				INSTANCE = null;
-			}
-		}
+            top = text.bottom() + 2;
 
-		@Override
-		public void onBackPressed() {
-			((ScrollOfMetamorphosis)curItem).confirmCancelation(this);
-		}
-	}
+            TalentsPane.TalentTierPane optionsPane = new TalentsPane.TalentTierPane(replaceOptions, tier, TalentButton.Mode.METAMORPH_REPLACE);
+            add(optionsPane);
+            optionsPane.title.text(" ");
+            optionsPane.setPos(0, top);
+            optionsPane.setSize(120, optionsPane.height());
+            resize((int) optionsPane.width(), (int) optionsPane.bottom());
+
+            resize(120, (int) optionsPane.bottom());
+        }
+
+        @Override
+        public void hide() {
+            super.hide();
+            if (INSTANCE == this) {
+                INSTANCE = null;
+            }
+        }
+
+        @Override
+        public void onBackPressed() {
+            ((ScrollOfMetamorphosis) curItem).confirmCancelation(this);
+        }
+    }
 }

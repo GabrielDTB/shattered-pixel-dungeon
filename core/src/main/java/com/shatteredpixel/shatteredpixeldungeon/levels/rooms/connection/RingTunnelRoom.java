@@ -30,43 +30,43 @@ import com.watabou.utils.Rect;
 
 public class RingTunnelRoom extends TunnelRoom {
 
-	@Override
-	public int minWidth() {
-		return Math.max(5, super.minWidth());
-	}
+    //caches the value so multiple calls will always return the same.
+    private Rect connSpace;
 
-	@Override
-	public int minHeight() {
-		return Math.max(5, super.minHeight());
-	}
+    @Override
+    public int minWidth() {
+        return Math.max(5, super.minWidth());
+    }
 
-	@Override
-	public void paint(Level level) {
-		super.paint(level);
+    @Override
+    public int minHeight() {
+        return Math.max(5, super.minHeight());
+    }
 
-		int floor = level.tunnelTile();
+    @Override
+    public void paint(Level level) {
+        super.paint(level);
 
-		Rect ring = getConnectionSpace();
+        int floor = level.tunnelTile();
 
-		Painter.fill( level, ring.left, ring.top, 3, 3,  floor);
-		Painter.fill( level, ring.left+1, ring.top+1, 1, 1,  Terrain.WALL);
-	}
+        Rect ring = getConnectionSpace();
 
-	//caches the value so multiple calls will always return the same.
-	private Rect connSpace;
+        Painter.fill(level, ring.left, ring.top, 3, 3, floor);
+        Painter.fill(level, ring.left + 1, ring.top + 1, 1, 1, Terrain.WALL);
+    }
 
-	@Override
-	protected Rect getConnectionSpace() {
-		if (connSpace == null) {
-			Point c = getDoorCenter();
+    @Override
+    protected Rect getConnectionSpace() {
+        if (connSpace == null) {
+            Point c = getDoorCenter();
 
-			c.x = (int) GameMath.gate(left + 2, c.x, right - 2);
-			c.y = (int) GameMath.gate(top + 2, c.y, bottom - 2);
+            c.x = (int) GameMath.gate(left + 2, c.x, right - 2);
+            c.y = (int) GameMath.gate(top + 2, c.y, bottom - 2);
 
 
-			connSpace = new Rect(c.x-1, c.y-1, c.x+1, c.y+1);
-		}
+            connSpace = new Rect(c.x - 1, c.y - 1, c.x + 1, c.y + 1);
+        }
 
-		return connSpace;
-	}
+        return connSpace;
+    }
 }

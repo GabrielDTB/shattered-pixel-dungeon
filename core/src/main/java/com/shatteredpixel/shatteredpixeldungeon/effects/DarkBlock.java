@@ -24,38 +24,38 @@ package com.shatteredpixel.shatteredpixeldungeon.effects;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.watabou.noosa.Gizmo;
 
-public class DarkBlock extends Gizmo{
+public class DarkBlock extends Gizmo {
 
-	private CharSprite target;
+    private CharSprite target;
 
-	public DarkBlock( CharSprite target ) {
-		super();
+    public DarkBlock(CharSprite target) {
+        super();
 
-		this.target = target;
-	}
+        this.target = target;
+    }
 
-	@Override
-	public void update() {
-		super.update();
+    public static DarkBlock darken(CharSprite sprite) {
 
-		target.brightness(0.4f);
+        DarkBlock darkBlock = new DarkBlock(sprite);
+        if (sprite.parent != null)
+            sprite.parent.add(darkBlock);
 
-	}
+        return darkBlock;
+    }
 
-	public void lighten() {
+    @Override
+    public void update() {
+        super.update();
 
-		target.resetColor();
-		killAndErase();
+        target.brightness(0.4f);
 
-	}
+    }
 
-	public static DarkBlock darken( CharSprite sprite ) {
+    public void lighten() {
 
-		DarkBlock darkBlock = new DarkBlock( sprite );
-		if (sprite.parent != null)
-			sprite.parent.add( darkBlock );
+        target.resetColor();
+        killAndErase();
 
-		return darkBlock;
-	}
+    }
 
 }

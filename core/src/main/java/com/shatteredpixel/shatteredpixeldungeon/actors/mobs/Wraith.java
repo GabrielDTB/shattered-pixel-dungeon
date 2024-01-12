@@ -35,99 +35,97 @@ import com.watabou.utils.Random;
 
 public class Wraith extends Mob {
 
-	private static final float SPAWN_DELAY	= 2f;
-	
-	protected int level;
-	
-	{
-		spriteClass = WraithSprite.class;
-		
-		HP = HT = 1;
-		EXP = 0;
+    private static final float SPAWN_DELAY = 2f;
+    private static final String LEVEL = "level";
+    protected int level;
 
-		maxLvl = -2;
-		
-		flying = true;
+    {
+        spriteClass = WraithSprite.class;
 
-		properties.add(Property.UNDEAD);
-	}
-	
-	private static final String LEVEL = "level";
-	
-	@Override
-	public void storeInBundle( Bundle bundle ) {
-		super.storeInBundle( bundle );
-		bundle.put( LEVEL, level );
-	}
-	
-	@Override
-	public void restoreFromBundle( Bundle bundle ) {
-		super.restoreFromBundle( bundle );
-		level = bundle.getInt( LEVEL );
-		adjustStats( level );
-	}
-	
-	@Override
-	public int damageRoll() {
-		return Random.NormalIntRange( 1 + level/2, 2 + level );
-	}
-	
-	@Override
-	public int attackSkill( Char target ) {
-		return 10 + level;
-	}
-	
-	public void adjustStats( int level ) {
-		this.level = level;
-		defenseSkill = attackSkill( null ) * 5;
-		enemySeen = true;
-	}
+        HP = HT = 1;
+        EXP = 0;
 
-	@Override
-	public float spawningWeight() {
-		return 0f;
-	}
+        maxLvl = -2;
 
-	@Override
-	public boolean reset() {
-		state = WANDERING;
-		return true;
-	}
-	
-	public static void spawnAround( int pos, boolean allowExotic ) {
-		for (int n : PathFinder.NEIGHBOURS4) {
-			spawnAt( pos + n, allowExotic );
-		}
-	}
-	
-	public static Wraith spawnAt( int pos, boolean allowExotic ) {
-		if ((!Dungeon.level.solid[pos] || Dungeon.level.passable[pos]) && Actor.findChar( pos ) == null) {
+        flying = true;
 
-			Wraith w;
-			if (allowExotic && Random.Int(100) == 0){
-				w = new TormentedSpirit();
-			} else {
-				w = new Wraith();
-			}
-			w.adjustStats( Dungeon.scalingDepth() );
-			w.pos = pos;
-			w.state = w.HUNTING;
-			GameScene.add( w, SPAWN_DELAY );
-			Dungeon.level.occupyCell(w);
+        properties.add(Property.UNDEAD);
+    }
 
-			w.sprite.alpha( 0 );
-			w.sprite.parent.add( new AlphaTweener( w.sprite, 1, 0.5f ) );
+    public static void spawnAround(int pos, boolean allowExotic) {
+        for (int n : PathFinder.NEIGHBOURS4) {
+            spawnAt(pos + n, allowExotic);
+        }
+    }
 
-			if (w instanceof TormentedSpirit){
-				w.sprite.emitter().burst(ChallengeParticle.FACTORY, 10);
-			} else {
-				w.sprite.emitter().burst(ShadowParticle.CURSE, 5);
-			}
-			
-			return w;
-		} else {
-			return null;
-		}
-	}
+    public static Wraith spawnAt(int pos, boolean allowExotic) {
+        if ((!Dungeon.level.solid[pos] || Dungeon.level.passable[pos]) && Actor.findChar(pos) == null) {
+
+            Wraith w;
+            if (allowExotic && Random.Int(100) == 0) {
+                w = new TormentedSpirit();
+            } else {
+                w = new Wraith();
+            }
+            w.adjustStats(Dungeon.scalingDepth());
+            w.pos = pos;
+            w.state = w.HUNTING;
+            GameScene.add(w, SPAWN_DELAY);
+            Dungeon.level.occupyCell(w);
+
+            w.sprite.alpha(0);
+            w.sprite.parent.add(new AlphaTweener(w.sprite, 1, 0.5f));
+
+            if (w instanceof TormentedSpirit) {
+                w.sprite.emitter().burst(ChallengeParticle.FACTORY, 10);
+            } else {
+                w.sprite.emitter().burst(ShadowParticle.CURSE, 5);
+            }
+
+            return w;
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(LEVEL, level);
+    }
+
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        level = bundle.getInt(LEVEL);
+        adjustStats(level);
+    }
+
+    @Override
+    public int damageRoll() {
+        return Random.NormalIntRange(1 + level / 2, 2 + level);
+    }
+
+    @Override
+    public int attackSkill(Char target) {
+        return 10 + level;
+    }
+
+    public void adjustStats(int level) {
+        this.level = level;
+        defenseSkill = attackSkill(null) * 5;
+        enemySeen = true;
+    }
+
+    @Override
+    public float spawningWeight() {
+        return 0f;
+    }
+
+    @Override
+    public boolean reset() {
+        state = WANDERING;
+        return true;
+    }
 
 }

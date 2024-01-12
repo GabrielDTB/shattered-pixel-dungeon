@@ -35,132 +35,128 @@ import java.util.List;
 
 public class Lightning extends Group {
 
-	private static final float DURATION = 0.3f;
-	
-	private float life;
+    private static final float DURATION = 0.3f;
+    private static final double A = 180 / Math.PI;
+    private float life;
+    private List<Arc> arcs;
+    private Callback callback;
 
-	private List<Arc> arcs;
-	
-	private Callback callback;
+    public Lightning(int from, int to, Callback callback) {
+        this(Arrays.asList(new Arc(from, to)), callback);
+    }
 
-	public Lightning(int from, int to, Callback callback){
-		this(Arrays.asList(new Arc(from, to)), callback);
-	}
+    public Lightning(PointF from, int to, Callback callback) {
+        this(Arrays.asList(new Arc(from, to)), callback);
+    }
 
-	public Lightning(PointF from, int to, Callback callback){
-		this(Arrays.asList(new Arc(from, to)), callback);
-	}
+    public Lightning(int from, PointF to, Callback callback) {
+        this(Arrays.asList(new Arc(from, to)), callback);
+    }
 
-	public Lightning(int from, PointF to, Callback callback){
-		this(Arrays.asList(new Arc(from, to)), callback);
-	}
+    public Lightning(PointF from, PointF to, Callback callback) {
+        this(Arrays.asList(new Arc(from, to)), callback);
+    }
 
-	public Lightning(PointF from, PointF to, Callback callback){
-		this(Arrays.asList(new Arc(from, to)), callback);
-	}
-	
-	public Lightning( List<Arc> arcs, Callback callback ) {
-		
-		super();
+    public Lightning(List<Arc> arcs, Callback callback) {
 
-		this.arcs = arcs;
-		for (Arc arc : this.arcs)
-			add(arc);
+        super();
 
-		this.callback = callback;
-		
-		life = DURATION;
-	}
-	
-	private static final double A = 180 / Math.PI;
-	
-	@Override
-	public void update() {
-		if ((life -= Game.elapsed) < 0) {
-			
-			killAndErase();
-			if (callback != null) {
-				callback.call();
-			}
-			
-		} else {
-			
-			float alpha = life / DURATION;
-			
-			for (Arc arc : arcs) {
-				arc.alpha(alpha);
-			}
+        this.arcs = arcs;
+        for (Arc arc : this.arcs)
+            add(arc);
 
-			super.update();
-		}
-	}
-	
-	@Override
-	public void draw() {
-		Blending.setLightMode();
-		super.draw();
-		Blending.setNormalMode();
-	}
+        this.callback = callback;
 
-	//A lightning object is meant to be loaded up with arcs.
-	//these act as a means of easily expressing lighting between two points.
-	public static class Arc extends Group {
+        life = DURATION;
+    }
 
-		private Image arc1, arc2;
+    @Override
+    public void update() {
+        if ((life -= Game.elapsed) < 0) {
 
-		//starting and ending x/y values
-		private PointF start, end;
+            killAndErase();
+            if (callback != null) {
+                callback.call();
+            }
 
-		public Arc(int from, int to){
-			this( DungeonTilemap.tileCenterToWorld(from),
-					DungeonTilemap.tileCenterToWorld(to));
-		}
+        } else {
 
-		public Arc(PointF from, int to){
-			this( from, DungeonTilemap.tileCenterToWorld(to));
-		}
+            float alpha = life / DURATION;
 
-		public Arc(int from, PointF to){
-			this( DungeonTilemap.tileCenterToWorld(from), to);
-		}
+            for (Arc arc : arcs) {
+                arc.alpha(alpha);
+            }
 
-		public Arc(PointF from, PointF to){
-			start = from;
-			end = to;
+            super.update();
+        }
+    }
 
-			arc1 = new Image(Effects.get(Effects.Type.LIGHTNING));
-			arc1.x = start.x - arc1.origin.x;
-			arc1.y = start.y - arc1.origin.y;
-			arc1.origin.set( 0, arc1.height()/2 );
-			add( arc1 );
+    @Override
+    public void draw() {
+        Blending.setLightMode();
+        super.draw();
+        Blending.setNormalMode();
+    }
 
-			arc2 = new Image(Effects.get(Effects.Type.LIGHTNING));
-			arc2.origin.set( 0, arc2.height()/2 );
-			add( arc2 );
+    //A lightning object is meant to be loaded up with arcs.
+    //these act as a means of easily expressing lighting between two points.
+    public static class Arc extends Group {
 
-			update();
-		}
+        private Image arc1, arc2;
 
-		public void alpha(float alpha) {
-			arc1.am = arc2.am = alpha;
-		}
+        //starting and ending x/y values
+        private PointF start, end;
 
-		@Override
-		public void update() {
-			float x2 = (start.x + end.x) / 2 + Random.Float( -4, +4 );
-			float y2 = (start.y + end.y) / 2 + Random.Float( -4, +4 );
+        public Arc(int from, int to) {
+            this(DungeonTilemap.tileCenterToWorld(from),
+                    DungeonTilemap.tileCenterToWorld(to));
+        }
 
-			float dx = x2 - start.x;
-			float dy = y2 - start.y;
-			arc1.angle = (float)(Math.atan2( dy, dx ) * A);
-			arc1.scale.x = (float)Math.sqrt( dx * dx + dy * dy ) / arc1.width;
+        public Arc(PointF from, int to) {
+            this(from, DungeonTilemap.tileCenterToWorld(to));
+        }
 
-			dx = end.x - x2;
-			dy = end.y - y2;
-			arc2.angle = (float)(Math.atan2( dy, dx ) * A);
-			arc2.scale.x = (float)Math.sqrt( dx * dx + dy * dy ) / arc2.width;
-			arc2.x = x2 - arc2.origin.x;
-			arc2.y = y2 - arc2.origin.x;
-		}
-	}
+        public Arc(int from, PointF to) {
+            this(DungeonTilemap.tileCenterToWorld(from), to);
+        }
+
+        public Arc(PointF from, PointF to) {
+            start = from;
+            end = to;
+
+            arc1 = new Image(Effects.get(Effects.Type.LIGHTNING));
+            arc1.x = start.x - arc1.origin.x;
+            arc1.y = start.y - arc1.origin.y;
+            arc1.origin.set(0, arc1.height() / 2);
+            add(arc1);
+
+            arc2 = new Image(Effects.get(Effects.Type.LIGHTNING));
+            arc2.origin.set(0, arc2.height() / 2);
+            add(arc2);
+
+            update();
+        }
+
+        public void alpha(float alpha) {
+            arc1.am = arc2.am = alpha;
+        }
+
+        @Override
+        public void update() {
+            float x2 = (start.x + end.x) / 2 + Random.Float(-4, +4);
+            float y2 = (start.y + end.y) / 2 + Random.Float(-4, +4);
+
+            float dx = x2 - start.x;
+            float dy = y2 - start.y;
+            arc1.angle = (float) (Math.atan2(dy, dx) * A);
+            arc1.scale.x = (float) Math.sqrt(dx * dx + dy * dy) / arc1.width;
+
+            dx = end.x - x2;
+            dy = end.y - y2;
+            arc2.angle = (float) (Math.atan2(dy, dx) * A);
+            arc2.scale.x = (float) Math.sqrt(dx * dx + dy * dy) / arc2.width;
+            arc2.x = x2 - arc2.origin.x;
+            arc2.y = y2 - arc2.origin.x;
+        }
+    }
 }

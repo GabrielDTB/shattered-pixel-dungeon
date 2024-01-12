@@ -35,72 +35,72 @@ import com.watabou.utils.Random;
 
 public class FetidRat extends Rat {
 
-	{
-		spriteClass = FetidRatSprite.class;
+    {
+        spriteClass = FetidRatSprite.class;
 
-		HP = HT = 20;
-		defenseSkill = 5;
+        HP = HT = 20;
+        defenseSkill = 5;
 
-		EXP = 4;
+        EXP = 4;
 
-		WANDERING = new Wandering();
-		state = WANDERING;
+        WANDERING = new Wandering();
+        state = WANDERING;
 
-		properties.add(Property.MINIBOSS);
-		properties.add(Property.DEMONIC);
-	}
+        properties.add(Property.MINIBOSS);
+        properties.add(Property.DEMONIC);
+    }
 
-	@Override
-	public int attackSkill( Char target ) {
-		return 12;
-	}
+    {
+        immunities.add(StenchGas.class);
+    }
 
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 2);
-	}
+    @Override
+    public int attackSkill(Char target) {
+        return 12;
+    }
 
-	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-		if (Random.Int(3) == 0) {
-			Buff.affect(enemy, Ooze.class).set( Ooze.DURATION );
-		}
+    @Override
+    public int drRoll() {
+        return super.drRoll() + Random.NormalIntRange(0, 2);
+    }
 
-		return damage;
-	}
+    @Override
+    public int attackProc(Char enemy, int damage) {
+        damage = super.attackProc(enemy, damage);
+        if (Random.Int(3) == 0) {
+            Buff.affect(enemy, Ooze.class).set(Ooze.DURATION);
+        }
 
-	@Override
-	public int defenseProc( Char enemy, int damage ) {
+        return damage;
+    }
 
-		GameScene.add(Blob.seed(pos, 20, StenchGas.class));
+    @Override
+    public int defenseProc(Char enemy, int damage) {
 
-		return super.defenseProc(enemy, damage);
-	}
+        GameScene.add(Blob.seed(pos, 20, StenchGas.class));
 
-	@Override
-	public void die( Object cause ) {
-		super.die( cause );
+        return super.defenseProc(enemy, damage);
+    }
 
-		Ghost.Quest.process();
-	}
+    @Override
+    public void die(Object cause) {
+        super.die(cause);
 
-	protected class Wandering extends Mob.Wandering{
-		@Override
-		protected int randomDestination() {
-			//of two potential wander positions, picks the one closest to the hero
-			int pos1 = super.randomDestination();
-			int pos2 = super.randomDestination();
-			PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable);
-			if (PathFinder.distance[pos2] < PathFinder.distance[pos1]){
-				return pos2;
-			} else {
-				return pos1;
-			}
-		}
-	}
-	
-	{
-		immunities.add( StenchGas.class );
-	}
+        Ghost.Quest.process();
+    }
+
+    protected class Wandering extends Mob.Wandering {
+        @Override
+        protected int randomDestination() {
+            //of two potential wander positions, picks the one closest to the hero
+            int pos1 = super.randomDestination();
+            int pos2 = super.randomDestination();
+            PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable);
+            if (PathFinder.distance[pos2] < PathFinder.distance[pos1]) {
+                return pos2;
+            } else {
+                return pos1;
+            }
+        }
+    }
 }

@@ -36,33 +36,33 @@ import com.watabou.noosa.audio.Sample;
 
 public class PotionOfLevitation extends Potion {
 
-	{
-		icon = ItemSpriteSheet.Icons.POTION_LEVITATE;
-	}
+    {
+        icon = ItemSpriteSheet.Icons.POTION_LEVITATE;
+    }
 
-	@Override
-	public void shatter( int cell ) {
+    @Override
+    public void shatter(int cell) {
 
-		if (Dungeon.level.heroFOV[cell]) {
-			identify();
+        if (Dungeon.level.heroFOV[cell]) {
+            identify();
 
-			splash( cell );
-			Sample.INSTANCE.play( Assets.Sounds.SHATTER );
-			Sample.INSTANCE.play( Assets.Sounds.GAS );
-		}
+            splash(cell);
+            Sample.INSTANCE.play(Assets.Sounds.SHATTER);
+            Sample.INSTANCE.play(Assets.Sounds.GAS);
+        }
 
-		GameScene.add( Blob.seed( cell, 1000, ConfusionGas.class ) );
-	}
-	
-	@Override
-	public void apply( Hero hero ) {
-		identify();
-		Buff.affect( hero, Levitation.class, Levitation.DURATION );
-		GLog.i( Messages.get(this, "float") );
-	}
-	
-	@Override
-	public int value() {
-		return isKnown() ? 40 * quantity : super.value();
-	}
+        GameScene.add(Blob.seed(cell, 1000, ConfusionGas.class));
+    }
+
+    @Override
+    public void apply(Hero hero) {
+        identify();
+        Buff.affect(hero, Levitation.class, Levitation.DURATION);
+        GLog.i(Messages.get(this, "float"));
+    }
+
+    @Override
+    public int value() {
+        return isKnown() ? 40 * quantity : super.value();
+    }
 }

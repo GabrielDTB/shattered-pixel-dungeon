@@ -38,92 +38,92 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 
 public class Sword extends MeleeWeapon {
-	
-	{
-		image = ItemSpriteSheet.SWORD;
-		hitSound = Assets.Sounds.HIT_SLASH;
-		hitSoundPitch = 1f;
 
-		tier = 3;
-	}
+    {
+        image = ItemSpriteSheet.SWORD;
+        hitSound = Assets.Sounds.HIT_SLASH;
+        hitSoundPitch = 1f;
 
-	@Override
-	protected int baseChargeUse(Hero hero, Char target){
-		if (hero.buff(Sword.CleaveTracker.class) != null){
-			return 0;
-		} else {
-			return 1;
-		}
-	}
+        tier = 3;
+    }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+    public static void cleaveAbility(Hero hero, Integer target, float dmgMulti, MeleeWeapon wep) {
+        if (target == null) {
+            return;
+        }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		Sword.cleaveAbility(hero, target, 1.27f, this);
-	}
+        Char enemy = Actor.findChar(target);
+        if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
+            GLog.w(Messages.get(wep, "ability_no_target"));
+            return;
+        }
 
-	public static void cleaveAbility(Hero hero, Integer target, float dmgMulti, MeleeWeapon wep){
-		if (target == null) {
-			return;
-		}
+        hero.belongings.abilityWeapon = wep;
+        if (!hero.canAttack(enemy)) {
+            GLog.w(Messages.get(wep, "ability_bad_position"));
+            hero.belongings.abilityWeapon = null;
+            return;
+        }
+        hero.belongings.abilityWeapon = null;
 
-		Char enemy = Actor.findChar(target);
-		if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
-			GLog.w(Messages.get(wep, "ability_no_target"));
-			return;
-		}
+        hero.sprite.attack(enemy.pos, new Callback() {
+            @Override
+            public void call() {
+                wep.beforeAbilityUsed(hero, enemy);
+                AttackIndicator.target(enemy);
+                if (hero.attack(enemy, dmgMulti, 0, Char.INFINITE_ACCURACY)) {
+                    Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
+                }
 
-		hero.belongings.abilityWeapon = wep;
-		if (!hero.canAttack(enemy)){
-			GLog.w(Messages.get(wep, "ability_bad_position"));
-			hero.belongings.abilityWeapon = null;
-			return;
-		}
-		hero.belongings.abilityWeapon = null;
+                Invisibility.dispel();
+                hero.spendAndNext(hero.attackDelay());
+                if (!enemy.isAlive()) {
+                    wep.onAbilityKill(hero, enemy);
+                    Buff.prolong(hero, CleaveTracker.class, 5f);
+                } else {
+                    if (hero.buff(CleaveTracker.class) != null) {
+                        hero.buff(CleaveTracker.class).detach();
+                    }
+                }
+                wep.afterAbilityUsed(hero);
+            }
+        });
+    }
 
-		hero.sprite.attack(enemy.pos, new Callback() {
-			@Override
-			public void call() {
-				wep.beforeAbilityUsed(hero, enemy);
-				AttackIndicator.target(enemy);
-				if (hero.attack(enemy, dmgMulti, 0, Char.INFINITE_ACCURACY)){
-					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-				}
+    @Override
+    protected int baseChargeUse(Hero hero, Char target) {
+        if (hero.buff(Sword.CleaveTracker.class) != null) {
+            return 0;
+        } else {
+            return 1;
+        }
+    }
 
-				Invisibility.dispel();
-				hero.spendAndNext(hero.attackDelay());
-				if (!enemy.isAlive()){
-					wep.onAbilityKill(hero, enemy);
-					Buff.prolong(hero, CleaveTracker.class, 5f);
-				} else {
-					if (hero.buff(CleaveTracker.class) != null) {
-						hero.buff(CleaveTracker.class).detach();
-					}
-				}
-				wep.afterAbilityUsed(hero);
-			}
-		});
-	}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-	public static class CleaveTracker extends FlavourBuff {
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        Sword.cleaveAbility(hero, target, 1.27f, this);
+    }
 
-		{
-			type = buffType.POSITIVE;
-		}
+    public static class CleaveTracker extends FlavourBuff {
 
-		@Override
-		public int icon() {
-			return BuffIndicator.DUEL_CLEAVE;
-		}
+        {
+            type = buffType.POSITIVE;
+        }
 
-		@Override
-		public float iconFadePercent() {
-			return Math.max(0, (5 - visualcooldown()) / 5);
-		}
-	}
+        @Override
+        public int icon() {
+            return BuffIndicator.DUEL_CLEAVE;
+        }
+
+        @Override
+        public float iconFadePercent() {
+            return Math.max(0, (5 - visualcooldown()) / 5);
+        }
+    }
 
 }

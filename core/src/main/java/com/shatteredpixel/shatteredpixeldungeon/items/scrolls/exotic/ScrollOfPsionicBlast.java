@@ -36,45 +36,45 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 
 public class ScrollOfPsionicBlast extends ExoticScroll {
-	
-	{
-		icon = ItemSpriteSheet.Icons.SCROLL_PSIBLAST;
-	}
-	
-	@Override
-	public void doRead() {
 
-		detach(curUser.belongings.backpack);
-		GameScene.flash( 0x80FFFFFF );
-		
-		Sample.INSTANCE.play( Assets.Sounds.BLAST );
-		GLog.i(Messages.get(ScrollOfRetribution.class, "blast"));
-		
-		int targets = 0;
-		for (Mob mob : Dungeon.level.mobs.toArray( new Mob[0] )) {
-			if (Dungeon.level.heroFOV[mob.pos]) {
-				targets ++;
-				mob.damage(Math.round(mob.HT/2f + mob.HP/2f), this);
-				if (mob.isAlive()) {
-					Buff.prolong(mob, Blindness.class, Blindness.DURATION);
-				}
-			}
-		}
-		
-		curUser.damage(Math.max(0, Math.round(curUser.HT*(0.5f * (float)Math.pow(0.9, targets)))), this);
-		if (curUser.isAlive()) {
-			Buff.prolong(curUser, Blindness.class, Blindness.DURATION);
-			Buff.prolong(curUser, Weakness.class, Weakness.DURATION*5f);
-			Dungeon.observe();
-			readAnimation();
-		} else {
-			Badges.validateDeathFromFriendlyMagic();
-			Dungeon.fail( this );
-			GLog.n( Messages.get(this, "ondeath") );
-		}
+    {
+        icon = ItemSpriteSheet.Icons.SCROLL_PSIBLAST;
+    }
 
-		identify();
-		
-	
-	}
+    @Override
+    public void doRead() {
+
+        detach(curUser.belongings.backpack);
+        GameScene.flash(0x80FFFFFF);
+
+        Sample.INSTANCE.play(Assets.Sounds.BLAST);
+        GLog.i(Messages.get(ScrollOfRetribution.class, "blast"));
+
+        int targets = 0;
+        for (Mob mob : Dungeon.level.mobs.toArray(new Mob[0])) {
+            if (Dungeon.level.heroFOV[mob.pos]) {
+                targets++;
+                mob.damage(Math.round(mob.HT / 2f + mob.HP / 2f), this);
+                if (mob.isAlive()) {
+                    Buff.prolong(mob, Blindness.class, Blindness.DURATION);
+                }
+            }
+        }
+
+        curUser.damage(Math.max(0, Math.round(curUser.HT * (0.5f * (float) Math.pow(0.9, targets)))), this);
+        if (curUser.isAlive()) {
+            Buff.prolong(curUser, Blindness.class, Blindness.DURATION);
+            Buff.prolong(curUser, Weakness.class, Weakness.DURATION * 5f);
+            Dungeon.observe();
+            readAnimation();
+        } else {
+            Badges.validateDeathFromFriendlyMagic();
+            Dungeon.fail(this);
+            GLog.n(Messages.get(this, "ondeath"));
+        }
+
+        identify();
+
+
+    }
 }

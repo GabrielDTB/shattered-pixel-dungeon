@@ -27,67 +27,67 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public abstract class Runestone extends Item {
-	
-	{
-		stackable = true;
-		defaultAction = AC_THROW;
-	}
 
-	//runestones press the cell they're thrown to by default, but a couple stones override this
-	protected boolean pressesCell = true;
+    //runestones press the cell they're thrown to by default, but a couple stones override this
+    protected boolean pressesCell = true;
 
-	@Override
-	protected void onThrow(int cell) {
-		if (Dungeon.level.pit[cell] || !defaultAction().equals(AC_THROW)){
-			super.onThrow( cell );
-		} else {
-			if (pressesCell) Dungeon.level.pressCell( cell );
-			activate(cell);
-			Invisibility.dispel();
-		}
-	}
-	
-	protected abstract void activate(int cell);
-	
-	@Override
-	public boolean isUpgradable() {
-		return false;
-	}
-	
-	@Override
-	public boolean isIdentified() {
-		return true;
-	}
-	
-	@Override
-	public int value() {
-		return 15 * quantity;
-	}
+    {
+        stackable = true;
+        defaultAction = AC_THROW;
+    }
 
-	@Override
-	public int energyVal() {
-		return 3 * quantity;
-	}
+    @Override
+    protected void onThrow(int cell) {
+        if (Dungeon.level.pit[cell] || !defaultAction().equals(AC_THROW)) {
+            super.onThrow(cell);
+        } else {
+            if (pressesCell) Dungeon.level.pressCell(cell);
+            activate(cell);
+            Invisibility.dispel();
+        }
+    }
 
-	public static class PlaceHolder extends Runestone {
-		
-		{
-			image = ItemSpriteSheet.STONE_HOLDER;
-		}
-		
-		@Override
-		protected void activate(int cell) {
-			//does nothing
-		}
-		
-		@Override
-		public boolean isSimilar(Item item) {
-			return item instanceof Runestone;
-		}
-		
-		@Override
-		public String info() {
-			return "";
-		}
-	}
+    protected abstract void activate(int cell);
+
+    @Override
+    public boolean isUpgradable() {
+        return false;
+    }
+
+    @Override
+    public boolean isIdentified() {
+        return true;
+    }
+
+    @Override
+    public int value() {
+        return 15 * quantity;
+    }
+
+    @Override
+    public int energyVal() {
+        return 3 * quantity;
+    }
+
+    public static class PlaceHolder extends Runestone {
+
+        {
+            image = ItemSpriteSheet.STONE_HOLDER;
+        }
+
+        @Override
+        protected void activate(int cell) {
+            //does nothing
+        }
+
+        @Override
+        public boolean isSimilar(Item item) {
+            return item instanceof Runestone;
+        }
+
+        @Override
+        public String info() {
+            return "";
+        }
+    }
 }

@@ -51,222 +51,223 @@ import com.watabou.utils.Random;
 
 public class WandOfBlastWave extends DamageWand {
 
-	{
-		image = ItemSpriteSheet.WAND_BLAST_WAVE;
+    {
+        image = ItemSpriteSheet.WAND_BLAST_WAVE;
 
-		collisionProperties = Ballistica.PROJECTILE;
-	}
+        collisionProperties = Ballistica.PROJECTILE;
+    }
 
-	public int min(int lvl){
-		return 1+lvl;
-	}
+    public static void throwChar(final Char ch, final Ballistica trajectory, int power,
+                                 boolean closeDoors, boolean collideDmg, Object cause) {
+        if (ch.properties().contains(Char.Property.BOSS)) {
+            power = (power + 1) / 2;
+        }
 
-	public int max(int lvl){
-		return 3+3*lvl;
-	}
+        int dist = Math.min(trajectory.dist, power);
 
-	@Override
-	public void onZap(Ballistica bolt) {
-		Sample.INSTANCE.play( Assets.Sounds.BLAST );
-		BlastWave.blast(bolt.collisionPos);
+        boolean collided = dist == trajectory.dist;
 
-		//presses all tiles in the AOE first, with the exception of tengu dart traps
-		for (int i : PathFinder.NEIGHBOURS9){
-			if (!(Dungeon.level.traps.get(bolt.collisionPos+i) instanceof TenguDartTrap)) {
-				Dungeon.level.pressCell(bolt.collisionPos + i);
-			}
-		}
+        if (dist <= 0
+                || ch.rooted
+                || ch.properties().contains(Char.Property.IMMOVABLE)) return;
 
-		//throws other chars around the center.
-		for (int i  : PathFinder.NEIGHBOURS8){
-			Char ch = Actor.findChar(bolt.collisionPos + i);
+        //large characters cannot be moved into non-open space
+        if (Char.hasProp(ch, Char.Property.LARGE)) {
+            for (int i = 1; i <= dist; i++) {
+                if (!Dungeon.level.openSpace[trajectory.path.get(i)]) {
+                    dist = i - 1;
+                    collided = true;
+                    break;
+                }
+            }
+        }
 
-			if (ch != null){
-				wandProc(ch, chargesPerCast());
-				if (ch.alignment != Char.Alignment.ALLY) ch.damage(damageRoll(), this);
+        if (Actor.findChar(trajectory.path.get(dist)) != null) {
+            dist--;
+            collided = true;
+        }
 
-				if (ch.pos == bolt.collisionPos + i) {
-					Ballistica trajectory = new Ballistica(ch.pos, ch.pos + i, Ballistica.MAGIC_BOLT);
-					int strength = 1 + Math.round(buffedLvl() / 2f);
-					throwChar(ch, trajectory, strength, false, true, this);
-				}
+        if (dist < 0) return;
 
-			}
-		}
+        final int newPos = trajectory.path.get(dist);
 
-		//throws the char at the center of the blast
-		Char ch = Actor.findChar(bolt.collisionPos);
-		if (ch != null){
-			wandProc(ch, chargesPerCast());
-			ch.damage(damageRoll(), this);
+        if (newPos == ch.pos) return;
 
-			if (bolt.path.size() > bolt.dist+1 && ch.pos == bolt.collisionPos) {
-				Ballistica trajectory = new Ballistica(ch.pos, bolt.path.get(bolt.dist + 1), Ballistica.MAGIC_BOLT);
-				int strength = buffedLvl() + 3;
-				throwChar(ch, trajectory, strength, false, true, this);
-			}
-		}
-		
-	}
+        final int finalDist = dist;
+        final boolean finalCollided = collided && collideDmg;
+        final int initialpos = ch.pos;
 
-	public static void throwChar(final Char ch, final Ballistica trajectory, int power,
-	                             boolean closeDoors, boolean collideDmg, Object cause){
-		if (ch.properties().contains(Char.Property.BOSS)) {
-			power = (power+1)/2;
-		}
+        Actor.add(new Pushing(ch, ch.pos, newPos, new Callback() {
+            public void call() {
+                if (initialpos != ch.pos || Actor.findChar(newPos) != null) {
+                    //something caused movement or added chars before pushing resolved, cancel to be safe.
+                    ch.sprite.place(ch.pos);
+                    return;
+                }
+                int oldPos = ch.pos;
+                ch.pos = newPos;
+                if (finalCollided && ch.isActive()) {
+                    ch.damage(Random.NormalIntRange(finalDist, 2 * finalDist), this);
+                    if (ch.isActive()) {
+                        Paralysis.prolong(ch, Paralysis.class, 1 + finalDist / 2f);
+                    } else if (ch == Dungeon.hero) {
+                        if (cause instanceof WandOfBlastWave || cause instanceof AquaBlast) {
+                            Badges.validateDeathFromFriendlyMagic();
+                        }
+                        Dungeon.fail(cause);
+                    }
+                }
+                if (closeDoors && Dungeon.level.map[oldPos] == Terrain.OPEN_DOOR) {
+                    Door.leave(oldPos);
+                }
+                Dungeon.level.occupyCell(ch);
+                if (ch == Dungeon.hero) {
+                    Dungeon.observe();
+                    GameScene.updateFog();
+                }
+            }
+        }));
+    }
 
-		int dist = Math.min(trajectory.dist, power);
+    public int min(int lvl) {
+        return 1 + lvl;
+    }
 
-		boolean collided = dist == trajectory.dist;
+    public int max(int lvl) {
+        return 3 + 3 * lvl;
+    }
 
-		if (dist <= 0
-				|| ch.rooted
-				|| ch.properties().contains(Char.Property.IMMOVABLE)) return;
+    @Override
+    public void onZap(Ballistica bolt) {
+        Sample.INSTANCE.play(Assets.Sounds.BLAST);
+        BlastWave.blast(bolt.collisionPos);
 
-		//large characters cannot be moved into non-open space
-		if (Char.hasProp(ch, Char.Property.LARGE)) {
-			for (int i = 1; i <= dist; i++) {
-				if (!Dungeon.level.openSpace[trajectory.path.get(i)]){
-					dist = i-1;
-					collided = true;
-					break;
-				}
-			}
-		}
+        //presses all tiles in the AOE first, with the exception of tengu dart traps
+        for (int i : PathFinder.NEIGHBOURS9) {
+            if (!(Dungeon.level.traps.get(bolt.collisionPos + i) instanceof TenguDartTrap)) {
+                Dungeon.level.pressCell(bolt.collisionPos + i);
+            }
+        }
 
-		if (Actor.findChar(trajectory.path.get(dist)) != null){
-			dist--;
-			collided = true;
-		}
+        //throws other chars around the center.
+        for (int i : PathFinder.NEIGHBOURS8) {
+            Char ch = Actor.findChar(bolt.collisionPos + i);
 
-		if (dist < 0) return;
+            if (ch != null) {
+                wandProc(ch, chargesPerCast());
+                if (ch.alignment != Char.Alignment.ALLY) ch.damage(damageRoll(), this);
 
-		final int newPos = trajectory.path.get(dist);
+                if (ch.pos == bolt.collisionPos + i) {
+                    Ballistica trajectory = new Ballistica(ch.pos, ch.pos + i, Ballistica.MAGIC_BOLT);
+                    int strength = 1 + Math.round(buffedLvl() / 2f);
+                    throwChar(ch, trajectory, strength, false, true, this);
+                }
 
-		if (newPos == ch.pos) return;
+            }
+        }
 
-		final int finalDist = dist;
-		final boolean finalCollided = collided && collideDmg;
-		final int initialpos = ch.pos;
+        //throws the char at the center of the blast
+        Char ch = Actor.findChar(bolt.collisionPos);
+        if (ch != null) {
+            wandProc(ch, chargesPerCast());
+            ch.damage(damageRoll(), this);
 
-		Actor.add(new Pushing(ch, ch.pos, newPos, new Callback() {
-			public void call() {
-				if (initialpos != ch.pos || Actor.findChar(newPos) != null) {
-					//something caused movement or added chars before pushing resolved, cancel to be safe.
-					ch.sprite.place(ch.pos);
-					return;
-				}
-				int oldPos = ch.pos;
-				ch.pos = newPos;
-				if (finalCollided && ch.isActive()) {
-					ch.damage(Random.NormalIntRange(finalDist, 2*finalDist), this);
-					if (ch.isActive()) {
-						Paralysis.prolong(ch, Paralysis.class, 1 + finalDist/2f);
-					} else if (ch == Dungeon.hero){
-						if (cause instanceof WandOfBlastWave || cause instanceof AquaBlast){
-							Badges.validateDeathFromFriendlyMagic();
-						}
-						Dungeon.fail(cause);
-					}
-				}
-				if (closeDoors && Dungeon.level.map[oldPos] == Terrain.OPEN_DOOR){
-					Door.leave(oldPos);
-				}
-				Dungeon.level.occupyCell(ch);
-				if (ch == Dungeon.hero){
-					Dungeon.observe();
-					GameScene.updateFog();
-				}
-			}
-		}));
-	}
+            if (bolt.path.size() > bolt.dist + 1 && ch.pos == bolt.collisionPos) {
+                Ballistica trajectory = new Ballistica(ch.pos, bolt.path.get(bolt.dist + 1), Ballistica.MAGIC_BOLT);
+                int strength = buffedLvl() + 3;
+                throwChar(ch, trajectory, strength, false, true, this);
+            }
+        }
 
-	@Override
-	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
-		//acts like elastic enchantment
-		//we delay this with an actor to prevent conflicts with regular elastic
-		//so elastic always fully resolves first, then this effect activates
-		Actor.add(new Actor() {
-			{
-				actPriority = VFX_PRIO+9; //act after pushing effects
-			}
+    }
 
-			@Override
-			protected boolean act() {
-				Actor.remove(this);
-				if (defender.isAlive()) {
-					new BlastWaveOnHit().proc(staff, attacker, defender, damage);
-				}
-				return true;
-			}
-		});
-	}
+    @Override
+    public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
+        //acts like elastic enchantment
+        //we delay this with an actor to prevent conflicts with regular elastic
+        //so elastic always fully resolves first, then this effect activates
+        Actor.add(new Actor() {
+            {
+                actPriority = VFX_PRIO + 9; //act after pushing effects
+            }
 
-	private static class BlastWaveOnHit extends Elastic{
-		@Override
-		protected float procChanceMultiplier(Char attacker) {
-			return Wand.procChanceMultiplier(attacker);
-		}
-	}
+            @Override
+            protected boolean act() {
+                Actor.remove(this);
+                if (defender.isAlive()) {
+                    new BlastWaveOnHit().proc(staff, attacker, defender, damage);
+                }
+                return true;
+            }
+        });
+    }
 
-	@Override
-	public void fx(Ballistica bolt, Callback callback) {
-		MagicMissile.boltFromChar( curUser.sprite.parent,
-				MagicMissile.FORCE,
-				curUser.sprite,
-				bolt.collisionPos,
-				callback);
-		Sample.INSTANCE.play(Assets.Sounds.ZAP);
-	}
+    @Override
+    public void fx(Ballistica bolt, Callback callback) {
+        MagicMissile.boltFromChar(curUser.sprite.parent,
+                MagicMissile.FORCE,
+                curUser.sprite,
+                bolt.collisionPos,
+                callback);
+        Sample.INSTANCE.play(Assets.Sounds.ZAP);
+    }
 
-	@Override
-	public void staffFx(MagesStaff.StaffParticle particle) {
-		particle.color( 0x664422 ); particle.am = 0.6f;
-		particle.setLifespan(3f);
-		particle.speed.polar(Random.Float(PointF.PI2), 0.3f);
-		particle.setSize( 1f, 2f);
-		particle.radiateXY(2.5f);
-	}
+    @Override
+    public void staffFx(MagesStaff.StaffParticle particle) {
+        particle.color(0x664422);
+        particle.am = 0.6f;
+        particle.setLifespan(3f);
+        particle.speed.polar(Random.Float(PointF.PI2), 0.3f);
+        particle.setSize(1f, 2f);
+        particle.radiateXY(2.5f);
+    }
 
-	public static class BlastWave extends Image {
+    private static class BlastWaveOnHit extends Elastic {
+        @Override
+        protected float procChanceMultiplier(Char attacker) {
+            return Wand.procChanceMultiplier(attacker);
+        }
+    }
 
-		private static final float TIME_TO_FADE = 0.2f;
+    public static class BlastWave extends Image {
 
-		private float time;
+        private static final float TIME_TO_FADE = 0.2f;
 
-		public BlastWave(){
-			super(Effects.get(Effects.Type.RIPPLE));
-			origin.set(width / 2, height / 2);
-		}
+        private float time;
 
-		public void reset(int pos) {
-			revive();
+        public BlastWave() {
+            super(Effects.get(Effects.Type.RIPPLE));
+            origin.set(width / 2, height / 2);
+        }
 
-			x = (pos % Dungeon.level.width()) * DungeonTilemap.SIZE + (DungeonTilemap.SIZE - width) / 2;
-			y = (pos / Dungeon.level.width()) * DungeonTilemap.SIZE + (DungeonTilemap.SIZE - height) / 2;
+        public static void blast(int pos) {
+            Group parent = Dungeon.hero.sprite.parent;
+            BlastWave b = (BlastWave) parent.recycle(BlastWave.class);
+            parent.bringToFront(b);
+            b.reset(pos);
+        }
 
-			time = TIME_TO_FADE;
-		}
+        public void reset(int pos) {
+            revive();
 
-		@Override
-		public void update() {
-			super.update();
+            x = (pos % Dungeon.level.width()) * DungeonTilemap.SIZE + (DungeonTilemap.SIZE - width) / 2;
+            y = (pos / Dungeon.level.width()) * DungeonTilemap.SIZE + (DungeonTilemap.SIZE - height) / 2;
 
-			if ((time -= Game.elapsed) <= 0) {
-				kill();
-			} else {
-				float p = time / TIME_TO_FADE;
-				alpha(p);
-				scale.y = scale.x = (1-p)*3;
-			}
-		}
+            time = TIME_TO_FADE;
+        }
 
-		public static void blast(int pos) {
-			Group parent = Dungeon.hero.sprite.parent;
-			BlastWave b = (BlastWave) parent.recycle(BlastWave.class);
-			parent.bringToFront(b);
-			b.reset(pos);
-		}
+        @Override
+        public void update() {
+            super.update();
 
-	}
+            if ((time -= Game.elapsed) <= 0) {
+                kill();
+            } else {
+                float p = time / TIME_TO_FADE;
+                alpha(p);
+                scale.y = scale.x = (1 - p) * 3;
+            }
+        }
+
+    }
 }

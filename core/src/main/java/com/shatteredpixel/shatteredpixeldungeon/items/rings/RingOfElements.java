@@ -40,58 +40,59 @@ import java.util.HashSet;
 
 public class RingOfElements extends Ring {
 
-	{
-		icon = ItemSpriteSheet.Icons.RING_ELEMENTS;
-	}
+    public static final HashSet<Class> RESISTS = new HashSet<>();
 
-	public String statsInfo() {
-		if (isIdentified()){
-			String info = Messages.get(this, "stats",
-					Messages.decimalFormat("#.##", 100f * (1f - Math.pow(0.825f, soloBuffedBonus()))));
-			if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Resistance.class)){
-				info += "\n\n" + Messages.get(this, "combined_stats",
-						Messages.decimalFormat("#.##", 100f * (1f - Math.pow(0.825f, combinedBuffedBonus(Dungeon.hero, Resistance.class)))));
-			}
-			return info;
-		} else {
-			return Messages.get(this, "typical_stats", Messages.decimalFormat("#.##", 17.5f));
-		}
-	}
-	
-	@Override
-	protected RingBuff buff( ) {
-		return new Resistance();
-	}
+    static {
+        RESISTS.add(Burning.class);
+        RESISTS.add(Chill.class);
+        RESISTS.add(Frost.class);
+        RESISTS.add(Ooze.class);
+        RESISTS.add(Paralysis.class);
+        RESISTS.add(Poison.class);
+        RESISTS.add(Corrosion.class);
 
-	public static final HashSet<Class> RESISTS = new HashSet<>();
-	static {
-		RESISTS.add( Burning.class );
-		RESISTS.add( Chill.class );
-		RESISTS.add( Frost.class );
-		RESISTS.add( Ooze.class );
-		RESISTS.add( Paralysis.class );
-		RESISTS.add( Poison.class );
-		RESISTS.add( Corrosion.class );
+        RESISTS.add(ToxicGas.class);
+        RESISTS.add(Electricity.class);
 
-		RESISTS.add( ToxicGas.class );
-		RESISTS.add( Electricity.class );
+        RESISTS.addAll(AntiMagic.RESISTS);
+    }
 
-		RESISTS.addAll( AntiMagic.RESISTS );
-	}
-	
-	public static float resist( Char target, Class effect ){
-		if (getBuffedBonus(target, Resistance.class) == 0) return 1f;
-		
-		for (Class c : RESISTS){
-			if (c.isAssignableFrom(effect)){
-				return (float)Math.pow(0.825, getBuffedBonus(target, Resistance.class));
-			}
-		}
-		
-		return 1f;
-	}
-	
-	public class Resistance extends RingBuff {
-	
-	}
+    {
+        icon = ItemSpriteSheet.Icons.RING_ELEMENTS;
+    }
+
+    public static float resist(Char target, Class effect) {
+        if (getBuffedBonus(target, Resistance.class) == 0) return 1f;
+
+        for (Class c : RESISTS) {
+            if (c.isAssignableFrom(effect)) {
+                return (float) Math.pow(0.825, getBuffedBonus(target, Resistance.class));
+            }
+        }
+
+        return 1f;
+    }
+
+    public String statsInfo() {
+        if (isIdentified()) {
+            String info = Messages.get(this, "stats",
+                    Messages.decimalFormat("#.##", 100f * (1f - Math.pow(0.825f, soloBuffedBonus()))));
+            if (isEquipped(Dungeon.hero) && soloBuffedBonus() != combinedBuffedBonus(Dungeon.hero, Resistance.class)) {
+                info += "\n\n" + Messages.get(this, "combined_stats",
+                        Messages.decimalFormat("#.##", 100f * (1f - Math.pow(0.825f, combinedBuffedBonus(Dungeon.hero, Resistance.class)))));
+            }
+            return info;
+        } else {
+            return Messages.get(this, "typical_stats", Messages.decimalFormat("#.##", 17.5f));
+        }
+    }
+
+    @Override
+    protected RingBuff buff() {
+        return new Resistance();
+    }
+
+    public class Resistance extends RingBuff {
+
+    }
 }

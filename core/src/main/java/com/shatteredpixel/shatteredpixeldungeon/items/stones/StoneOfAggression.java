@@ -36,76 +36,76 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.noosa.audio.Sample;
 
 public class StoneOfAggression extends Runestone {
-	
-	{
-		image = ItemSpriteSheet.STONE_AGGRESSION;
-	}
-	
-	@Override
-	protected void activate(int cell) {
-		
-		Char ch = Actor.findChar( cell );
-		
-		if (ch != null) {
-			if (ch.alignment == Char.Alignment.ENEMY) {
-				Buff.prolong(ch, Aggression.class, Aggression.DURATION / 4f);
-			} else {
-				Buff.prolong(ch, Aggression.class, Aggression.DURATION);
-			}
-			CellEmitter.center(cell).start( Speck.factory( Speck.SCREAM ), 0.3f, 3 );
-			Sample.INSTANCE.play( Assets.Sounds.READ );
-		} else {
-			//Item.onThrow
-			Heap heap = Dungeon.level.drop( this, cell );
-			if (!heap.isEmpty()) {
-				heap.sprite.drop( cell );
-			}
-		}
-		
-	}
 
-	public static class Aggression extends FlavourBuff {
-		
-		public static final float DURATION = 20f;
-		
-		{
-			type = buffType.NEGATIVE;
-			announced = true;
-		}
+    {
+        image = ItemSpriteSheet.STONE_AGGRESSION;
+    }
 
-		@Override
-		public int icon() {
-			return BuffIndicator.TARGETED;
-		}
+    @Override
+    protected void activate(int cell) {
 
-		@Override
-		public float iconFadePercent() {
-			if (target.alignment == Char.Alignment.ENEMY){
-				return Math.max(0, (DURATION/4f - visualcooldown()) / (DURATION/4f));
-			} else {
-				return Math.max(0, (DURATION - visualcooldown()) / DURATION);
-			}
-		}
+        Char ch = Actor.findChar(cell);
 
-		@Override
-		public void detach() {
-			//if our target is an enemy, reset the aggro of any enemies targeting it
-			if (target.isAlive()) {
-				if (target.alignment == Char.Alignment.ENEMY) {
-					for (Mob m : Dungeon.level.mobs) {
-						if (m.alignment == Char.Alignment.ENEMY && m.isTargeting(target)) {
-							m.aggro(null);
-						}
-						if (target instanceof Mob && ((Mob) target).isTargeting(m)){
-							((Mob) target).aggro(null);
-						}
-					}
-				}
-			}
-			super.detach();
-			
-		}
+        if (ch != null) {
+            if (ch.alignment == Char.Alignment.ENEMY) {
+                Buff.prolong(ch, Aggression.class, Aggression.DURATION / 4f);
+            } else {
+                Buff.prolong(ch, Aggression.class, Aggression.DURATION);
+            }
+            CellEmitter.center(cell).start(Speck.factory(Speck.SCREAM), 0.3f, 3);
+            Sample.INSTANCE.play(Assets.Sounds.READ);
+        } else {
+            //Item.onThrow
+            Heap heap = Dungeon.level.drop(this, cell);
+            if (!heap.isEmpty()) {
+                heap.sprite.drop(cell);
+            }
+        }
 
-	}
-	
+    }
+
+    public static class Aggression extends FlavourBuff {
+
+        public static final float DURATION = 20f;
+
+        {
+            type = buffType.NEGATIVE;
+            announced = true;
+        }
+
+        @Override
+        public int icon() {
+            return BuffIndicator.TARGETED;
+        }
+
+        @Override
+        public float iconFadePercent() {
+            if (target.alignment == Char.Alignment.ENEMY) {
+                return Math.max(0, (DURATION / 4f - visualcooldown()) / (DURATION / 4f));
+            } else {
+                return Math.max(0, (DURATION - visualcooldown()) / DURATION);
+            }
+        }
+
+        @Override
+        public void detach() {
+            //if our target is an enemy, reset the aggro of any enemies targeting it
+            if (target.isAlive()) {
+                if (target.alignment == Char.Alignment.ENEMY) {
+                    for (Mob m : Dungeon.level.mobs) {
+                        if (m.alignment == Char.Alignment.ENEMY && m.isTargeting(target)) {
+                            m.aggro(null);
+                        }
+                        if (target instanceof Mob && ((Mob) target).isTargeting(m)) {
+                            ((Mob) target).aggro(null);
+                        }
+                    }
+                }
+            }
+            super.detach();
+
+        }
+
+    }
+
 }

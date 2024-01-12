@@ -40,162 +40,161 @@ import com.watabou.utils.Bundle;
 import java.util.ArrayList;
 
 public class Swiftthistle extends Plant {
-	
-	{
-		image = 2;
-		seedClass = Seed.class;
-	}
-	
-	@Override
-	public void activate( Char ch ) {
-		if (ch != null) {
-			Buff.affect(ch, TimeBubble.class).reset();
-			if (ch instanceof Hero && ((Hero) ch).subClass == HeroSubClass.WARDEN){
-				Buff.affect(ch, Haste.class, 1f);
-			}
-		}
-	}
-	
-	public static class Seed extends Plant.Seed {
-		{
-			image = ItemSpriteSheet.SEED_SWIFTTHISTLE;
-			
-			plantClass = Swiftthistle.class;
-		}
-	}
-	
-	//FIXME lots of copypasta from time freeze here
-	
-	public static class TimeBubble extends Buff {
-		
-		{
-			type = buffType.POSITIVE;
-			announced = true;
-		}
-		
-		private float left;
-		ArrayList<Integer> presses = new ArrayList<>();
-		
-		@Override
-		public int icon() {
-			return BuffIndicator.TIME;
-		}
 
-		@Override
-		public void tintIcon(Image icon) {
-			icon.hardlight(1f, 1f, 0);
-		}
+    {
+        image = 2;
+        seedClass = Seed.class;
+    }
 
-		@Override
-		public float iconFadePercent() {
-			return Math.max(0, (6f - left) / 6f);
-		}
+    @Override
+    public void activate(Char ch) {
+        if (ch != null) {
+            Buff.affect(ch, TimeBubble.class).reset();
+            if (ch instanceof Hero && ((Hero) ch).subClass == HeroSubClass.WARDEN) {
+                Buff.affect(ch, Haste.class, 1f);
+            }
+        }
+    }
 
-		@Override
-		public String iconTextDisplay() {
-			return Integer.toString((int)left);
-		}
-		
-		public void reset(){
-			left = 7f;
-		}
-		
-		@Override
-		public String desc() {
-			return Messages.get(this, "desc", dispTurns(left));
-		}
-		
-		public void processTime(float time){
-			left -= time;
+    public static class Seed extends Plant.Seed {
+        {
+            image = ItemSpriteSheet.SEED_SWIFTTHISTLE;
 
-			//use 1/1,000 to account for rounding errors
-			if (left < -0.001f){
-				detach();
-			}
-			
-		}
-		
-		public void setDelayedPress(int cell){
-			if (!presses.contains(cell)) {
-				presses.add(cell);
-			}
-		}
+            plantClass = Swiftthistle.class;
+        }
+    }
 
-		public void triggerPresses(){
-			for (int cell : presses){
-				Trap t = Dungeon.level.traps.get(cell);
-				if (t != null){
-					t.trigger();
-				}
-				Plant p = Dungeon.level.plants.get(cell);
-				if (p != null){
-					p.trigger();
-				}
-			}
+    //FIXME lots of copypasta from time freeze here
 
-			presses = new ArrayList<>();
-		}
+    public static class TimeBubble extends Buff {
 
-		public void disarmPresses(){
-			for (int cell : presses){
-				Trap t = Dungeon.level.traps.get(cell);
-				if (t != null && t.disarmedByActivation) {
-					t.disarm();
-				}
+        private static final String PRESSES = "presses";
+        private static final String LEFT = "left";
+        ArrayList<Integer> presses = new ArrayList<>();
+        private float left;
 
-				Dungeon.level.uproot(cell);
-			}
+        {
+            type = buffType.POSITIVE;
+            announced = true;
+        }
 
-			presses = new ArrayList<>();
-		}
-		
-		@Override
-		public void detach(){
-			super.detach();
-			triggerPresses();
-			target.next();
-		}
+        @Override
+        public int icon() {
+            return BuffIndicator.TIME;
+        }
 
-		@Override
-		public void fx(boolean on) {
-			if (!(target instanceof Hero)) return;
-			Emitter.freezeEmitters = on;
-			if (on){
-				for (Mob mob : Dungeon.level.mobs.toArray(new Mob[0])) {
-					if (mob.sprite != null) mob.sprite.add(CharSprite.State.PARALYSED);
-				}
-			} else {
-				for (Mob mob : Dungeon.level.mobs.toArray(new Mob[0])) {
-					if (mob.paralysed <= 0) mob.sprite.remove(CharSprite.State.PARALYSED);
-				}
-			}
-		}
-		
-		private static final String PRESSES = "presses";
-		private static final String LEFT = "left";
-		
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			
-			int[] values = new int[presses.size()];
-			for (int i = 0; i < values.length; i ++)
-				values[i] = presses.get(i);
-			bundle.put( PRESSES , values );
-			
-			bundle.put( LEFT, left);
-		}
-		
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			
-			int[] values = bundle.getIntArray( PRESSES );
-			for (int value : values)
-				presses.add(value);
-			
-			left = bundle.getFloat(LEFT);
-		}
-		
-	}
+        @Override
+        public void tintIcon(Image icon) {
+            icon.hardlight(1f, 1f, 0);
+        }
+
+        @Override
+        public float iconFadePercent() {
+            return Math.max(0, (6f - left) / 6f);
+        }
+
+        @Override
+        public String iconTextDisplay() {
+            return Integer.toString((int) left);
+        }
+
+        public void reset() {
+            left = 7f;
+        }
+
+        @Override
+        public String desc() {
+            return Messages.get(this, "desc", dispTurns(left));
+        }
+
+        public void processTime(float time) {
+            left -= time;
+
+            //use 1/1,000 to account for rounding errors
+            if (left < -0.001f) {
+                detach();
+            }
+
+        }
+
+        public void setDelayedPress(int cell) {
+            if (!presses.contains(cell)) {
+                presses.add(cell);
+            }
+        }
+
+        public void triggerPresses() {
+            for (int cell : presses) {
+                Trap t = Dungeon.level.traps.get(cell);
+                if (t != null) {
+                    t.trigger();
+                }
+                Plant p = Dungeon.level.plants.get(cell);
+                if (p != null) {
+                    p.trigger();
+                }
+            }
+
+            presses = new ArrayList<>();
+        }
+
+        public void disarmPresses() {
+            for (int cell : presses) {
+                Trap t = Dungeon.level.traps.get(cell);
+                if (t != null && t.disarmedByActivation) {
+                    t.disarm();
+                }
+
+                Dungeon.level.uproot(cell);
+            }
+
+            presses = new ArrayList<>();
+        }
+
+        @Override
+        public void detach() {
+            super.detach();
+            triggerPresses();
+            target.next();
+        }
+
+        @Override
+        public void fx(boolean on) {
+            if (!(target instanceof Hero)) return;
+            Emitter.freezeEmitters = on;
+            if (on) {
+                for (Mob mob : Dungeon.level.mobs.toArray(new Mob[0])) {
+                    if (mob.sprite != null) mob.sprite.add(CharSprite.State.PARALYSED);
+                }
+            } else {
+                for (Mob mob : Dungeon.level.mobs.toArray(new Mob[0])) {
+                    if (mob.paralysed <= 0) mob.sprite.remove(CharSprite.State.PARALYSED);
+                }
+            }
+        }
+
+        @Override
+        public void storeInBundle(Bundle bundle) {
+            super.storeInBundle(bundle);
+
+            int[] values = new int[presses.size()];
+            for (int i = 0; i < values.length; i++)
+                values[i] = presses.get(i);
+            bundle.put(PRESSES, values);
+
+            bundle.put(LEFT, left);
+        }
+
+        @Override
+        public void restoreFromBundle(Bundle bundle) {
+            super.restoreFromBundle(bundle);
+
+            int[] values = bundle.getIntArray(PRESSES);
+            for (int value : values)
+                presses.add(value);
+
+            left = bundle.getFloat(LEFT);
+        }
+
+    }
 }

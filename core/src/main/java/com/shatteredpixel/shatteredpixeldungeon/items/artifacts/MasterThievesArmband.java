@@ -52,275 +52,279 @@ import java.util.ArrayList;
 
 public class MasterThievesArmband extends Artifact {
 
-	{
-		image = ItemSpriteSheet.ARTIFACT_ARMBAND;
+    public static final String AC_STEAL = "STEAL";
+    private CellSelector.Listener targeter = new CellSelector.Listener() {
 
-		levelCap = 10;
+        @Override
+        public void onSelect(Integer target) {
 
-		charge = 0;
-		partialCharge = 0;
-		chargeCap = 5+level()/2;
+            if (target == null) {
+                return;
+            } else if (!Dungeon.level.adjacent(curUser.pos, target) || Actor.findChar(target) == null) {
+                GLog.w(Messages.get(MasterThievesArmband.class, "no_target"));
+            } else {
+                Char ch = Actor.findChar(target);
+                if (ch instanceof Shopkeeper) {
+                    GLog.w(Messages.get(MasterThievesArmband.class, "steal_shopkeeper"));
+                } else if (ch.alignment != Char.Alignment.ENEMY) {
+                    GLog.w(Messages.get(MasterThievesArmband.class, "no_target"));
+                } else if (ch instanceof Mob) {
+                    curUser.busy();
+                    curUser.sprite.attack(target, new Callback() {
+                        @Override
+                        public void call() {
+                            Sample.INSTANCE.play(Assets.Sounds.HIT);
 
-		defaultAction = AC_STEAL;
-	}
+                            boolean surprised = ((Mob) ch).surprisedBy(curUser, false);
+                            float lootMultiplier = 1f + 0.1f * level();
+                            int debuffDuration = 3 + level() / 2;
 
-	public static final String AC_STEAL = "STEAL";
+                            Invisibility.dispel(curUser);
 
-	@Override
-	public ArrayList<String> actions(Hero hero) {
-		ArrayList<String> actions = super.actions(hero);
-		if (isEquipped(hero)
-				&& charge > 0
-				&& hero.buff(MagicImmune.class) == null
-				&& !cursed) {
-			actions.add(AC_STEAL);
-		}
-		return actions;
-	}
+                            if (surprised) {
+                                lootMultiplier += 0.5f;
+                                Surprise.hit(ch);
+                                Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
+                                debuffDuration += 2;
+                                exp += 2;
+                            }
 
-	@Override
-	public void execute(Hero hero, String action) {
-		super.execute(hero, action);
+                            float lootChance = ((Mob) ch).lootChance() * lootMultiplier;
 
-		if (hero.buff(MagicImmune.class) != null) return;
+                            if (Dungeon.hero.lvl > ((Mob) ch).maxLvl + 2) {
+                                lootChance = 0;
+                            } else if (ch.buff(StolenTracker.class) != null) {
+                                lootChance = 0;
+                            }
 
-		if (action.equals(AC_STEAL)){
+                            if (lootChance == 0) {
+                                GLog.w(Messages.get(MasterThievesArmband.class, "no_steal"));
+                            } else if (Random.Float() <= lootChance) {
+                                Item loot = ((Mob) ch).createLoot();
+                                if (Challenges.isItemBlocked(loot)) {
+                                    GLog.i(Messages.get(MasterThievesArmband.class, "failed_steal"));
+                                    Buff.affect(ch, StolenTracker.class).setItemStolen(false);
+                                } else {
+                                    if (loot.doPickUp(curUser)) {
+                                        //item collection happens instantly
+                                        curUser.spend(-TIME_TO_PICK_UP);
+                                    } else {
+                                        Dungeon.level.drop(loot, curUser.pos).sprite.drop();
+                                    }
+                                    GLog.i(Messages.get(MasterThievesArmband.class, "stole_item", loot.name()));
+                                    Buff.affect(ch, StolenTracker.class).setItemStolen(true);
+                                }
+                            } else {
+                                GLog.i(Messages.get(MasterThievesArmband.class, "failed_steal"));
+                                Buff.affect(ch, StolenTracker.class).setItemStolen(false);
+                            }
 
-			curUser = hero;
+                            Buff.prolong(ch, Blindness.class, debuffDuration);
+                            Buff.prolong(ch, Cripple.class, debuffDuration);
 
-			if (!isEquipped( hero )) {
-				GLog.i( Messages.get(Artifact.class, "need_to_equip") );
-				usesTargeting = false;
+                            charge--;
+                            exp += 3;
+                            Talent.onArtifactUsed(Dungeon.hero);
+                            while (exp >= (10 + Math.round(3.33f * level())) && level() < levelCap) {
+                                exp -= 10 + Math.round(3.33f * level());
+                                GLog.p(Messages.get(MasterThievesArmband.class, "level_up"));
+                                upgrade();
+                            }
+                            Item.updateQuickslot();
+                            curUser.next();
+                        }
+                    });
 
-			} else if (charge < 1) {
-				GLog.i( Messages.get(this, "no_charge") );
-				usesTargeting = false;
+                }
+            }
 
-			} else if (cursed) {
-				GLog.w( Messages.get(this, "cursed") );
-				usesTargeting = false;
+        }
 
-			} else {
-				usesTargeting = true;
-				GameScene.selectCell(targeter);
-			}
+        @Override
+        public String prompt() {
+            return Messages.get(MasterThievesArmband.class, "prompt");
+        }
+    };
 
-		}
-	}
+    {
+        image = ItemSpriteSheet.ARTIFACT_ARMBAND;
 
-	private CellSelector.Listener targeter = new CellSelector.Listener(){
+        levelCap = 10;
 
-		@Override
-		public void onSelect(Integer target) {
+        charge = 0;
+        partialCharge = 0;
+        chargeCap = 5 + level() / 2;
 
-			if (target == null) {
-				return;
-			} else if (!Dungeon.level.adjacent(curUser.pos, target) || Actor.findChar(target) == null){
-				GLog.w( Messages.get(MasterThievesArmband.class, "no_target") );
-			} else {
-				Char ch = Actor.findChar(target);
-				if (ch instanceof Shopkeeper){
-					GLog.w( Messages.get(MasterThievesArmband.class, "steal_shopkeeper") );
-				} else if (ch.alignment != Char.Alignment.ENEMY){
-					GLog.w( Messages.get(MasterThievesArmband.class, "no_target") );
-				} else if (ch instanceof Mob) {
-					curUser.busy();
-					curUser.sprite.attack(target, new Callback() {
-						@Override
-						public void call() {
-							Sample.INSTANCE.play(Assets.Sounds.HIT);
+        defaultAction = AC_STEAL;
+    }
 
-							boolean surprised = ((Mob) ch).surprisedBy(curUser, false);
-							float lootMultiplier = 1f + 0.1f*level();
-							int debuffDuration = 3 + level()/2;
+    @Override
+    public ArrayList<String> actions(Hero hero) {
+        ArrayList<String> actions = super.actions(hero);
+        if (isEquipped(hero)
+                && charge > 0
+                && hero.buff(MagicImmune.class) == null
+                && !cursed) {
+            actions.add(AC_STEAL);
+        }
+        return actions;
+    }
 
-							Invisibility.dispel(curUser);
+    @Override
+    public void execute(Hero hero, String action) {
+        super.execute(hero, action);
 
-							if (surprised){
-								lootMultiplier += 0.5f;
-								Surprise.hit(ch);
-								Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-								debuffDuration += 2;
-								exp += 2;
-							}
+        if (hero.buff(MagicImmune.class) != null) return;
 
-							float lootChance = ((Mob) ch).lootChance() * lootMultiplier;
+        if (action.equals(AC_STEAL)) {
 
-							if (Dungeon.hero.lvl > ((Mob) ch).maxLvl + 2) {
-								lootChance = 0;
-							} else if (ch.buff(StolenTracker.class) != null){
-								lootChance = 0;
-							}
+            curUser = hero;
 
-							if (lootChance == 0){
-								GLog.w(Messages.get(MasterThievesArmband.class, "no_steal"));
-							} else if (Random.Float() <= lootChance){
-								Item loot = ((Mob) ch).createLoot();
-								if (Challenges.isItemBlocked(loot)){
-									GLog.i(Messages.get(MasterThievesArmband.class, "failed_steal"));
-									Buff.affect(ch, StolenTracker.class).setItemStolen(false);
-								} else {
-									if (loot.doPickUp(curUser)) {
-										//item collection happens instantly
-										curUser.spend(-TIME_TO_PICK_UP);
-									} else {
-										Dungeon.level.drop(loot, curUser.pos).sprite.drop();
-									}
-									GLog.i(Messages.get(MasterThievesArmband.class, "stole_item", loot.name()));
-									Buff.affect(ch, StolenTracker.class).setItemStolen(true);
-								}
-							} else {
-								GLog.i(Messages.get(MasterThievesArmband.class, "failed_steal"));
-								Buff.affect(ch, StolenTracker.class).setItemStolen(false);
-							}
+            if (!isEquipped(hero)) {
+                GLog.i(Messages.get(Artifact.class, "need_to_equip"));
+                usesTargeting = false;
 
-							Buff.prolong(ch, Blindness.class, debuffDuration);
-							Buff.prolong(ch, Cripple.class, debuffDuration);
+            } else if (charge < 1) {
+                GLog.i(Messages.get(this, "no_charge"));
+                usesTargeting = false;
 
-							charge--;
-							exp += 3;
-							Talent.onArtifactUsed(Dungeon.hero);
-							while (exp >= (10 + Math.round(3.33f * level())) && level() < levelCap) {
-								exp -= 10 + Math.round(3.33f * level());
-								GLog.p(Messages.get(MasterThievesArmband.class, "level_up"));
-								upgrade();
-							}
-							Item.updateQuickslot();
-							curUser.next();
-						}
-					});
+            } else if (cursed) {
+                GLog.w(Messages.get(this, "cursed"));
+                usesTargeting = false;
 
-				}
-			}
+            } else {
+                usesTargeting = true;
+                GameScene.selectCell(targeter);
+            }
 
-		}
+        }
+    }
 
-		@Override
-		public String prompt() {
-			return Messages.get(MasterThievesArmband.class, "prompt");
-		}
-	};
+    @Override
+    protected ArtifactBuff passiveBuff() {
+        return new Thievery();
+    }
 
-	//counter of 0 for attempt but no success, 1 for success
-	public static class StolenTracker extends CounterBuff {
-		public void setItemStolen(boolean stolen){ if (stolen) countUp(1); }
-		public boolean itemWasStolen(){ return count() > 0; }
-	}
+    @Override
+    public void charge(Hero target, float amount) {
+        if (cursed || target.buff(MagicImmune.class) != null) return;
+        partialCharge += 0.1f * amount;
+        partialCharge = Math.min(partialCharge, chargeCap - charge);
+        while (partialCharge >= 1f) {
+            charge++;
+            partialCharge--;
+            updateQuickslot();
+            if (charge == chargeCap) {
+                GLog.p(Messages.get(MasterThievesArmband.class, "full"));
+            }
+        }
+    }
 
-	@Override
-	protected ArtifactBuff passiveBuff() {
-		return new Thievery();
-	}
-	
-	@Override
-	public void charge(Hero target, float amount) {
-		if (cursed || target.buff(MagicImmune.class) != null) return;
-		partialCharge += 0.1f * amount;
-		partialCharge = Math.min(partialCharge, chargeCap - charge);
-		while (partialCharge >= 1f){
-			charge++;
-			partialCharge--;
-			updateQuickslot();
-			if (charge == chargeCap){
-				GLog.p( Messages.get(MasterThievesArmband.class, "full") );
-			}
-		}
-	}
+    @Override
+    public Item upgrade() {
+        chargeCap = 5 + (level() + 1) / 2;
+        return super.upgrade();
+    }
 
-	@Override
-	public Item upgrade() {
-		chargeCap = 5 + (level()+1)/2;
-		return super.upgrade();
-	}
+    @Override
+    public String desc() {
+        String desc = super.desc();
 
-	@Override
-	public String desc() {
-		String desc = super.desc();
+        if (isEquipped(Dungeon.hero)) {
+            if (cursed) {
+                desc += "\n\n" + Messages.get(this, "desc_cursed");
+            } else {
+                desc += "\n\n" + Messages.get(this, "desc_worn");
+            }
+        }
 
-		if ( isEquipped (Dungeon.hero) ){
-			if (cursed){
-				desc += "\n\n" + Messages.get(this, "desc_cursed");
-			} else {
-				desc += "\n\n" + Messages.get(this, "desc_worn");
-			}
-		}
+        return desc;
+    }
 
-		return desc;
-	}
+    //counter of 0 for attempt but no success, 1 for success
+    public static class StolenTracker extends CounterBuff {
+        public void setItemStolen(boolean stolen) {
+            if (stolen) countUp(1);
+        }
 
-	public class Thievery extends ArtifactBuff {
+        public boolean itemWasStolen() {
+            return count() > 0;
+        }
+    }
 
-		@Override
-		public boolean act() {
-			if (cursed && Dungeon.gold > 0 && Random.Int(5) == 0){
-				Dungeon.gold--;
-			}
+    public class Thievery extends ArtifactBuff {
 
-			spend(TICK);
-			return true;
-		}
+        @Override
+        public boolean act() {
+            if (cursed && Dungeon.gold > 0 && Random.Int(5) == 0) {
+                Dungeon.gold--;
+            }
 
-		public void gainCharge(float levelPortion) {
-			if (cursed || target.buff(MagicImmune.class) != null) return;
+            spend(TICK);
+            return true;
+        }
 
-			if (charge < chargeCap){
-				float chargeGain = 3f * levelPortion;
-				chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
+        public void gainCharge(float levelPortion) {
+            if (cursed || target.buff(MagicImmune.class) != null) return;
 
-				partialCharge += chargeGain;
-				while (partialCharge > 1f){
-					partialCharge--;
-					charge++;
-					updateQuickslot();
+            if (charge < chargeCap) {
+                float chargeGain = 3f * levelPortion;
+                chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
 
-					if (charge == chargeCap){
-						GLog.p( Messages.get(MasterThievesArmband.class, "full") );
-						partialCharge = 0;
-					}
-				}
+                partialCharge += chargeGain;
+                while (partialCharge > 1f) {
+                    partialCharge--;
+                    charge++;
+                    updateQuickslot();
 
-			} else {
-				partialCharge = 0f;
-			}
-		}
-		
-		public boolean steal(Item item){
-			int chargesUsed = chargesToUse(item);
-			float stealChance = stealChance(item);
-			if (Random.Float() > stealChance){
-				return false;
-			} else {
-				charge -= chargesUsed;
-				exp += 4 * chargesUsed;
-				GLog.i(Messages.get(MasterThievesArmband.class, "stole_item", item.name()));
+                    if (charge == chargeCap) {
+                        GLog.p(Messages.get(MasterThievesArmband.class, "full"));
+                        partialCharge = 0;
+                    }
+                }
 
-				Talent.onArtifactUsed(Dungeon.hero);
-				while (exp >= (10 + Math.round(3.33f * level())) && level() < levelCap) {
-					exp -= 10 + Math.round(3.33f * level());
-					GLog.p(Messages.get(MasterThievesArmband.class, "level_up"));
-					upgrade();
-				}
-				return true;
-			}
-		}
+            } else {
+                partialCharge = 0f;
+            }
+        }
 
-		public float stealChance(Item item){
-			int chargesUsed = chargesToUse(item);
-			float val = chargesUsed * (10 + level()/2f);
-			return Math.min(1f, val/item.value());
-		}
+        public boolean steal(Item item) {
+            int chargesUsed = chargesToUse(item);
+            float stealChance = stealChance(item);
+            if (Random.Float() > stealChance) {
+                return false;
+            } else {
+                charge -= chargesUsed;
+                exp += 4 * chargesUsed;
+                GLog.i(Messages.get(MasterThievesArmband.class, "stole_item", item.name()));
 
-		public int chargesToUse(Item item){
-			int value = item.value();
-			float valUsing = 0;
-			int chargesUsed = 0;
-			while (valUsing < value && chargesUsed < charge){
-				valUsing += 10 + level()/2f;
-				chargesUsed++;
-			}
-			return chargesUsed;
-		}
-	}
+                Talent.onArtifactUsed(Dungeon.hero);
+                while (exp >= (10 + Math.round(3.33f * level())) && level() < levelCap) {
+                    exp -= 10 + Math.round(3.33f * level());
+                    GLog.p(Messages.get(MasterThievesArmband.class, "level_up"));
+                    upgrade();
+                }
+                return true;
+            }
+        }
+
+        public float stealChance(Item item) {
+            int chargesUsed = chargesToUse(item);
+            float val = chargesUsed * (10 + level() / 2f);
+            return Math.min(1f, val / item.value());
+        }
+
+        public int chargesToUse(Item item) {
+            int value = item.value();
+            float valUsing = 0;
+            int chargesUsed = 0;
+            while (valUsing < value && chargesUsed < charge) {
+                valUsing += 10 + level() / 2f;
+                chargesUsed++;
+            }
+            return chargesUsed;
+        }
+    }
 
 
 }

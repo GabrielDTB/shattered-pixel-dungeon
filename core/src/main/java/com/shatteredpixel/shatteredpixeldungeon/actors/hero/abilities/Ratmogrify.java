@@ -55,267 +55,265 @@ import java.util.HashSet;
 
 public class Ratmogrify extends ArmorAbility {
 
-	{
-		baseChargeUse = 50f;
-	}
+    //this is sort of hacky, but we need it to know when to use alternate name/icon for heroic energy
+    public static boolean useRatroicEnergy = false;
 
-	//this is sort of hacky, but we need it to know when to use alternate name/icon for heroic energy
-	public static boolean useRatroicEnergy = false;
+    {
+        baseChargeUse = 50f;
+    }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-	@Override
-	public int targetedPos(Char user, int dst) {
-		return dst;
-	}
+    @Override
+    public int targetedPos(Char user, int dst) {
+        return dst;
+    }
 
-	@Override
-	protected void activate(ClassArmor armor, Hero hero, Integer target) {
+    @Override
+    protected void activate(ClassArmor armor, Hero hero, Integer target) {
 
-		if (target == null){
-			return;
-		}
+        if (target == null) {
+            return;
+        }
 
-		Char ch = Actor.findChar(target);
+        Char ch = Actor.findChar(target);
 
-		if (ch == null || !Dungeon.level.heroFOV[target]) {
-			GLog.w(Messages.get(this, "no_target"));
-			return;
-		} else if (ch == hero){
-			if (!hero.hasTalent(Talent.RATFORCEMENTS)){
-				GLog.w(Messages.get(this, "self_target"));
-				return;
-			} else {
-				ArrayList<Integer> spawnPoints = new ArrayList<>();
+        if (ch == null || !Dungeon.level.heroFOV[target]) {
+            GLog.w(Messages.get(this, "no_target"));
+            return;
+        } else if (ch == hero) {
+            if (!hero.hasTalent(Talent.RATFORCEMENTS)) {
+                GLog.w(Messages.get(this, "self_target"));
+                return;
+            } else {
+                ArrayList<Integer> spawnPoints = new ArrayList<>();
 
-				for (int i = 0; i < PathFinder.NEIGHBOURS8.length; i++) {
-					int p = hero.pos + PathFinder.NEIGHBOURS8[i];
-					if (Actor.findChar( p ) == null && Dungeon.level.passable[p]) {
-						spawnPoints.add( p );
-					}
-				}
+                for (int i = 0; i < PathFinder.NEIGHBOURS8.length; i++) {
+                    int p = hero.pos + PathFinder.NEIGHBOURS8[i];
+                    if (Actor.findChar(p) == null && Dungeon.level.passable[p]) {
+                        spawnPoints.add(p);
+                    }
+                }
 
-				int ratsToSpawn = hero.pointsInTalent(Talent.RATFORCEMENTS);
+                int ratsToSpawn = hero.pointsInTalent(Talent.RATFORCEMENTS);
 
-				while (ratsToSpawn > 0 && spawnPoints.size() > 0) {
-					int index = Random.index( spawnPoints );
+                while (ratsToSpawn > 0 && spawnPoints.size() > 0) {
+                    int index = Random.index(spawnPoints);
 
-					Rat rat = new Rat();
-					rat.alignment = Char.Alignment.ALLY;
-					rat.state = rat.HUNTING;
-					Buff.affect(rat, AscensionChallenge.AscensionBuffBlocker.class);
-					GameScene.add( rat );
-					ScrollOfTeleportation.appear( rat, spawnPoints.get( index ) );
+                    Rat rat = new Rat();
+                    rat.alignment = Char.Alignment.ALLY;
+                    rat.state = rat.HUNTING;
+                    Buff.affect(rat, AscensionChallenge.AscensionBuffBlocker.class);
+                    GameScene.add(rat);
+                    ScrollOfTeleportation.appear(rat, spawnPoints.get(index));
 
-					spawnPoints.remove( index );
-					ratsToSpawn--;
-				}
+                    spawnPoints.remove(index);
+                    ratsToSpawn--;
+                }
 
-			}
-		} else if (ch.alignment != Char.Alignment.ENEMY || !(ch instanceof Mob) || ch instanceof Rat){
-			GLog.w(Messages.get(this, "cant_transform"));
-			return;
-		} else if (ch instanceof TransmogRat){
-			if (((TransmogRat) ch).allied || !hero.hasTalent(Talent.RATLOMACY)){
-				GLog.w(Messages.get(this, "cant_transform"));
-				return;
-			} else {
-				((TransmogRat) ch).makeAlly();
-				ch.sprite.emitter().start(Speck.factory(Speck.HEART), 0.2f, 5);
-				Sample.INSTANCE.play(Assets.Sounds.TELEPORT);
-				if (hero.pointsInTalent(Talent.RATLOMACY) > 1){
-					Buff.affect(ch, Adrenaline.class, 2*(hero.pointsInTalent(Talent.RATLOMACY)-1));
-				}
-			}
-		} else if (Char.hasProp(ch, Char.Property.MINIBOSS) || Char.hasProp(ch, Char.Property.BOSS)){
-			GLog.w(Messages.get(this, "too_strong"));
-			return;
-		} else {
-			TransmogRat rat = new TransmogRat();
-			rat.setup((Mob)ch);
-			rat.pos = ch.pos;
+            }
+        } else if (ch.alignment != Char.Alignment.ENEMY || !(ch instanceof Mob) || ch instanceof Rat) {
+            GLog.w(Messages.get(this, "cant_transform"));
+            return;
+        } else if (ch instanceof TransmogRat) {
+            if (((TransmogRat) ch).allied || !hero.hasTalent(Talent.RATLOMACY)) {
+                GLog.w(Messages.get(this, "cant_transform"));
+                return;
+            } else {
+                ((TransmogRat) ch).makeAlly();
+                ch.sprite.emitter().start(Speck.factory(Speck.HEART), 0.2f, 5);
+                Sample.INSTANCE.play(Assets.Sounds.TELEPORT);
+                if (hero.pointsInTalent(Talent.RATLOMACY) > 1) {
+                    Buff.affect(ch, Adrenaline.class, 2 * (hero.pointsInTalent(Talent.RATLOMACY) - 1));
+                }
+            }
+        } else if (Char.hasProp(ch, Char.Property.MINIBOSS) || Char.hasProp(ch, Char.Property.BOSS)) {
+            GLog.w(Messages.get(this, "too_strong"));
+            return;
+        } else {
+            TransmogRat rat = new TransmogRat();
+            rat.setup((Mob) ch);
+            rat.pos = ch.pos;
 
-			//preserve champion enemy buffs
-			HashSet<ChampionEnemy> champBuffs = ch.buffs(ChampionEnemy.class);
-			for (ChampionEnemy champ : champBuffs){
-				if (ch.remove(champ)) {
-					ch.sprite.clearAura();
-				}
-			}
+            //preserve champion enemy buffs
+            HashSet<ChampionEnemy> champBuffs = ch.buffs(ChampionEnemy.class);
+            for (ChampionEnemy champ : champBuffs) {
+                if (ch.remove(champ)) {
+                    ch.sprite.clearAura();
+                }
+            }
 
-			Actor.remove( ch );
-			ch.sprite.killAndErase();
-			Dungeon.level.mobs.remove(ch);
+            Actor.remove(ch);
+            ch.sprite.killAndErase();
+            Dungeon.level.mobs.remove(ch);
 
-			for (ChampionEnemy champ : champBuffs){
-				ch.add(champ);
-			}
+            for (ChampionEnemy champ : champBuffs) {
+                ch.add(champ);
+            }
 
-			GameScene.add(rat);
+            GameScene.add(rat);
 
-			TargetHealthIndicator.instance.target(null);
-			CellEmitter.get(rat.pos).burst(Speck.factory(Speck.WOOL), 4);
-			Sample.INSTANCE.play(Assets.Sounds.PUFF);
+            TargetHealthIndicator.instance.target(null);
+            CellEmitter.get(rat.pos).burst(Speck.factory(Speck.WOOL), 4);
+            Sample.INSTANCE.play(Assets.Sounds.PUFF);
 
-			Dungeon.level.occupyCell(rat);
+            Dungeon.level.occupyCell(rat);
 
-			//for rare cases where a buff was keeping a mob alive (e.g. gnoll brutes)
-			if (!rat.isAlive()){
-				rat.die(this);
-			}
-		}
+            //for rare cases where a buff was keeping a mob alive (e.g. gnoll brutes)
+            if (!rat.isAlive()) {
+                rat.die(this);
+            }
+        }
 
-		armor.charge -= chargeUse(hero);
-		armor.updateQuickslot();
-		Invisibility.dispel();
-		hero.spendAndNext(Actor.TICK);
+        armor.charge -= chargeUse(hero);
+        armor.updateQuickslot();
+        Invisibility.dispel();
+        hero.spendAndNext(Actor.TICK);
 
-	}
+    }
 
-	@Override
-	public int icon() {
-		return HeroIcon.RATMOGRIFY;
-	}
+    @Override
+    public int icon() {
+        return HeroIcon.RATMOGRIFY;
+    }
 
-	@Override
-	public Talent[] talents() {
-		return new Talent[]{ Talent.RATSISTANCE, Talent.RATLOMACY, Talent.RATFORCEMENTS, Talent.HEROIC_ENERGY};
-	}
+    @Override
+    public Talent[] talents() {
+        return new Talent[]{Talent.RATSISTANCE, Talent.RATLOMACY, Talent.RATFORCEMENTS, Talent.HEROIC_ENERGY};
+    }
 
-	public static class TransmogRat extends Mob {
+    public static class TransmogRat extends Mob {
 
-		{
-			spriteClass = RatSprite.class;
+        private static final String ORIGINAL = "original";
+        private static final String ALLIED = "allied";
+        private Mob original;
+        private boolean allied;
+        private float timeLeft = 6f;
 
-			//always false, as we derive stats from what we are transmogging from (which was already added)
-			firstAdded = false;
-		}
+        {
+            spriteClass = RatSprite.class;
 
-		private Mob original;
-		private boolean allied;
+            //always false, as we derive stats from what we are transmogging from (which was already added)
+            firstAdded = false;
+        }
 
-		public void setup(Mob original) {
-			this.original = original;
+        {
+            immunities.add(AllyBuff.class);
+        }
 
-			HP = original.HP;
-			HT = original.HT;
+        public void setup(Mob original) {
+            this.original = original;
 
-			defenseSkill = original.defenseSkill;
+            HP = original.HP;
+            HT = original.HT;
 
-			EXP = original.EXP;
-			maxLvl = original.maxLvl;
+            defenseSkill = original.defenseSkill;
 
-			if (original.state == original.SLEEPING) {
-				state = SLEEPING;
-			} else if (original.state == original.HUNTING) {
-				state = HUNTING;
-			} else {
-				state = WANDERING;
-			}
+            EXP = original.EXP;
+            maxLvl = original.maxLvl;
 
-		}
+            if (original.state == original.SLEEPING) {
+                state = SLEEPING;
+            } else if (original.state == original.HUNTING) {
+                state = HUNTING;
+            } else {
+                state = WANDERING;
+            }
 
-		public Mob getOriginal(){
-			if (original != null) {
-				original.HP = HP;
-				original.pos = pos;
-			}
-			return original;
-		}
+        }
 
-		private float timeLeft = 6f;
+        public Mob getOriginal() {
+            if (original != null) {
+                original.HP = HP;
+                original.pos = pos;
+            }
+            return original;
+        }
 
-		@Override
-		protected boolean act() {
-			if (timeLeft <= 0){
-				Mob original = getOriginal();
-				this.original = null;
-				original.clearTime();
-				GameScene.add(original);
+        @Override
+        protected boolean act() {
+            if (timeLeft <= 0) {
+                Mob original = getOriginal();
+                this.original = null;
+                original.clearTime();
+                GameScene.add(original);
 
-				EXP = 0;
-				destroy();
-				sprite.killAndErase();
-				CellEmitter.get(original.pos).burst(Speck.factory(Speck.WOOL), 4);
-				Sample.INSTANCE.play(Assets.Sounds.PUFF);
-				return true;
-			} else {
-				return super.act();
-			}
-		}
+                EXP = 0;
+                destroy();
+                sprite.killAndErase();
+                CellEmitter.get(original.pos).burst(Speck.factory(Speck.WOOL), 4);
+                Sample.INSTANCE.play(Assets.Sounds.PUFF);
+                return true;
+            } else {
+                return super.act();
+            }
+        }
 
-		@Override
-		protected void spend(float time) {
-			if (!allied) timeLeft -= time;
-			super.spend(time);
-		}
+        @Override
+        protected void spend(float time) {
+            if (!allied) timeLeft -= time;
+            super.spend(time);
+        }
 
-		public void makeAlly() {
-			allied = true;
-			alignment = Alignment.ALLY;
-			timeLeft = Float.POSITIVE_INFINITY;
-		}
+        public void makeAlly() {
+            allied = true;
+            alignment = Alignment.ALLY;
+            timeLeft = Float.POSITIVE_INFINITY;
+        }
 
-		public int attackSkill(Char target) {
-			return original.attackSkill(target);
-		}
+        public int attackSkill(Char target) {
+            return original.attackSkill(target);
+        }
 
-		public int drRoll() {
-			return original.drRoll();
-		}
+        public int drRoll() {
+            return original.drRoll();
+        }
 
-		@Override
-		public int damageRoll() {
-			int damage = original.damageRoll();
-			if (!allied && Dungeon.hero.hasTalent(Talent.RATSISTANCE)){
-				damage *= Math.pow(0.9f, Dungeon.hero.pointsInTalent(Talent.RATSISTANCE));
-			}
-			return damage;
-		}
+        @Override
+        public int damageRoll() {
+            int damage = original.damageRoll();
+            if (!allied && Dungeon.hero.hasTalent(Talent.RATSISTANCE)) {
+                damage *= Math.pow(0.9f, Dungeon.hero.pointsInTalent(Talent.RATSISTANCE));
+            }
+            return damage;
+        }
 
-		@Override
-		public float attackDelay() {
-			return original.attackDelay();
-		}
+        @Override
+        public float attackDelay() {
+            return original.attackDelay();
+        }
 
-		@Override
-		public void rollToDropLoot() {
-			original.pos = pos;
-			original.rollToDropLoot();
-		}
+        @Override
+        public void rollToDropLoot() {
+            original.pos = pos;
+            original.rollToDropLoot();
+        }
 
-		@Override
-		public String name() {
-			return Messages.get(this, "name", original.name());
-		}
+        @Override
+        public String name() {
+            return Messages.get(this, "name", original.name());
+        }
 
-		{
-			immunities.add(AllyBuff.class);
-		}
+        @Override
+        public void storeInBundle(Bundle bundle) {
+            super.storeInBundle(bundle);
+            bundle.put(ORIGINAL, original);
+            bundle.put(ALLIED, allied);
+        }
 
-		private static final String ORIGINAL = "original";
-		private static final String ALLIED = "allied";
+        @Override
+        public void restoreFromBundle(Bundle bundle) {
+            super.restoreFromBundle(bundle);
 
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(ORIGINAL, original);
-			bundle.put(ALLIED, allied);
-		}
+            original = (Mob) bundle.get(ORIGINAL);
+            defenseSkill = original.defenseSkill;
+            EXP = original.EXP;
 
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-
-			original = (Mob) bundle.get(ORIGINAL);
-			defenseSkill = original.defenseSkill;
-			EXP = original.EXP;
-
-			allied = bundle.getBoolean(ALLIED);
-			if (allied) alignment = Alignment.ALLY;
-		}
-	}
+            allied = bundle.getBoolean(ALLIED);
+            if (allied) alignment = Alignment.ALLY;
+        }
+    }
 }

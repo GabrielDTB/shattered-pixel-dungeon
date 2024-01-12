@@ -27,18 +27,18 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.noosa.audio.Sample;
 
-public class ToxicTrap extends Trap{
+public class ToxicTrap extends Trap {
 
-	{
-		color = GREEN;
-		shape = GRILL;
-	}
+    {
+        color = GREEN;
+        shape = GRILL;
+    }
 
-	@Override
-	public void activate() {
+    @Override
+    public void activate() {
 
-		GameScene.add( Blob.seed( pos, 300 + 20 * scalingDepth(), ToxicGas.class ) );
-		Sample.INSTANCE.play(Assets.Sounds.GAS);
+        GameScene.add(Blob.seed(pos, 300 + 20 * scalingDepth(), ToxicGas.class));
+        Sample.INSTANCE.play(Assets.Sounds.GAS);
 
-	}
+    }
 }

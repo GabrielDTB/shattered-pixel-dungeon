@@ -34,86 +34,84 @@ import com.watabou.noosa.audio.Sample;
 import java.util.ArrayList;
 
 public abstract class InventoryStone extends Runestone {
-	
-	{
-		defaultAction = AC_USE;
-	}
-	
-	public static final String AC_USE	= "USE";
-	
-	@Override
-	public ArrayList<String> actions(Hero hero) {
-		ArrayList<String> actions = super.actions( hero );
-		actions.add( AC_USE );
-		return actions;
-	}
-	
-	@Override
-	public void execute(Hero hero, String action) {
-		super.execute(hero, action);
-		if (action.equals(AC_USE)){
-			activate(curUser.pos);
-		}
-	}
-	
-	@Override
-	protected void activate(int cell) {
-		GameScene.selectItem( itemSelector );
-	}
-	
-	protected void useAnimation() {
-		curUser.spend( 1f );
-		curUser.busy();
-		curUser.sprite.operate(curUser.pos);
 
-		Sample.INSTANCE.play( Assets.Sounds.READ );
-		Invisibility.dispel();
-	}
+    public static final String AC_USE = "USE";
+    protected Class<? extends Bag> preferredBag = null;
+    protected WndBag.ItemSelector itemSelector = new WndBag.ItemSelector() {
 
-	private String inventoryTitle(){
-		return Messages.get(this, "inv_title");
-	}
+        @Override
+        public String textPrompt() {
+            return inventoryTitle();
+        }
 
-	protected Class<?extends Bag> preferredBag = null;
+        @Override
+        public Class<? extends Bag> preferredBag() {
+            return preferredBag;
+        }
 
-	protected boolean usableOnItem( Item item ){
-		return true;
-	}
-	
-	protected abstract void onItemSelected( Item item );
-	
-	protected WndBag.ItemSelector itemSelector = new WndBag.ItemSelector() {
+        @Override
+        public boolean itemSelectable(Item item) {
+            return usableOnItem(item);
+        }
 
-		@Override
-		public String textPrompt() {
-			return inventoryTitle();
-		}
+        @Override
+        public void onSelect(Item item) {
 
-		@Override
-		public Class<? extends Bag> preferredBag() {
-			return preferredBag;
-		}
+            //FIXME this safety check shouldn't be necessary
+            //it would be better to eliminate the curItem static variable.
+            if (!(curItem instanceof InventoryStone)) {
+                return;
+            }
 
-		@Override
-		public boolean itemSelectable(Item item) {
-			return usableOnItem(item);
-		}
+            if (item != null) {
 
-		@Override
-		public void onSelect( Item item ) {
-			
-			//FIXME this safety check shouldn't be necessary
-			//it would be better to eliminate the curItem static variable.
-			if (!(curItem instanceof InventoryStone)){
-				return;
-			}
-			
-			if (item != null) {
+                ((InventoryStone) curItem).onItemSelected(item);
 
-				((InventoryStone)curItem).onItemSelected( item );
-				
-			}
-		}
-	};
-	
+            }
+        }
+    };
+
+    {
+        defaultAction = AC_USE;
+    }
+
+    @Override
+    public ArrayList<String> actions(Hero hero) {
+        ArrayList<String> actions = super.actions(hero);
+        actions.add(AC_USE);
+        return actions;
+    }
+
+    @Override
+    public void execute(Hero hero, String action) {
+        super.execute(hero, action);
+        if (action.equals(AC_USE)) {
+            activate(curUser.pos);
+        }
+    }
+
+    @Override
+    protected void activate(int cell) {
+        GameScene.selectItem(itemSelector);
+    }
+
+    protected void useAnimation() {
+        curUser.spend(1f);
+        curUser.busy();
+        curUser.sprite.operate(curUser.pos);
+
+        Sample.INSTANCE.play(Assets.Sounds.READ);
+        Invisibility.dispel();
+    }
+
+    private String inventoryTitle() {
+        return Messages.get(this, "inv_title");
+    }
+
+    protected boolean usableOnItem(Item item) {
+        return true;
+    }
+
+    protected abstract void onItemSelected(Item item);
+
 }

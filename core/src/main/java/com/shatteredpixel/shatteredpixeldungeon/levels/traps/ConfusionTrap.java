@@ -29,16 +29,16 @@ import com.watabou.noosa.audio.Sample;
 
 public class ConfusionTrap extends Trap {
 
-	{
-		color = TEAL;
-		shape = GRILL;
-	}
+    {
+        color = TEAL;
+        shape = GRILL;
+    }
 
-	@Override
-	public void activate() {
+    @Override
+    public void activate() {
 
-		GameScene.add(Blob.seed(pos, 300 + 20 * scalingDepth(), ConfusionGas.class));
-		Sample.INSTANCE.play(Assets.Sounds.GAS);
+        GameScene.add(Blob.seed(pos, 300 + 20 * scalingDepth(), ConfusionGas.class));
+        Sample.INSTANCE.play(Assets.Sounds.GAS);
 
-	}
+    }
 }

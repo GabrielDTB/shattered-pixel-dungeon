@@ -43,217 +43,215 @@ import java.util.ArrayList;
 
 public class AlchemistsToolkit extends Artifact {
 
-	{
-		image = ItemSpriteSheet.ARTIFACT_TOOLKIT;
-		defaultAction = AC_BREW;
+    public static final String AC_BREW = "BREW";
+    public static final String AC_ENERGIZE = "ENERGIZE";
+    private static final String WARM_UP = "warm_up";
+    private float warmUpDelay;
 
-		levelCap = 10;
-		
-		charge = 0;
-		partialCharge = 0;
-	}
+    {
+        image = ItemSpriteSheet.ARTIFACT_TOOLKIT;
+        defaultAction = AC_BREW;
 
-	public static final String AC_BREW = "BREW";
-	public static final String AC_ENERGIZE = "ENERGIZE";
+        levelCap = 10;
 
-	private float warmUpDelay;
+        charge = 0;
+        partialCharge = 0;
+    }
 
-	@Override
-	public ArrayList<String> actions( Hero hero ) {
-		ArrayList<String> actions = super.actions( hero );
-		if (isEquipped( hero ) && !cursed && hero.buff(MagicImmune.class) == null) {
-			actions.add(AC_BREW);
-			if (level() < levelCap) {
-				actions.add(AC_ENERGIZE);
-			}
-		}
-		return actions;
-	}
+    @Override
+    public ArrayList<String> actions(Hero hero) {
+        ArrayList<String> actions = super.actions(hero);
+        if (isEquipped(hero) && !cursed && hero.buff(MagicImmune.class) == null) {
+            actions.add(AC_BREW);
+            if (level() < levelCap) {
+                actions.add(AC_ENERGIZE);
+            }
+        }
+        return actions;
+    }
 
-	@Override
-	public void execute(Hero hero, String action ) {
+    @Override
+    public void execute(Hero hero, String action) {
 
-		super.execute(hero, action);
+        super.execute(hero, action);
 
-		if (hero.buff(MagicImmune.class) != null) return;
+        if (hero.buff(MagicImmune.class) != null) return;
 
-		if (action.equals(AC_BREW)){
-			if (!isEquipped(hero))              GLog.i( Messages.get(this, "need_to_equip") );
-			else if (cursed)                    GLog.w( Messages.get(this, "cursed") );
-			else if (warmUpDelay > 0)           GLog.w( Messages.get(this, "not_ready") );
-			else {
-				AlchemyScene.assignToolkit(this);
-				Game.switchScene(AlchemyScene.class);
-			}
-			
-		} else if (action.equals(AC_ENERGIZE)){
-			if (!isEquipped(hero))              GLog.i( Messages.get(this, "need_to_equip") );
-			else if (cursed)                    GLog.w( Messages.get(this, "cursed") );
-			else if (Dungeon.energy < 6)        GLog.w( Messages.get(this, "need_energy") );
-			else {
+        if (action.equals(AC_BREW)) {
+            if (!isEquipped(hero)) GLog.i(Messages.get(this, "need_to_equip"));
+            else if (cursed) GLog.w(Messages.get(this, "cursed"));
+            else if (warmUpDelay > 0) GLog.w(Messages.get(this, "not_ready"));
+            else {
+                AlchemyScene.assignToolkit(this);
+                Game.switchScene(AlchemyScene.class);
+            }
 
-				final int maxLevels = Math.min(levelCap - level(), Dungeon.energy/6);
+        } else if (action.equals(AC_ENERGIZE)) {
+            if (!isEquipped(hero)) GLog.i(Messages.get(this, "need_to_equip"));
+            else if (cursed) GLog.w(Messages.get(this, "cursed"));
+            else if (Dungeon.energy < 6) GLog.w(Messages.get(this, "need_energy"));
+            else {
 
-				String[] options;
-				if (maxLevels > 1){
-					options = new String[]{ Messages.get(this, "energize_1"), Messages.get(this, "energize_all", 6*maxLevels, maxLevels)};
-				} else {
-					options = new String[]{ Messages.get(this, "energize_1")};
-				}
+                final int maxLevels = Math.min(levelCap - level(), Dungeon.energy / 6);
 
-				GameScene.show(new WndOptions(new ItemSprite(image),
-						Messages.titleCase(name()),
-						Messages.get(this, "energize_desc"),
-						options){
-					@Override
-					protected void onSelect(int index) {
-						super.onSelect(index);
+                String[] options;
+                if (maxLevels > 1) {
+                    options = new String[]{Messages.get(this, "energize_1"), Messages.get(this, "energize_all", 6 * maxLevels, maxLevels)};
+                } else {
+                    options = new String[]{Messages.get(this, "energize_1")};
+                }
 
-						if (index == 0){
-							Dungeon.energy -= 6;
-							Sample.INSTANCE.play(Assets.Sounds.DRINK);
-							Sample.INSTANCE.playDelayed(Assets.Sounds.PUFF, 0.5f);
-							Dungeon.hero.sprite.operate(Dungeon.hero.pos);
-							upgrade();
-						} else if (index == 1){
-							Dungeon.energy -= 6*maxLevels;
-							Sample.INSTANCE.play(Assets.Sounds.DRINK);
-							Sample.INSTANCE.playDelayed(Assets.Sounds.PUFF, 0.5f);
-							Dungeon.hero.sprite.operate(Dungeon.hero.pos);
-							upgrade(maxLevels);
-						}
+                GameScene.show(new WndOptions(new ItemSprite(image),
+                        Messages.titleCase(name()),
+                        Messages.get(this, "energize_desc"),
+                        options) {
+                    @Override
+                    protected void onSelect(int index) {
+                        super.onSelect(index);
 
-					}
+                        if (index == 0) {
+                            Dungeon.energy -= 6;
+                            Sample.INSTANCE.play(Assets.Sounds.DRINK);
+                            Sample.INSTANCE.playDelayed(Assets.Sounds.PUFF, 0.5f);
+                            Dungeon.hero.sprite.operate(Dungeon.hero.pos);
+                            upgrade();
+                        } else if (index == 1) {
+                            Dungeon.energy -= 6 * maxLevels;
+                            Sample.INSTANCE.play(Assets.Sounds.DRINK);
+                            Sample.INSTANCE.playDelayed(Assets.Sounds.PUFF, 0.5f);
+                            Dungeon.hero.sprite.operate(Dungeon.hero.pos);
+                            upgrade(maxLevels);
+                        }
 
-					@Override
-					protected boolean hasIcon(int index) {
-						return true;
-					}
+                    }
 
-					@Override
-					protected Image getIcon(int index) {
-						return new ItemSprite(ItemSpriteSheet.ENERGY);
-					}
-				});
-			}
-		}
+                    @Override
+                    protected boolean hasIcon(int index) {
+                        return true;
+                    }
 
-		updateQuickslot();
-	}
+                    @Override
+                    protected Image getIcon(int index) {
+                        return new ItemSprite(ItemSpriteSheet.ENERGY);
+                    }
+                });
+            }
+        }
 
-	@Override
-	public String status() {
-		if (isEquipped(Dungeon.hero) && warmUpDelay > 0 && !cursed){
-			return Messages.format( "%d%%", Math.max(0, 100 - (int)warmUpDelay) );
-		} else {
-			return super.status();
-		}
-	}
+        updateQuickslot();
+    }
 
-	@Override
-	protected ArtifactBuff passiveBuff() {
-		return new kitEnergy();
-	}
-	
-	@Override
-	public void charge(Hero target, float amount) {
-		if (target.buff(MagicImmune.class) != null) return;
-		partialCharge += 0.25f*amount;
-		if (partialCharge >= 1){
-			partialCharge--;
-			charge++;
-			updateQuickslot();
-		}
-	}
+    @Override
+    public String status() {
+        if (isEquipped(Dungeon.hero) && warmUpDelay > 0 && !cursed) {
+            return Messages.format("%d%%", Math.max(0, 100 - (int) warmUpDelay));
+        } else {
+            return super.status();
+        }
+    }
 
-	public int availableEnergy(){
-		return charge;
-	}
+    @Override
+    protected ArtifactBuff passiveBuff() {
+        return new kitEnergy();
+    }
 
-	public int consumeEnergy(int amount){
-		int result = amount - charge;
-		charge = Math.max(0, charge - amount);
-		Talent.onArtifactUsed(Dungeon.hero);
-		return Math.max(0, result);
-	}
+    @Override
+    public void charge(Hero target, float amount) {
+        if (target.buff(MagicImmune.class) != null) return;
+        partialCharge += 0.25f * amount;
+        if (partialCharge >= 1) {
+            partialCharge--;
+            charge++;
+            updateQuickslot();
+        }
+    }
 
-	@Override
-	public String desc() {
-		String result = Messages.get(this, "desc");
+    public int availableEnergy() {
+        return charge;
+    }
 
-		if (isEquipped(Dungeon.hero)) {
-			if (cursed)                 result += "\n\n" + Messages.get(this, "desc_cursed");
-			else if (warmUpDelay > 0)   result += "\n\n" + Messages.get(this, "desc_warming");
-			else                        result += "\n\n" + Messages.get(this, "desc_hint");
-		}
-		
-		return result;
-	}
-	
-	@Override
-	public boolean doEquip(Hero hero) {
-		if (super.doEquip(hero)){
-			warmUpDelay = 101f;
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	private static final String WARM_UP = "warm_up";
-	
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put(WARM_UP, warmUpDelay);
-	}
-	
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		warmUpDelay = bundle.getFloat(WARM_UP);
-	}
-	
-	public class kitEnergy extends ArtifactBuff {
+    public int consumeEnergy(int amount) {
+        int result = amount - charge;
+        charge = Math.max(0, charge - amount);
+        Talent.onArtifactUsed(Dungeon.hero);
+        return Math.max(0, result);
+    }
 
-		@Override
-		public boolean act() {
+    @Override
+    public String desc() {
+        String result = Messages.get(this, "desc");
 
-			if (warmUpDelay > 0){
-				if (level() == 10){
-					warmUpDelay = 0;
-				} else if (warmUpDelay == 101){
-					warmUpDelay = 100f;
-				} else if (!cursed && target.buff(MagicImmune.class) == null) {
-					float turnsToWarmUp = (int) Math.pow(10 - level(), 2);
-					warmUpDelay -= 100 / turnsToWarmUp;
-				}
-				updateQuickslot();
-			}
+        if (isEquipped(Dungeon.hero)) {
+            if (cursed) result += "\n\n" + Messages.get(this, "desc_cursed");
+            else if (warmUpDelay > 0) result += "\n\n" + Messages.get(this, "desc_warming");
+            else result += "\n\n" + Messages.get(this, "desc_hint");
+        }
 
-			spend(TICK);
-			return true;
-		}
+        return result;
+    }
 
-		public void gainCharge(float levelPortion) {
-			if (cursed || target.buff(MagicImmune.class) != null) return;
+    @Override
+    public boolean doEquip(Hero hero) {
+        if (super.doEquip(hero)) {
+            warmUpDelay = 101f;
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-			//generates 2 energy every hero level, +1 energy per toolkit level
-			//to a max of 12 energy per hero level
-			//This means that energy absorbed into the kit is recovered in 5 hero levels
-			float chargeGain = (2 + level()) * levelPortion;
-			chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
-			partialCharge += chargeGain;
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        bundle.put(WARM_UP, warmUpDelay);
+    }
 
-			//charge is in increments of 1 energy.
-			while (partialCharge >= 1) {
-				charge++;
-				partialCharge -= 1;
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        warmUpDelay = bundle.getFloat(WARM_UP);
+    }
 
-				updateQuickslot();
-			}
-		}
+    public class kitEnergy extends ArtifactBuff {
 
-	}
+        @Override
+        public boolean act() {
+
+            if (warmUpDelay > 0) {
+                if (level() == 10) {
+                    warmUpDelay = 0;
+                } else if (warmUpDelay == 101) {
+                    warmUpDelay = 100f;
+                } else if (!cursed && target.buff(MagicImmune.class) == null) {
+                    float turnsToWarmUp = (int) Math.pow(10 - level(), 2);
+                    warmUpDelay -= 100 / turnsToWarmUp;
+                }
+                updateQuickslot();
+            }
+
+            spend(TICK);
+            return true;
+        }
+
+        public void gainCharge(float levelPortion) {
+            if (cursed || target.buff(MagicImmune.class) != null) return;
+
+            //generates 2 energy every hero level, +1 energy per toolkit level
+            //to a max of 12 energy per hero level
+            //This means that energy absorbed into the kit is recovered in 5 hero levels
+            float chargeGain = (2 + level()) * levelPortion;
+            chargeGain *= RingOfEnergy.artifactChargeMultiplier(target);
+            partialCharge += chargeGain;
+
+            //charge is in increments of 1 energy.
+            while (partialCharge >= 1) {
+                charge++;
+                partialCharge -= 1;
+
+                updateQuickslot();
+            }
+        }
+
+    }
 
 }

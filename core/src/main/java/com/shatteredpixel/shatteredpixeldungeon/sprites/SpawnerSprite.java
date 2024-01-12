@@ -29,58 +29,58 @@ import com.watabou.utils.PointF;
 
 public class SpawnerSprite extends MobSprite {
 
-	public SpawnerSprite() {
-		super();
+    private float baseY = Float.NaN;
 
-		texture( Assets.Sprites.SPAWNER );
+    public SpawnerSprite() {
+        super();
 
-		perspectiveRaise = 8 / 16f;
-		shadowOffset = 1.25f;
-		shadowHeight = 0.4f;
-		shadowWidth = 1f;
+        texture(Assets.Sprites.SPAWNER);
 
-		TextureFilm frames = new TextureFilm( texture, 16, 16 );
+        perspectiveRaise = 8 / 16f;
+        shadowOffset = 1.25f;
+        shadowHeight = 0.4f;
+        shadowWidth = 1f;
 
-		idle = new Animation( 8, true );
-		idle.frames( frames, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 );
+        TextureFilm frames = new TextureFilm(texture, 16, 16);
 
-		run = idle.clone();
+        idle = new Animation(8, true);
+        idle.frames(frames, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 
-		attack = idle.clone();
+        run = idle.clone();
 
-		die = idle.clone();
+        attack = idle.clone();
 
-		play( idle );
-	}
+        die = idle.clone();
 
-	private float baseY = Float.NaN;
+        play(idle);
+    }
 
-	@Override
-	public void place(int cell) {
-		super.place(cell);
-		baseY = y;
-	}
+    @Override
+    public void place(int cell) {
+        super.place(cell);
+        baseY = y;
+    }
 
-	@Override
-	public void update() {
-		super.update();
-		if (!paused){
-			if (Float.isNaN(baseY)) baseY = y;
-			y = baseY + (float)(Math.sin(Game.timeTotal)/3f);
-			shadowOffset = 1.25f - 0.6f*(float)(Math.sin(Game.timeTotal)/3f);
-		}
-	}
+    @Override
+    public void update() {
+        super.update();
+        if (!paused) {
+            if (Float.isNaN(baseY)) baseY = y;
+            y = baseY + (float) (Math.sin(Game.timeTotal) / 3f);
+            shadowOffset = 1.25f - 0.6f * (float) (Math.sin(Game.timeTotal) / 3f);
+        }
+    }
 
-	@Override
-	public void die() {
-		Splash.around( this, blood(), 100 );
-		killAndErase();
-	}
+    @Override
+    public void die() {
+        Splash.around(this, blood(), 100);
+        killAndErase();
+    }
 
-	@Override
-	public void bloodBurstA(PointF from, int damage) {
-		if (alive) {
-			super.bloodBurstA(from, damage);
-		}
-	}
+    @Override
+    public void bloodBurstA(PointF from, int damage) {
+        if (alive) {
+            super.bloodBurstA(from, damage);
+        }
+    }
 }

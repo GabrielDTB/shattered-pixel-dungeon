@@ -33,32 +33,32 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
 
 public class PotionOfSnapFreeze extends ExoticPotion {
-	
-	{
-		icon = ItemSpriteSheet.Icons.POTION_SNAPFREEZ;
-	}
-	
-	@Override
-	public void shatter(int cell) {
-		
-		if (Dungeon.level.heroFOV[cell]) {
-			identify();
-			
-			splash( cell );
-			Sample.INSTANCE.play( Assets.Sounds.SHATTER );
-		}
-		
-		for (int offset : PathFinder.NEIGHBOURS9){
-			if (!Dungeon.level.solid[cell+offset]) {
-				
-				Freezing.affect( cell + offset );
-				
-				Char ch = Actor.findChar( cell + offset);
-				if (ch != null){
-					Buff.affect(ch, Roots.class, Roots.DURATION*2f);
-				}
-				
-			}
-		}
-	}
+
+    {
+        icon = ItemSpriteSheet.Icons.POTION_SNAPFREEZ;
+    }
+
+    @Override
+    public void shatter(int cell) {
+
+        if (Dungeon.level.heroFOV[cell]) {
+            identify();
+
+            splash(cell);
+            Sample.INSTANCE.play(Assets.Sounds.SHATTER);
+        }
+
+        for (int offset : PathFinder.NEIGHBOURS9) {
+            if (!Dungeon.level.solid[cell + offset]) {
+
+                Freezing.affect(cell + offset);
+
+                Char ch = Actor.findChar(cell + offset);
+                if (ch != null) {
+                    Buff.affect(ch, Roots.class, Roots.DURATION * 2f);
+                }
+
+            }
+        }
+    }
 }

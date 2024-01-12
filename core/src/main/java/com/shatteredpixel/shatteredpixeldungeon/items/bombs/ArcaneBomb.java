@@ -38,62 +38,62 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 
 public class ArcaneBomb extends Bomb.MagicalBomb {
-	
-	{
-		image = ItemSpriteSheet.ARCANE_BOMB;
-	}
-	
-	@Override
-	protected void onThrow(int cell) {
-		super.onThrow(cell);
-		if (fuse != null){
-			PathFinder.buildDistanceMap( cell, BArray.not( Dungeon.level.solid, null ), 2 );
-			for (int i = 0; i < PathFinder.distance.length; i++) {
-				if (PathFinder.distance[i] < Integer.MAX_VALUE)
-					GameScene.add(Blob.seed(i, 3, GooWarn.class));
-			}
-		}
-	}
-	
-	@Override
-	public boolean explodesDestructively() {
-		return false;
-	}
-	
-	@Override
-	public void explode(int cell) {
-		super.explode(cell);
-		
-		ArrayList<Char> affected = new ArrayList<>();
-		
-		PathFinder.buildDistanceMap( cell, BArray.not( Dungeon.level.solid, null ), 2 );
-		for (int i = 0; i < PathFinder.distance.length; i++) {
-			if (PathFinder.distance[i] < Integer.MAX_VALUE) {
-				if (Dungeon.level.heroFOV[i]) {
-					CellEmitter.get(i).burst(ElmoParticle.FACTORY, 10);
-				}
-				Char ch = Actor.findChar(i);
-				if (ch != null){
-					affected.add(ch);
-				}
-			}
-		}
-		
-		for (Char ch : affected){
-			// 100%/83%/67% bomb damage based on distance, but pierces armor.
-			int damage = Math.round(Random.NormalIntRange( Dungeon.scalingDepth()+5, 10 + Dungeon.scalingDepth() * 2 ));
-			float multiplier = 1f - (.16667f*Dungeon.level.distance(cell, ch.pos));
-			ch.damage(Math.round(damage*multiplier), this);
-			if (ch == Dungeon.hero && !ch.isAlive()){
-				Badges.validateDeathFromFriendlyMagic();
-				Dungeon.fail(this);
-			}
-		}
-	}
-	
-	@Override
-	public int value() {
-		//prices of ingredients
-		return quantity * (20 + 30);
-	}
+
+    {
+        image = ItemSpriteSheet.ARCANE_BOMB;
+    }
+
+    @Override
+    protected void onThrow(int cell) {
+        super.onThrow(cell);
+        if (fuse != null) {
+            PathFinder.buildDistanceMap(cell, BArray.not(Dungeon.level.solid, null), 2);
+            for (int i = 0; i < PathFinder.distance.length; i++) {
+                if (PathFinder.distance[i] < Integer.MAX_VALUE)
+                    GameScene.add(Blob.seed(i, 3, GooWarn.class));
+            }
+        }
+    }
+
+    @Override
+    public boolean explodesDestructively() {
+        return false;
+    }
+
+    @Override
+    public void explode(int cell) {
+        super.explode(cell);
+
+        ArrayList<Char> affected = new ArrayList<>();
+
+        PathFinder.buildDistanceMap(cell, BArray.not(Dungeon.level.solid, null), 2);
+        for (int i = 0; i < PathFinder.distance.length; i++) {
+            if (PathFinder.distance[i] < Integer.MAX_VALUE) {
+                if (Dungeon.level.heroFOV[i]) {
+                    CellEmitter.get(i).burst(ElmoParticle.FACTORY, 10);
+                }
+                Char ch = Actor.findChar(i);
+                if (ch != null) {
+                    affected.add(ch);
+                }
+            }
+        }
+
+        for (Char ch : affected) {
+            // 100%/83%/67% bomb damage based on distance, but pierces armor.
+            int damage = Math.round(Random.NormalIntRange(Dungeon.scalingDepth() + 5, 10 + Dungeon.scalingDepth() * 2));
+            float multiplier = 1f - (.16667f * Dungeon.level.distance(cell, ch.pos));
+            ch.damage(Math.round(damage * multiplier), this);
+            if (ch == Dungeon.hero && !ch.isAlive()) {
+                Badges.validateDeathFromFriendlyMagic();
+                Dungeon.fail(this);
+            }
+        }
+    }
+
+    @Override
+    public int value() {
+        //prices of ingredients
+        return quantity * (20 + 30);
+    }
 }

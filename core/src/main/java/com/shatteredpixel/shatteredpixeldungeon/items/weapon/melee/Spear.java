@@ -38,75 +38,75 @@ import com.watabou.utils.Callback;
 
 public class Spear extends MeleeWeapon {
 
-	{
-		image = ItemSpriteSheet.SPEAR;
-		hitSound = Assets.Sounds.HIT_STAB;
-		hitSoundPitch = 0.9f;
+    {
+        image = ItemSpriteSheet.SPEAR;
+        hitSound = Assets.Sounds.HIT_STAB;
+        hitSoundPitch = 0.9f;
 
-		tier = 2;
-		DLY = 1.5f; //0.67x speed
-		RCH = 2;    //extra reach
-	}
+        tier = 2;
+        DLY = 1.5f; //0.67x speed
+        RCH = 2;    //extra reach
+    }
 
-	@Override
-	public int max(int lvl) {
-		return  Math.round(6.67f*(tier+1)) +    //20 base, up from 15
-				lvl*Math.round(1.33f*(tier+1)); //+4 per level, up from +3
-	}
+    public static void spikeAbility(Hero hero, Integer target, float dmgMulti, MeleeWeapon wep) {
+        if (target == null) {
+            return;
+        }
 
-	@Override
-	public String targetingPrompt() {
-		return Messages.get(this, "prompt");
-	}
+        Char enemy = Actor.findChar(target);
+        if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
+            GLog.w(Messages.get(wep, "ability_no_target"));
+            return;
+        }
 
-	@Override
-	protected void duelistAbility(Hero hero, Integer target) {
-		Spear.spikeAbility(hero, target, 1.45f, this);
-	}
+        hero.belongings.abilityWeapon = wep;
+        if (!hero.canAttack(enemy) || Dungeon.level.adjacent(hero.pos, enemy.pos)) {
+            GLog.w(Messages.get(wep, "ability_bad_position"));
+            hero.belongings.abilityWeapon = null;
+            return;
+        }
+        hero.belongings.abilityWeapon = null;
 
-	public static void spikeAbility(Hero hero, Integer target, float dmgMulti, MeleeWeapon wep){
-		if (target == null) {
-			return;
-		}
+        hero.sprite.attack(enemy.pos, new Callback() {
+            @Override
+            public void call() {
+                wep.beforeAbilityUsed(hero, enemy);
+                AttackIndicator.target(enemy);
+                int oldPos = enemy.pos;
+                if (hero.attack(enemy, dmgMulti, 0, Char.INFINITE_ACCURACY)) {
+                    if (enemy.isAlive() && enemy.pos == oldPos) {
+                        //trace a ballistica to our target (which will also extend past them
+                        Ballistica trajectory = new Ballistica(hero.pos, enemy.pos, Ballistica.STOP_TARGET);
+                        //trim it to just be the part that goes past them
+                        trajectory = new Ballistica(trajectory.collisionPos, trajectory.path.get(trajectory.path.size() - 1), Ballistica.PROJECTILE);
+                        //knock them back along that ballistica
+                        WandOfBlastWave.throwChar(enemy, trajectory, 1, true, false, hero);
+                    } else {
+                        wep.onAbilityKill(hero, enemy);
+                    }
+                    Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
+                }
+                Invisibility.dispel();
+                hero.spendAndNext(hero.attackDelay());
+                wep.afterAbilityUsed(hero);
+            }
+        });
+    }
 
-		Char enemy = Actor.findChar(target);
-		if (enemy == null || enemy == hero || hero.isCharmedBy(enemy) || !Dungeon.level.heroFOV[target]) {
-			GLog.w(Messages.get(wep, "ability_no_target"));
-			return;
-		}
+    @Override
+    public int max(int lvl) {
+        return Math.round(6.67f * (tier + 1)) +    //20 base, up from 15
+                lvl * Math.round(1.33f * (tier + 1)); //+4 per level, up from +3
+    }
 
-		hero.belongings.abilityWeapon = wep;
-		if (!hero.canAttack(enemy) || Dungeon.level.adjacent(hero.pos, enemy.pos)){
-			GLog.w(Messages.get(wep, "ability_bad_position"));
-			hero.belongings.abilityWeapon = null;
-			return;
-		}
-		hero.belongings.abilityWeapon = null;
+    @Override
+    public String targetingPrompt() {
+        return Messages.get(this, "prompt");
+    }
 
-		hero.sprite.attack(enemy.pos, new Callback() {
-			@Override
-			public void call() {
-				wep.beforeAbilityUsed(hero, enemy);
-				AttackIndicator.target(enemy);
-				int oldPos = enemy.pos;
-				if (hero.attack(enemy, dmgMulti, 0, Char.INFINITE_ACCURACY)) {
-					if (enemy.isAlive() && enemy.pos == oldPos){
-						//trace a ballistica to our target (which will also extend past them
-						Ballistica trajectory = new Ballistica(hero.pos, enemy.pos, Ballistica.STOP_TARGET);
-						//trim it to just be the part that goes past them
-						trajectory = new Ballistica(trajectory.collisionPos, trajectory.path.get(trajectory.path.size() - 1), Ballistica.PROJECTILE);
-						//knock them back along that ballistica
-						WandOfBlastWave.throwChar(enemy, trajectory, 1, true, false, hero);
-					} else {
-						wep.onAbilityKill(hero, enemy);
-					}
-					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-				}
-				Invisibility.dispel();
-				hero.spendAndNext(hero.attackDelay());
-				wep.afterAbilityUsed(hero);
-			}
-		});
-	}
+    @Override
+    protected void duelistAbility(Hero hero, Integer target) {
+        Spear.spikeAbility(hero, target, 1.45f, this);
+    }
 
 }

@@ -40,116 +40,115 @@ import com.watabou.utils.PathFinder;
 
 public class PitfallTrap extends Trap {
 
-	{
-		color = RED;
-		shape = DIAMOND;
-	}
+    {
+        color = RED;
+        shape = DIAMOND;
+    }
 
-	@Override
-	public void activate() {
-		
-		if( Dungeon.bossLevel() || Dungeon.depth > 25 || Dungeon.branch != 0){
-			GLog.w(Messages.get(this, "no_pit"));
-			return;
-		}
+    @Override
+    public void activate() {
 
-		DelayedPit p = Buff.append(Dungeon.hero, DelayedPit.class, 1);
-		p.depth = Dungeon.depth;
-		p.branch = Dungeon.branch;
-		p.pos = pos;
+        if (Dungeon.bossLevel() || Dungeon.depth > 25 || Dungeon.branch != 0) {
+            GLog.w(Messages.get(this, "no_pit"));
+            return;
+        }
 
-		for (int i : PathFinder.NEIGHBOURS9){
-			if (!Dungeon.level.solid[pos+i] || Dungeon.level.passable[pos+i]){
-				CellEmitter.floor(pos+i).burst(PitfallParticle.FACTORY4, 8);
-			}
-		}
+        DelayedPit p = Buff.append(Dungeon.hero, DelayedPit.class, 1);
+        p.depth = Dungeon.depth;
+        p.branch = Dungeon.branch;
+        p.pos = pos;
 
-		if (pos == Dungeon.hero.pos){
-			GLog.n(Messages.get(this, "triggered_hero"));
-		} else if (Dungeon.level.heroFOV[pos]){
-			GLog.n(Messages.get(this, "triggered"));
-		}
+        for (int i : PathFinder.NEIGHBOURS9) {
+            if (!Dungeon.level.solid[pos + i] || Dungeon.level.passable[pos + i]) {
+                CellEmitter.floor(pos + i).burst(PitfallParticle.FACTORY4, 8);
+            }
+        }
 
-	}
+        if (pos == Dungeon.hero.pos) {
+            GLog.n(Messages.get(this, "triggered_hero"));
+        } else if (Dungeon.level.heroFOV[pos]) {
+            GLog.n(Messages.get(this, "triggered"));
+        }
 
-	public static class DelayedPit extends FlavourBuff {
+    }
 
-		{
-			revivePersists = true;
-		}
+    public static class DelayedPit extends FlavourBuff {
 
-		int pos;
-		int depth;
-		int branch;
+        private static final String POS = "pos";
+        private static final String DEPTH = "depth";
+        private static final String BRANCH = "branch";
+        int pos;
+        int depth;
+        int branch;
 
-		@Override
-		public boolean act() {
+        {
+            revivePersists = true;
+        }
 
-			boolean herofell = false;
-			if (depth == Dungeon.depth && branch == Dungeon.branch) {
-				for (int i : PathFinder.NEIGHBOURS9) {
+        @Override
+        public boolean act() {
 
-					int cell = pos + i;
+            boolean herofell = false;
+            if (depth == Dungeon.depth && branch == Dungeon.branch) {
+                for (int i : PathFinder.NEIGHBOURS9) {
 
-					if (Dungeon.level.solid[pos+i] && !Dungeon.level.passable[pos+i]){
-						continue;
-					}
+                    int cell = pos + i;
 
-					CellEmitter.floor(pos+i).burst(PitfallParticle.FACTORY8, 12);
+                    if (Dungeon.level.solid[pos + i] && !Dungeon.level.passable[pos + i]) {
+                        continue;
+                    }
 
-					Heap heap = Dungeon.level.heaps.get(cell);
+                    CellEmitter.floor(pos + i).burst(PitfallParticle.FACTORY8, 12);
 
-					if (heap != null && heap.type != Heap.Type.FOR_SALE
-							&& heap.type != Heap.Type.LOCKED_CHEST
-							&& heap.type != Heap.Type.CRYSTAL_CHEST) {
-						for (Item item : heap.items) {
-							Dungeon.dropToChasm(item);
-						}
-						heap.sprite.kill();
-						GameScene.discard(heap);
-						heap.sprite.drop();
-						Dungeon.level.heaps.remove(cell);
-					}
+                    Heap heap = Dungeon.level.heaps.get(cell);
 
-					Char ch = Actor.findChar(cell);
+                    if (heap != null && heap.type != Heap.Type.FOR_SALE
+                            && heap.type != Heap.Type.LOCKED_CHEST
+                            && heap.type != Heap.Type.CRYSTAL_CHEST) {
+                        for (Item item : heap.items) {
+                            Dungeon.dropToChasm(item);
+                        }
+                        heap.sprite.kill();
+                        GameScene.discard(heap);
+                        heap.sprite.drop();
+                        Dungeon.level.heaps.remove(cell);
+                    }
 
-					//don't trigger on flying chars, or immovable neutral chars
-					if (ch != null && !ch.flying
-						&& !(ch.alignment == Char.Alignment.NEUTRAL && Char.hasProp(ch, Char.Property.IMMOVABLE))) {
-						if (ch == Dungeon.hero) {
-							Chasm.heroFall(cell);
-							herofell = true;
-						} else {
-							Chasm.mobFall((Mob) ch);
-						}
-					}
+                    Char ch = Actor.findChar(cell);
 
-				}
-			}
+                    //don't trigger on flying chars, or immovable neutral chars
+                    if (ch != null && !ch.flying
+                            && !(ch.alignment == Char.Alignment.NEUTRAL && Char.hasProp(ch, Char.Property.IMMOVABLE))) {
+                        if (ch == Dungeon.hero) {
+                            Chasm.heroFall(cell);
+                            herofell = true;
+                        } else {
+                            Chasm.mobFall((Mob) ch);
+                        }
+                    }
 
-			detach();
-			return !herofell;
-		}
+                }
+            }
 
-		private static final String POS = "pos";
-		private static final String DEPTH = "depth";
-		private static final String BRANCH = "branch";
+            detach();
+            return !herofell;
+        }
 
-		@Override
-		public void storeInBundle(Bundle bundle) {
-			super.storeInBundle(bundle);
-			bundle.put(POS, pos);
-			bundle.put(DEPTH, depth);
-			bundle.put(BRANCH, branch);
-		}
+        @Override
+        public void storeInBundle(Bundle bundle) {
+            super.storeInBundle(bundle);
+            bundle.put(POS, pos);
+            bundle.put(DEPTH, depth);
+            bundle.put(BRANCH, branch);
+        }
 
-		@Override
-		public void restoreFromBundle(Bundle bundle) {
-			super.restoreFromBundle(bundle);
-			pos = bundle.getInt(POS);
-			depth = bundle.getInt(DEPTH);
-			branch = bundle.getInt(BRANCH);
-		}
+        @Override
+        public void restoreFromBundle(Bundle bundle) {
+            super.restoreFromBundle(bundle);
+            pos = bundle.getInt(POS);
+            depth = bundle.getInt(DEPTH);
+            branch = bundle.getInt(BRANCH);
+        }
 
-	}
+    }
 }
