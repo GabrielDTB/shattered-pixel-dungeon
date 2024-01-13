@@ -16,15 +16,32 @@ struct Item {
         bomb @8 :Bomb;
         food @9 :Food;
         journal @10 :Journal;
-        # key :group {}
-        # potion :group {}
-        # quest :group {}
-        # ring :group {}
-        # scroll :group {}
-        # spell :group {}
-        # stone :group {}
-        # wand :group {}
-        # weapon :group {}
+        key @20 :Key;
+        potion @12 :Potion;
+        quest @13:Quest;
+        ring @14 :Ring;
+        scroll @15 :Scroll;
+        spell @16 :Spell;
+        stone @17 :Stone;
+        wand @18 :Wand;
+        weapon @19 :Weapon;
+        # amulet :Void;
+        # ankh :Ankh;
+        # arcaneResin :Void;
+        # brokenSeal :BrokenSeal;
+        # dewdrop :Void;
+        # energyCrystal :Void;
+        # generator :Generator;
+        # gold :Void;
+        # heap :Heap;
+        # honeypot :Void;
+        # kingsCrown :Void;
+        # liquidMetal :Void;
+        # lostBackpack :Void;
+        # stylus :Void;
+        # tengusMask :Void;
+        # torch :Void;
+        # waterskin :Waterskin;
     }
     
     struct Armor { # Completed pass 1
@@ -129,7 +146,7 @@ struct Item {
         todo @0 :Void;
     }
     
-    struct Food { # TODO Finish blandfruit
+    struct Food { # Completed pass 1
         kind :union {
             berry @0 :Void;
             blandfruit @1 :Blandfruit;
@@ -241,6 +258,160 @@ struct Item {
             spawnPower @0 :Int64;
         }
     }
+
+    struct Ring { # Completed pass 1
+        levelsToId @0 :Float64;
+        union {
+            accuracy @1 :Void;
+            arcana @2 :Void;
+            elements @3 :Void;
+            energy @4 :Void;
+            evasion @5 :Void;
+            force @6 :Void;
+            furor @7 :Void;
+            haste @8 :Void;
+            might @9 :Void;
+            sharpshooting @10 :Void;
+            tenacity @11 :Void;
+            wealth @12 :Wealth;
+        }
+
+        struct Wealth {
+            triesToDrop @0 :Float64;
+            dropsToRare @1 :Int64;
+        }
+    }
+
+    struct Scroll { # Completed pass 1
+        union {
+            identity @0 :Void;# Normal
+            lullaby @1 :Void;
+            magicMapping @2 :Void;
+            mirrorImage @3 :Void;
+            rage @4 :Void;
+            recharging @5 :Void;
+            removeCurse @6 :Void;
+            retribution @7 :Void;
+            teleportation @8 :Void;
+            terror @9 :Void;
+            transmutation @10 :Void;
+            upgrade @11 :Void;
+            antiMagic @12 :Void; # Exotic
+            challenge @13 :Void;
+            divination @14 :Void;
+            dread @15 :Void;
+            enchantment @16 :Void;
+            foresight @17 :Void;
+            metamorphosis @18 :Void;
+            mysticalEnergy @19 :Void;
+            passage @20 :Void;
+            prismaticImage @21 :Void;
+            psionicBlast @22 :Void;
+            sirensSong @23 :Void;
+        }
+    }
+
+    struct Spell { # Completed pass 1
+        union {
+            alchemize @0 :Void;
+            aquaBlast @1 :Void;
+            arcaneCatalyst @2 :Void;
+            beaconOfReturning @3 :BeaconOfReturning;
+            curseInfusion @4 :Void;
+            featherFall @5 :Void;
+            magicalInfusion @6 :Void;
+            phaseShift @7 :Void;
+            reclaimTrap @8 :ReclaimTrap;
+            recycle @9 :Void;
+            summonElemental @10 :SummonElemental;
+            telekineticGrab @11 :Void;
+            wildEnergy @12 :Void;
+        }
+
+        struct BeaconOfReturning {
+            returnDepth @0 :Int64;
+            returnBranch @1 :Int64;
+            returnPosition @2 :Int64;
+        }
+
+        struct ReclaimTrap {
+            storedTrap @0 :Todo; # TODO Trap
+        }
+
+        struct SummonElemental {
+            summonClass @0 :Todo; # TODO SummonClass
+        }
+    }
+
+    struct Stone {
+        union {
+            agggression @0 :Void;
+            augmentation @1 :Void;
+            blast @2 :Void;
+            blink @3 :Void;
+            clairvoyance @4 :Void;
+            deepSleep @5 :Void;
+            disarming @6 :Void;
+            enchantment @7 :Void;
+            fear @8 :Void;
+            flock @9 :Void;
+            intuition @10 :Void;
+            shock @11 :Void;
+        }
+    }
+
+    struct Wand { # Completed pass 1
+        usesLeftToId @0 :Float64;
+        availableUsesToId @1 :Float64;
+        currentCharges @2 :Int64;
+        currentChargesKnown @3 :Bool;
+        partialCharge @4 :Float64;
+        curseInfusionBonus @5 :Bool;
+        resinBonus @6 :Int64;
+        union {
+            blastWave @7 :Void;
+            corrosion @8 :Void;
+            corruption @9 :Void;
+            disintegration @10 :Void;
+            fireblast @11 :Void;
+            frost @12 :Void;
+            lightning @13 :Void;
+            livingEarth @14 :LivingEarth;
+            magicMissile @15 :MagicMissile;
+            prismaticLight @16 :Void;
+            regrowth @17 :Regrowth;
+            transfusion @18 :Transfusion;
+            warding @19 :Warding;
+        }
+
+        struct LivingEarth {
+            wandLevel @0 :Int64; # TODO Figure out why wandLevel is stored
+            armor @1 :Int64; # TODO FIgure out why armor is stored
+        }
+
+        struct MagicMissile {
+            level @0 :Int64; # TODO Figure out why level is stored
+        }
+
+        struct Regrowth {
+            totalChargesUsed @0 :Int64;
+            chargesOverLimit @1 :Int64;
+        }
+
+        struct Transfusion {
+            freeCharge @0 :Bool;
+        }
+
+        struct Warding {
+            tier @0 :Int64;
+            wandLevel @1 :Int64; # TODO Find why wandLevel is stored
+            totalZaps @2 :Int64; 
+        }
+    }
+
+    struct Weapon {
+        todo @0 :Void;
+    }
 }
 
 struct Inventory {
@@ -258,3 +429,22 @@ enum ArmorVariant {
 }
 enum ArmorClassVariant {}
 struct ActiveBuff {}
+struct Gem {
+    union {
+        garnet @0 :Void;
+        ruby @1 :Void;
+        topaz @2 :Void;
+        emerald @3 :Void;
+        onyx @4 :Void;
+        opal @5 :Void;
+        tourmaline @6 :Void;
+        sapphire @7 :Void;
+        amethyst @8 :Void;
+        quartz @9 :Void;
+        agate @10 :Void;
+        diamond @11 :Void;
+    }
+}
+struct Todo {
+    todo @0 :Void;
+}
