@@ -33,124 +33,126 @@ import com.watabou.utils.PlatformSupport;
 
 public class ShatteredPixelDungeon extends Game {
 
-	public static final int v2_2_1  = 1;
-	
-	public ShatteredPixelDungeon( PlatformSupport platform ) {
-		super( sceneClass == null ? WelcomeScene.class : sceneClass, platform );
+    public static final int v2_2_1 = 1;
+    public static final int v2_3_0_0 = 4;
 
-		//pre-v2.3.0
-		com.watabou.utils.Bundle.addAlias(
-				com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb.ConjuredBomb.class,
-				"com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb$MagicalBomb" );
+    public ShatteredPixelDungeon(PlatformSupport platform) {
+        super(sceneClass == null ? WelcomeScene.class : sceneClass, platform);
 
-		//pre-v2.2.0
-		com.watabou.utils.Bundle.addAlias(
-				com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom.QuestEntrance.class,
-				"com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.BlacksmithRoom$QuestEntrance" );
-		com.watabou.utils.Bundle.addAlias(
-				com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom.class,
-				"com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.BlacksmithRoom" );
-		com.watabou.utils.Bundle.addAlias(
-				com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.MassGraveRoom.class,
-				"com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MassGraveRoom" );
-		com.watabou.utils.Bundle.addAlias(
-				com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.MassGraveRoom.Bones.class,
-				"com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MassGraveRoom$Bones" );
-		com.watabou.utils.Bundle.addAlias(
-				com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RitualSiteRoom.class,
-				"com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.RitualSiteRoom" );
-		com.watabou.utils.Bundle.addAlias(
-				com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RitualSiteRoom.RitualMarker.class,
-				"com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.RitualSiteRoom$RitualMarker" );
-		com.watabou.utils.Bundle.addAlias(
-				com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RotGardenRoom.class,
-				"com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.RotGardenRoom" );
-	}
-	
-	@Override
-	public void create() {
-		super.create();
+        //pre-v2.3.0
+        com.watabou.utils.Bundle.addAlias(
+                com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb.ConjuredBomb.class,
+                "com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb$MagicalBomb");
 
-		updateSystemUI();
-		SPDAction.loadBindings();
-		
-		Music.INSTANCE.enable( SPDSettings.music() );
-		Music.INSTANCE.volume( SPDSettings.musicVol()*SPDSettings.musicVol()/100f );
-		Sample.INSTANCE.enable( SPDSettings.soundFx() );
-		Sample.INSTANCE.volume( SPDSettings.SFXVol()*SPDSettings.SFXVol()/100f );
+        //pre-v2.2.0
+        com.watabou.utils.Bundle.addAlias(
+                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom.QuestEntrance.class,
+                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.BlacksmithRoom$QuestEntrance");
+        com.watabou.utils.Bundle.addAlias(
+                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom.class,
+                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.BlacksmithRoom");
+        com.watabou.utils.Bundle.addAlias(
+                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.MassGraveRoom.class,
+                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MassGraveRoom");
+        com.watabou.utils.Bundle.addAlias(
+                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.MassGraveRoom.Bones.class,
+                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MassGraveRoom$Bones");
+        com.watabou.utils.Bundle.addAlias(
+                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RitualSiteRoom.class,
+                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.RitualSiteRoom");
+        com.watabou.utils.Bundle.addAlias(
+                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RitualSiteRoom.RitualMarker.class,
+                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.RitualSiteRoom$RitualMarker");
+        com.watabou.utils.Bundle.addAlias(
+                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RotGardenRoom.class,
+                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.RotGardenRoom");
+    }
 
-		Sample.INSTANCE.load( Assets.Sounds.all );
-		
-	}
+    @Override
+    public void create() {
+        super.create();
 
-	@Override
-	public void finish() {
-		if (!DeviceCompat.isiOS()) {
-			super.finish();
-		} else {
-			//can't exit on iOS (Apple guidelines), so just go to title screen
-			switchScene(TitleScene.class);
-		}
-	}
+        updateSystemUI();
+        SPDAction.loadBindings();
 
-	public static void switchNoFade(Class<? extends PixelScene> c){
-		switchNoFade(c, null);
-	}
+        Music.INSTANCE.enable(SPDSettings.music());
+        Music.INSTANCE.volume(SPDSettings.musicVol() * SPDSettings.musicVol() / 100f);
+        Sample.INSTANCE.enable(SPDSettings.soundFx());
+        Sample.INSTANCE.volume(SPDSettings.SFXVol() * SPDSettings.SFXVol() / 100f);
 
-	public static void switchNoFade(Class<? extends PixelScene> c, SceneChangeCallback callback) {
-		PixelScene.noFade = true;
-		switchScene( c, callback );
-	}
-	
-	public static void seamlessResetScene(SceneChangeCallback callback) {
-		if (scene() instanceof PixelScene){
-			((PixelScene) scene()).saveWindows();
-			switchNoFade((Class<? extends PixelScene>) sceneClass, callback );
-		} else {
-			resetScene();
-		}
-	}
-	
-	public static void seamlessResetScene(){
-		seamlessResetScene(null);
-	}
-	
-	@Override
-	protected void switchScene() {
-		super.switchScene();
-		if (scene instanceof PixelScene){
-			((PixelScene) scene).restoreWindows();
-		}
-	}
-	
-	@Override
-	public void resize( int width, int height ) {
-		if (width == 0 || height == 0){
-			return;
-		}
+        Sample.INSTANCE.load(Assets.Sounds.all);
 
-		if (scene instanceof PixelScene &&
-				(height != Game.height || width != Game.width)) {
-			PixelScene.noFade = true;
-			((PixelScene) scene).saveWindows();
-		}
+    }
 
-		super.resize( width, height );
+    @Override
+    public void finish() {
+        if (!DeviceCompat.isiOS()) {
+            super.finish();
+        } else {
+            //can't exit on iOS (Apple guidelines), so just go to title screen
+            switchScene(TitleScene.class);
+        }
+    }
 
-		updateDisplaySize();
+    public static void switchNoFade(Class<? extends PixelScene> c) {
+        switchNoFade(c, null);
+    }
 
-	}
-	
-	@Override
-	public void destroy(){
-		super.destroy();
-		GameScene.endActorThread();
-	}
-	
-	public void updateDisplaySize(){
-		platform.updateDisplaySize();
-	}
+    public static void switchNoFade(Class<? extends PixelScene> c, SceneChangeCallback callback) {
+        PixelScene.noFade = true;
+        switchScene(c, callback);
+    }
 
-	public static void updateSystemUI() {
-		platform.updateSystemUI();
-	}
+    public static void seamlessResetScene(SceneChangeCallback callback) {
+        if (scene() instanceof PixelScene) {
+            ((PixelScene) scene()).saveWindows();
+            switchNoFade((Class<? extends PixelScene>) sceneClass, callback);
+        } else {
+            resetScene();
+        }
+    }
+
+    public static void seamlessResetScene() {
+        seamlessResetScene(null);
+    }
+
+    @Override
+    protected void switchScene() {
+        super.switchScene();
+        if (scene instanceof PixelScene) {
+            ((PixelScene) scene).restoreWindows();
+        }
+    }
+
+    @Override
+    public void resize(int width, int height) {
+        if (width == 0 || height == 0) {
+            return;
+        }
+
+        if (scene instanceof PixelScene &&
+                (height != Game.height || width != Game.width)) {
+            PixelScene.noFade = true;
+            ((PixelScene) scene).saveWindows();
+        }
+
+        super.resize(width, height);
+
+        updateDisplaySize();
+
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        GameScene.endActorThread();
+    }
+
+    public void updateDisplaySize() {
+        platform.updateDisplaySize();
+    }
+
+    public static void updateSystemUI() {
+        platform.updateSystemUI();
+    }
+}
