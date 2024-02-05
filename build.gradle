@@ -24,8 +24,8 @@ allprojects {
         appName = 'Tweaked Pixel Dungeon'
         appPackageName = 'com.gabrieltb.tweakedpixeldungeon'
 
-        appVersionCode = 4
-        appVersionName = '2.3.0.0'
+        appVersionCode = 5
+        appVersionName = '2.3.2.0'
 
         appJavaCompatibility = JavaVersion.VERSION_1_8
 
@@ -62,3 +62,5 @@ compileTestKotlin {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+}
+
