@@ -114,6 +114,7 @@ public enum Icons {
 	LIBGDX,
 	ALEKS,
 	WATA,
+	GABE,
 	CELESTI,
 	KRISTJAN,
 	CUBE_CODE,
@@ -354,6 +355,9 @@ public enum Icons {
 				break;
 			case WATA:
 				icon.frame( icon.texture.uvRectBySize( 0, 112, 17, 12 ) );
+				break;
+			case GABE:
+				icon.frame( icon.texture.uvRectBySize( 136, 0, 17, 16 ) );
 				break;
 
 			//large icons are scaled down to match game's size

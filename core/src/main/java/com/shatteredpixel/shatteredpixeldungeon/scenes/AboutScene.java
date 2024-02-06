@@ -62,6 +62,22 @@ public class AboutScene extends PixelScene {
 		Component content = list.content();
 		content.clear();
 
+		//*** Tweaks Credits ***
+
+		final int TWEAKS_COLOR = 0xB7876E;
+		CreditsBlock tweaks = new CreditsBlock(true, TWEAKS_COLOR,
+				"Tweaks",
+				Icons.GABE.get(),
+				"Developed by: _Gabriel TB_\nTweaks for quality of life",
+				"gabrieltb.me",
+				"https://gabrieltb.me/");
+		if (landscape()){
+			tweaks.setRect((w - fullWidth)/2f - 6, 10, 120, 0);
+		} else {
+			tweaks.setRect((w - fullWidth)/2f, 6, 120, 0);
+		}
+		content.add(tweaks);
+
 		//*** Shattered Pixel Dungeon Credits ***
 
 		String shpxLink = "https://ShatteredPixel.com";
@@ -76,12 +92,9 @@ public class AboutScene extends PixelScene {
 				"Developed by: _Evan Debenham_\nBased on Pixel Dungeon's open source",
 				"ShatteredPixel.com",
 				shpxLink);
-		if (landscape()){
-			shpx.setRect((w - fullWidth)/2f - 6, 10, 120, 0);
-		} else {
-			shpx.setRect((w - fullWidth)/2f, 6, 120, 0);
-		}
+		shpx.setRect((Camera.main.width - colWidth)/2f, tweaks.bottom() + 8, colWidth, 0);
 		content.add(shpx);
+		addLine(shpx.top() - 4, content);
 
 		CreditsBlock alex = new CreditsBlock(false, Window.SHPX_COLOR,
 				"Hero Art & Design:",
