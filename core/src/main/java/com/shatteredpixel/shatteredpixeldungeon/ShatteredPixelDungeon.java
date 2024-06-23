@@ -35,37 +35,39 @@ public class ShatteredPixelDungeon extends Game {
 
     public static final int v2_2_1 = 1;
     public static final int v2_3_0_0 = 4;
+    public static final int v2_4_2_0 = 6;
 
-    public ShatteredPixelDungeon(PlatformSupport platform) {
-        super(sceneClass == null ? WelcomeScene.class : sceneClass, platform);
+	public ShatteredPixelDungeon( PlatformSupport platform ) {
+		super( sceneClass == null ? WelcomeScene.class : sceneClass, platform );
 
-        //pre-v2.3.0
-        com.watabou.utils.Bundle.addAlias(
-                com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb.ConjuredBomb.class,
-                "com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb$MagicalBomb");
+		//pre-v2.4.0
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.UnstableBrew.class,
+				"com.shatteredpixel.shatteredpixeldungeon.items.potions.AlchemicalCatalyst" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.items.spells.UnstableSpell.class,
+				"com.shatteredpixel.shatteredpixeldungeon.items.spells.ArcaneCatalyst" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfFeatherFall.class,
+				"com.shatteredpixel.shatteredpixeldungeon.items.spells.FeatherFall" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfFeatherFall.FeatherBuff.class,
+				"com.shatteredpixel.shatteredpixeldungeon.items.spells.FeatherFall$FeatherBuff" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.AquaBrew.class,
+				"com.shatteredpixel.shatteredpixeldungeon.items.spells.AquaBlast" );
 
-        //pre-v2.2.0
-        com.watabou.utils.Bundle.addAlias(
-                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom.QuestEntrance.class,
-                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.BlacksmithRoom$QuestEntrance");
-        com.watabou.utils.Bundle.addAlias(
-                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom.class,
-                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.BlacksmithRoom");
-        com.watabou.utils.Bundle.addAlias(
-                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.MassGraveRoom.class,
-                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MassGraveRoom");
-        com.watabou.utils.Bundle.addAlias(
-                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.MassGraveRoom.Bones.class,
-                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MassGraveRoom$Bones");
-        com.watabou.utils.Bundle.addAlias(
-                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RitualSiteRoom.class,
-                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.RitualSiteRoom");
-        com.watabou.utils.Bundle.addAlias(
-                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RitualSiteRoom.RitualMarker.class,
-                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.RitualSiteRoom$RitualMarker");
-        com.watabou.utils.Bundle.addAlias(
-                com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RotGardenRoom.class,
-                "com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.RotGardenRoom");
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.entrance.EntranceRoom.class,
+				"com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.EntranceRoom" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit.ExitRoom.class,
+				"com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.ExitRoom" );
+
+		//pre-v2.3.0
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb.ConjuredBomb.class,
+				"com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb$MagicalBomb" );
     }
 
     @Override
@@ -81,7 +83,6 @@ public class ShatteredPixelDungeon extends Game {
         Sample.INSTANCE.volume(SPDSettings.SFXVol() * SPDSettings.SFXVol() / 100f);
 
         Sample.INSTANCE.load(Assets.Sounds.all);
-
     }
 
     @Override
